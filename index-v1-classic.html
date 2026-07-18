@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Syahi · an AI venture studio run by one human and her agents</title>
+<meta name="description" content="Syahi (स्याही, ink) is a one-person AI venture studio in Bangalore: agent software, Hindi audiobooks, AI education, and illustrated stories, built by Surabhi Pradhan and her agents.">
+<meta property="og:title" content="Syahi · ink for the agent age">
+<meta property="og:description" content="One human, many hands. Software, audiobooks, education, and stories. Built with AI agents, approved by a person.">
+<meta property="og:url" content="https://syahi.sh">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='58' r='30' fill='%23221A0E'/><path d='M50 8 C50 8 32 34 50 44 C68 34 50 8 50 8 Z' fill='%23221A0E'/></svg>">
+<style>
+  :root{
+    --ink:#221A0E;
+    --parchment:#F0E8D2;
+    --parchment-deep:#E6DBBE;
+    --ink-soft:rgba(34,26,14,.62);
+    --ink-faint:rgba(34,26,14,.14);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--parchment);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    font-size:17px;line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:860px;margin:0 auto;padding:0 24px}
+  header{padding:96px 0 72px;border-bottom:1px solid var(--ink-faint)}
+  .devanagari{
+    font-family:'Fraunces',serif;
+    font-size:15px;letter-spacing:.35em;text-transform:uppercase;
+    color:var(--ink-soft);margin-bottom:18px;
+  }
+  h1{
+    font-family:'Fraunces',serif;font-weight:600;
+    font-size:clamp(52px,9vw,88px);line-height:1.02;letter-spacing:-.015em;
+  }
+  h1 .drop{
+    display:inline-block;width:.42em;height:.42em;margin-left:.12em;
+    background:var(--ink);border-radius:50% 50% 50% 0;transform:rotate(-45deg) translateY(-6px);
+  }
+  .thesis{
+    margin-top:34px;max-width:560px;
+    font-size:clamp(19px,2.6vw,23px);line-height:1.5;color:var(--ink);
+    font-family:'Fraunces',serif;font-weight:400;
+  }
+  .thesis em{font-style:italic}
+  .sub{margin-top:18px;color:var(--ink-soft);max-width:520px;font-size:16px}
+  main{padding:56px 0 8px}
+  .group{margin-bottom:56px}
+  .kicker{
+    font-size:12.5px;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--ink-soft);margin-bottom:6px;
+  }
+  .group-lede{
+    font-family:'Fraunces',serif;font-style:italic;
+    font-size:17px;color:var(--ink-soft);margin-bottom:20px;
+  }
+  .ventures{display:grid;grid-template-columns:1fr;gap:0;border-top:1px solid var(--ink-faint)}
+  .venture{
+    display:grid;grid-template-columns:200px 1fr;gap:24px;
+    padding:26px 0;border-bottom:1px solid var(--ink-faint);
+  }
+  .venture h3{
+    font-family:'Fraunces',serif;font-weight:600;font-size:22px;letter-spacing:-.01em;
+  }
+  .venture .tag{
+    display:block;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin-top:6px;
+  }
+  .venture p{color:var(--ink-soft);font-size:15.5px;max-width:520px}
+  .venture p b{color:var(--ink);font-weight:500}
+  .signet-cta{
+    margin-top:10px;display:inline-block;
+    font-size:14px;font-weight:500;color:var(--ink);
+    border-bottom:1.5px solid var(--ink);text-decoration:none;padding-bottom:1px;
+  }
+  .signet-cta:hover{opacity:.7}
+  .method{
+    margin:72px 0 0;padding:40px;background:var(--parchment-deep);
+    border-radius:2px;
+  }
+  .method p{
+    font-family:'Fraunces',serif;font-size:clamp(18px,2.4vw,21px);
+    line-height:1.55;max-width:640px;
+  }
+  footer{
+    border-top:1px solid var(--ink-faint);
+    padding:44px 0 72px;
+    display:flex;flex-wrap:wrap;gap:12px 32px;align-items:baseline;
+    color:var(--ink-soft);font-size:15px;
+  }
+  footer a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--ink-faint)}
+  footer a:hover{border-bottom-color:var(--ink)}
+  footer .place{margin-left:auto;font-family:'Fraunces',serif;font-style:italic}
+  @media(max-width:640px){
+    header{padding:64px 0 48px}
+    .venture{grid-template-columns:1fr;gap:8px;padding:22px 0}
+    .method{padding:28px 22px}
+    footer .place{margin-left:0;width:100%}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="devanagari">स्याही &nbsp;·&nbsp; syahi &nbsp;·&nbsp; ink</div>
+  <h1>Syahi<span class="drop" aria-hidden="true"></span></h1>
+  <p class="thesis">An AI venture studio run by <em>one human and her agents.</em></p>
+  <p class="sub">Agents do the work. A person signs it. Everything ships with a receipt. That's the whole method, and the company is the demo.</p>
+</header>
+
+<main>
+  <section class="group">
+    <div class="kicker">Product</div>
+    <p class="group-lede">Software we ship.</p>
+    <div class="ventures">
+      <div class="venture">
+        <div><h3>Signet</h3><span class="tag">Founding users open</span></div>
+        <div>
+          <p><b>Push-to-approve for your agents, with a decision ledger.</b> Your agents merge, deploy, reply, and publish. Signet is the seal: approvals from your phone, and a compounding record of every yes and no with the context that shaped it.</p>
+          <a class="signet-cta" href="mailto:hello@syahi.sh?subject=Signet%20founding%20user">Become a founding user →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="group">
+    <div class="kicker">Services</div>
+    <p class="group-lede">Work we do for clients, receipts included.</p>
+    <div class="ventures">
+      <div class="venture">
+        <div><h3>Katha Audio</h3><span class="tag">Audiobook production</span></div>
+        <div><p><b>Finished, verified Hindi audiobooks for publishers.</b> Manuscript in, retail-ready audio out. Every sentence verified against the source, pronunciation handled, delivered to the channels that welcome disclosed AI narration.</p></div>
+      </div>
+      <div class="venture">
+        <div><h3>Studio services</h3><span class="tag">Agent systems</span></div>
+        <div><p><b>The system we run, installed for you.</b> Agent workflows, capture-to-corpus knowledge systems, and automation for founders and small teams. Productized, receipted, no bodyshop hours.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="group">
+    <div class="kicker">Media</div>
+    <p class="group-lede">What we teach and tell.</p>
+    <div class="ventures">
+      <div class="venture">
+        <div><h3>Paper Machine</h3><span class="tag">Education</span></div>
+        <div><p><b>AI and ML explained like a naturalist's field guide.</b> Plates, not thumbnails. <a class="signet-cta" href="https://youtube.com/@papermachine07">Watch on YouTube →</a></p></div>
+      </div>
+      <div class="venture">
+        <div><h3>Visual Reads</h3><span class="tag">Stories</span></div>
+        <div><p><b>Books, retold as cinematic illustrated shorts.</b> Literature in sixty seconds, drawn by machines with taste supplied by a human.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="method">
+    <p>Ink is how intent becomes record. Every venture here runs on the same loop: agents draft, a human approves, the decision gets written down. We think that loop, not the models, is what the next decade of small companies is made of.</p>
+  </div>
+</main>
+
+<footer>
+  <a href="mailto:hello@syahi.sh">hello@syahi.sh</a>
+  <a href="https://cal.com/surabhipradhan/25-min-research-chat">book a chat</a>
+  <a href="https://x.com/surabhipradhan">x</a>
+  <a href="https://github.com/surpradhan">github</a>
+  <span class="place">Bengaluru, India · est. 2026</span>
+</footer>
+
+</div>
+</body>
+</html>
