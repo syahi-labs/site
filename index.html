@@ -1,459 +1,827 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Syahi · an AI venture studio run by one human and her agents</title>
-<meta name="description" content="Syahi (स्याही, ink) is a one-person AI venture studio in Bangalore: agent software, Hindi audiobooks, AI education, and illustrated stories, built by Surabhi Pradhan and her agents.">
-<meta property="og:title" content="Syahi · ink for the agent age">
-<meta property="og:description" content="One human, many hands. Software, audiobooks, education, and stories. Built with AI agents, approved by a person.">
-<meta property="og:url" content="https://syahi.sh">
-<meta property="og:type" content="website">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='58' r='30' fill='%23221A0E'/><path d='M50 8 C50 8 32 34 50 44 C68 34 50 8 50 8 Z' fill='%23221A0E'/></svg>">
-<style>
-  :root{
-    --ink:#221A0E;
-    --parchment:#F0E8D2;
-    --parchment-deep:#E6DBBE;
-    --ink-soft:rgba(34,26,14,.6);
-    --ink-faint:rgba(34,26,14,.16);
-    --ink-hair:rgba(34,26,14,.09);
-    --wax:#8E2F1E;
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{
-    background:var(--parchment);
-    color:var(--ink);
-    font-family:'Inter',system-ui,sans-serif;
-    font-size:17px;line-height:1.65;
-    -webkit-font-smoothing:antialiased;
-    overflow-x:hidden;
-  }
-  .grain{
-    position:fixed;inset:0;pointer-events:none;z-index:50;opacity:.05;
-  }
-  .wrap{max-width:1060px;margin:0 auto;padding:0 28px;position:relative}
-  .mono{font-family:'IBM Plex Mono',monospace}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Signet: agents do the work, you keep the say-so</title>
+  <meta name="description" content="Signet is a decision ledger for personal AI agents. Consequential actions wait for your approval on your phone; every decision is sealed into a permanent record." />
 
-  /* ---------- hero ---------- */
-  header{padding:110px 0 84px;position:relative}
-  .entry-meta{
-    font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.12em;
-    color:var(--ink-soft);display:flex;gap:28px;flex-wrap:wrap;
-    border-bottom:1px solid var(--ink-faint);padding-bottom:14px;margin-bottom:64px;
-    opacity:0;animation:rise .8s .1s cubic-bezier(.2,.8,.2,1) forwards;
-  }
-  .entry-meta span b{color:var(--ink);font-weight:500}
-  .devanagari{
-    font-family:'Fraunces',serif;font-size:15px;letter-spacing:.4em;text-transform:uppercase;
-    color:var(--ink-soft);margin-bottom:20px;
-    opacity:0;animation:rise .8s .25s cubic-bezier(.2,.8,.2,1) forwards;
-  }
-  h1{
-    font-family:'Fraunces',serif;font-weight:600;
-    font-size:clamp(72px,14vw,168px);line-height:.94;letter-spacing:-.02em;
-    opacity:0;animation:rise .9s .4s cubic-bezier(.2,.8,.2,1) forwards;
-  }
-  h1 .drop{
-    display:inline-block;width:.34em;height:.34em;margin-left:.1em;
-    background:var(--ink);border-radius:50% 50% 50% 0;
-    transform:rotate(-45deg);
-    animation:dropfall .7s 1.15s cubic-bezier(.3,1.6,.4,1) backwards;
-  }
-  @keyframes dropfall{
-    0%{opacity:0;transform:rotate(-45deg) translate(-40px,-90px) scale(.4)}
-    60%{opacity:1;transform:rotate(-45deg) translate(4px,6px) scale(1.15)}
-    100%{opacity:1;transform:rotate(-45deg) translate(0,0) scale(1)}
-  }
-  .thesis{
-    margin-top:44px;max-width:600px;
-    font-size:clamp(20px,2.8vw,26px);line-height:1.45;
-    font-family:'Fraunces',serif;font-weight:400;
-    opacity:0;animation:rise .8s .6s cubic-bezier(.2,.8,.2,1) forwards;
-  }
-  .thesis em{font-style:italic}
-  .sub{
-    margin-top:20px;color:var(--ink-soft);max-width:540px;font-size:16px;
-    opacity:0;animation:rise .8s .75s cubic-bezier(.2,.8,.2,1) forwards;
-  }
-  @keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+  <!-- ============================================================
+       OG / social meta.
+       BRAND-MARK SWAP POINT (#203): the seal used across this page
+       (header/footer/watermark SVGs, the favicon below, and og.png
+       rendered from og-image.html) is a geometric PLACEHOLDER mark.
+       When the real seal lands (issue #203): swap the inline SVGs
+       (search "placeholder-seal"), the favicon data-URI, and
+       regenerate og.png. Nothing else needs to change.
+       ============================================================ -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Signet" />
+  <meta property="og:title" content="Signet: agents do the work, you keep the say-so" />
+  <meta property="og:description" content="A decision ledger for personal AI agents. Consequential actions wait for your seal; every decision goes on the record." />
+  <meta property="og:url" content="https://signet.syahi.sh/" />
+  <meta property="og:image" content="https://signet.syahi.sh/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="A circular seal mark with a serrated edge and the letter S, above the words: Agents do the work. You keep the say-so. Signet, a decision ledger." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Signet: agents do the work, you keep the say-so" />
+  <meta name="twitter:description" content="A decision ledger for personal AI agents. Consequential actions wait for your seal; every decision goes on the record." />
+  <meta name="twitter:image" content="https://signet.syahi.sh/og.png" />
+  <meta name="twitter:image:alt" content="A circular seal mark with a serrated edge and the letter S, above the words: Agents do the work. You keep the say-so. Signet, a decision ledger." />
+  <link rel="canonical" href="https://signet.syahi.sh/" />
+  <meta name="theme-color" content="#F0E8D2" />
 
-  /* ---------- section dividers ---------- */
-  .section-head{
-    display:flex;align-items:baseline;gap:24px;
-    margin:96px 0 8px;border-bottom:1.5px solid var(--ink);padding-bottom:12px;
-  }
-  .section-head .roman{
-    font-family:'Fraunces',serif;font-weight:600;font-size:clamp(34px,4.5vw,52px);
-    letter-spacing:-.01em;
-  }
-  .section-head .label{
-    font-family:'IBM Plex Mono',monospace;font-size:12.5px;letter-spacing:.3em;
-    text-transform:uppercase;color:var(--ink-soft);
-  }
-  .section-head .lede{
-    margin-left:auto;font-family:'Fraunces',serif;font-style:italic;
-    font-size:16px;color:var(--ink-soft);
-  }
+  <!-- Must run before first paint: the demo storyboard's pre-animation
+       hidden states are scoped to html.js, so if this landed after paint
+       the settled storyboard could flash and then blink out. -->
+  <script>document.documentElement.classList.add('js');</script>
 
-  /* ---------- plates ---------- */
-  .plate{
-    display:grid;grid-template-columns:minmax(220px,340px) 1fr;gap:56px;
-    padding:72px 0;border-bottom:1px solid var(--ink-faint);
-    position:relative;
-  }
-  .plate-fig{position:relative}
-  .plate-fig svg{width:100%;height:auto;display:block}
-  .plate-fig .figcap{
-    font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.22em;
-    text-transform:uppercase;color:var(--ink-soft);margin-top:14px;
-    display:flex;justify-content:space-between;
-  }
-  .plate-fig img{height:auto;
-    width:100%;display:block;mix-blend-mode:multiply;
-    opacity:0;transform:translateY(14px);
-    transition:opacity 1.1s cubic-bezier(.2,.7,.2,1),transform 1.1s cubic-bezier(.2,.7,.2,1);
-  }
-  .inview .plate-fig img{opacity:1;transform:none}
-  .hero-grid{display:grid;grid-template-columns:1fr 300px;gap:40px;align-items:center}
-  .hero-mark{mix-blend-mode:multiply;width:100%;max-width:300px;height:auto;
-    opacity:0;animation:rise 1s .9s cubic-bezier(.2,.8,.2,1) forwards}
-  .hero-mark-cap{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.22em;
-    text-transform:uppercase;color:var(--ink-soft);text-align:center;margin-top:10px;
-    opacity:0;animation:rise 1s 1.1s cubic-bezier(.2,.8,.2,1) forwards}
-  @media(max-width:820px){.hero-grid{grid-template-columns:1fr}.hero-side{display:none}}
-  .plate-fig path,.plate-fig circle,.plate-fig ellipse,.plate-fig line,.plate-fig rect{
-    fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;
-  }
-  .draw path,.draw circle,.draw ellipse,.draw line,.draw rect{
-    stroke-dasharray:1;stroke-dashoffset:1;
-  }
-  .inview .draw path,.inview .draw circle,.inview .draw ellipse,.inview .draw line,.inview .draw rect{
-    animation:drawin 1.4s cubic-bezier(.4,0,.2,1) forwards;
-  }
-  .inview .draw :nth-child(2){animation-delay:.15s}
-  .inview .draw :nth-child(3){animation-delay:.3s}
-  .inview .draw :nth-child(4){animation-delay:.45s}
-  .inview .draw :nth-child(5){animation-delay:.6s}
-  .inview .draw :nth-child(6){animation-delay:.75s}
-  .inview .draw :nth-child(7){animation-delay:.9s}
-  .inview .draw :nth-child(8){animation-delay:1.05s}
-  .inview .draw :nth-child(9){animation-delay:1.2s}
-  .inview .draw :nth-child(10){animation-delay:1.35s}
-  @keyframes drawin{to{stroke-dashoffset:0}}
+  <!-- Favicon: placeholder-seal — same swap point as above (#203). -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='31' fill='%23221A0E'/%3E%3Ccircle cx='32' cy='32' r='26' fill='none' stroke='%23F0E8D2' stroke-width='2' stroke-dasharray='2.6 2.4'/%3E%3Ccircle cx='32' cy='32' r='21' fill='none' stroke='%23F0E8D2' stroke-width='1.5'/%3E%3Ctext x='32' y='41' text-anchor='middle' font-family='Georgia,serif' font-style='italic' font-size='27' fill='%23F0E8D2'%3ES%3C/text%3E%3C/svg%3E" />
 
-  .plate-body h3{
-    font-family:'Fraunces',serif;font-weight:600;
-    font-size:clamp(30px,4vw,44px);letter-spacing:-.015em;line-height:1.05;
-  }
-  .plate-body .prose{margin-top:18px;color:var(--ink-soft);max-width:560px;font-size:16.5px}
-  .plate-body .prose b{color:var(--ink);font-weight:500}
+  <!-- Loom typefaces: the same trio the Signet PWA loads, but deliberately
+       with heavier weights than the PWA requests — this page sets display
+       sizes the app never does. Not interchangeable with the PWA's load. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&amp;family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" />
 
-  /* receipt block */
-  .receipt{
-    margin-top:28px;max-width:470px;
-    background:var(--parchment-deep);
-    padding:20px 22px 18px;position:relative;
-    font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:2.05;
-    color:var(--ink);
-    background-image:repeating-linear-gradient(180deg,transparent 0 26px,var(--ink-hair) 26px 27px);
-  }
-  .receipt::before,.receipt::after{
-    content:"";position:absolute;left:0;right:0;height:8px;
-    background-image:radial-gradient(circle at 6px 4px,var(--parchment) 4px,transparent 4.5px);
-    background-size:16px 8px;background-repeat:repeat-x;
-  }
-  .receipt::before{top:-4px}
-  .receipt::after{bottom:-4px;transform:scaleY(-1)}
-  .receipt .row{display:flex;gap:16px}
-  .receipt .k{width:82px;flex:none;color:var(--ink-soft);font-size:11.5px;letter-spacing:.08em;padding-top:1px}
-  .receipt .open{color:var(--wax);font-weight:500}
-  .receipt a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--ink);font-weight:500}
-  .receipt a:hover{color:var(--wax);border-bottom-color:var(--wax)}
+  <style>
+    /* Loom palette — mirrors pao/web/src/index.css. --copper-text and
+     * --copper-graphic are the WCAG-derived variants of the PWA's raw
+     * copper #BC6A28, which fails 4.5:1 as text on paper — so that token
+     * is deliberately NOT defined here (nothing on this page may use it):
+     * text uses #8A4E1D and graphical marks use #B06325 (see the token
+     * rationale in the PWA stylesheet).
+     *
+     * Dark "dock" surfaces (the footer band, the phone screen) follow the
+     * PWA's dock rules: they use --dock, NOT --ink — the PWA's token
+     * comment is explicit that ink is body text and would invert a dock
+     * surface under a dark theme. Text on dock is --paper (14.06:1),
+     * secondary text is --nav-inactive #A0906E (5.49:1 on dock, the PWA's
+     * measured AA-passing value), and copper accents on dock use
+     * --copper-glow #E8B872 (9.43:1) — never the darkened copper-text,
+     * which FAILS on dark surfaces (2.61:1). All ratios here are measured
+     * against this page's SOLID dock; the PWA's own comments quote lower
+     * figures (8.3:1 / 2.29:1) because its dock is a translucent
+     * bg-dock/95–/97 + backdrop-blur composite. Same conclusions. */
+    :root {
+      --paper:          #F0E8D2;
+      --surface:        #FAF4E2;
+      --territory:      #E2D5B0;
+      --ink:            #221A0E;
+      --dock:           #221A0E;
+      --muted:          #6B5A3E;
+      --walnut:         #5C4A2E;
+      --copper-text:    #8A4E1D;
+      --copper-graphic: #B06325;
+      --copper-glow:    #E8B872;
+      --nav-inactive:   #A0906E;
 
-  /* wax seal */
-  .seal{
-    position:absolute;right:-6px;top:46px;width:92px;height:92px;z-index:2;
-    opacity:0;transform:scale(2.4) rotate(-18deg);
-    pointer-events:none;mix-blend-mode:multiply;
-  }
-  .seal img{width:100%;height:auto;display:block}
-  .inview .seal{
-    animation:stamp .5s .9s cubic-bezier(.2,1.5,.35,1) forwards;
-  }
-  @keyframes stamp{
-    0%{opacity:0;transform:scale(2.4) rotate(-18deg)}
-    55%{opacity:1;transform:scale(.92) rotate(-7deg)}
-    100%{opacity:1;transform:scale(1) rotate(-8deg)}
-  }
-  .seal svg{width:100%;height:100%;filter:drop-shadow(0 2px 3px rgba(34,26,14,.25))}
+      --serif: "Cormorant Garamond", Georgia, serif;
+      --sans:  "Inter", ui-sans-serif, system-ui, sans-serif;
+      --mono:  "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+    }
 
-  /* marginalia */
-  .margin-note{
-    position:absolute;left:-118px;top:86px;width:88px;
-    font-family:'Fraunces',serif;font-style:italic;font-size:13px;line-height:1.5;
-    color:var(--ink-soft);transform:rotate(-3deg);text-align:right;
-  }
-  @media(max-width:1240px){.margin-note{display:none}}
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  /* ---------- colophon ---------- */
-  .colophon{
-    margin:96px 0 0;padding:52px 48px;
-    border:1.5px solid var(--ink);position:relative;
-  }
-  .colophon .label{
-    position:absolute;top:-11px;left:36px;background:var(--parchment);padding:0 12px;
-    font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.3em;text-transform:uppercase;
-    color:var(--ink-soft);
-  }
-  .colophon p{
-    font-family:'Fraunces',serif;font-size:clamp(19px,2.6vw,24px);
-    line-height:1.55;max-width:700px;
-  }
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
 
-  /* ---------- footer ---------- */
-  footer{padding:84px 0 88px}
-  .sig-line{
-    border-bottom:1px solid var(--ink);max-width:340px;margin-bottom:10px;
-    display:flex;align-items:flex-end;
-  }
-  .sig{
-    font-family:'Fraunces',serif;font-style:italic;font-weight:500;
-    font-size:34px;letter-spacing:.01em;line-height:1;padding:0 4px 6px;
-    transform:rotate(-2deg);
-  }
-  .sig-cap{
-    font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.18em;
-    text-transform:uppercase;color:var(--ink-soft);margin-bottom:44px;
-  }
-  .foot-links{
-    display:flex;flex-wrap:wrap;gap:12px 34px;align-items:baseline;
-    color:var(--ink-soft);font-size:15px;border-top:1px solid var(--ink-faint);padding-top:26px;
-  }
-  .foot-links a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--ink-faint);position:relative}
-  .foot-links a:hover{border-bottom-color:var(--ink)}
-  .foot-links a:hover::after{
-    content:"";position:absolute;right:-10px;bottom:2px;width:5px;height:5px;
-    background:var(--ink);border-radius:50% 50% 50% 0;transform:rotate(-45deg);
-  }
-  .foot-links .place{margin-left:auto;font-family:'Fraunces',serif;font-style:italic}
+    a { color: var(--copper-text); }
 
-  /* ---------- responsive ---------- */
-  @media(max-width:760px){
-    header{padding:72px 0 56px}
-    .entry-meta{gap:14px;margin-bottom:44px}
-    .section-head{flex-wrap:wrap;gap:10px 18px;margin-top:72px}
-    .section-head .lede{margin-left:0;width:100%}
-    .plate{grid-template-columns:1fr;gap:34px;padding:52px 0}
-    .plate-fig{max-width:250px}
-    .seal{width:66px;height:66px;top:6px;right:0;bottom:auto}
-    .colophon{padding:36px 24px}
-    .foot-links .place{margin-left:0;width:100%}
-  }
-  @media(prefers-reduced-motion:reduce){
-    *{animation:none!important;transition:none!important}
-    .entry-meta,.devanagari,h1,.thesis,.sub,.seal{opacity:1;transform:none}
-    .draw path,.draw circle,.draw ellipse,.draw line,.draw rect{stroke-dasharray:none;stroke-dashoffset:0}
-    .seal{transform:scale(1) rotate(-8deg)}
-  }
-</style>
+    :focus-visible {
+      outline: 2px solid var(--copper-graphic);
+      outline-offset: 3px;
+    }
+
+    .wrap {
+      max-width: 46rem;
+      margin: 0 auto;
+      padding: 0 1.25rem;
+    }
+
+    .seal { display: block; }
+
+    /* ---- header ---- */
+    header {
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--territory);
+    }
+    header .wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .wordmark {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      font-weight: 500;
+      letter-spacing: 0.35em;
+      color: var(--ink);
+      text-decoration: none;
+      /* Pad the hit area to ≥44px without moving the visual layout. */
+      padding: 0.55rem 0.25rem;
+      margin: -0.55rem -0.25rem;
+    }
+    .byline {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    /* ---- hero ---- */
+    /* Longhand on purpose: this element is `class="hero wrap"`, and a
+     * `padding` shorthand here would zero out .wrap's horizontal gutter
+     * (equal specificity, later in source). */
+    .hero {
+      padding-top: 4.5rem;
+      padding-bottom: 3.5rem;
+      position: relative;
+      overflow: visible;
+    }
+    /* Oversized ghost seal behind the headline — pure decoration
+     * (territory-on-paper, aria-hidden). Ink text over it still clears
+     * 4.5:1 by a wide margin (ink on solid territory is 11.77:1, and the
+     * watermark is line-work, not a fill). Hidden below 900px where it
+     * would crowd the text. */
+    .hero-watermark {
+      position: absolute;
+      top: 1.5rem;
+      right: -4rem;
+      width: 22rem;
+      height: 22rem;
+      pointer-events: none;
+    }
+    @media (max-width: 900px) { .hero-watermark { display: none; } }
+    .hero > * { position: relative; }
+    .hero-watermark { position: absolute; } /* re-assert after .hero > * */
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--copper-text);
+      margin-bottom: 1.5rem;
+    }
+    h1 {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: clamp(2.6rem, 8vw, 4.4rem);
+      line-height: 1.04;
+      letter-spacing: -0.01em;
+      text-wrap: balance;
+    }
+    h1 em {
+      font-style: italic;
+      color: var(--copper-text);
+    }
+    .hero p.lede {
+      margin-top: 1.5rem;
+      max-width: 34rem;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    /* ---- ledger vignette ----
+     * A real Signet artifact: three ledger entries, the middle one carrying
+     * the human's seal. Rows reveal in sequence on load; the stamp lands last. */
+    .ledger {
+      margin: 3rem 0 0;
+      background: var(--surface);
+      border: 1px solid var(--territory);
+      position: relative;
+    }
+    .ledger-head {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid var(--territory);
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .ledger ol { list-style: none; }
+    .ledger li {
+      display: grid;
+      grid-template-columns: 3.4rem 1fr auto;
+      gap: 0.75rem;
+      align-items: baseline;
+      padding: 0.85rem 1rem;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      line-height: 1.5;
+    }
+    .ledger li + li { border-top: 1px dashed var(--territory); }
+    /* The stamp hangs over the card's bottom-right corner; keep the last
+     * row's status text clear of it. */
+    .ledger li:last-child { padding-right: 6rem; }
+    .ledger .t { color: var(--muted); }
+    .ledger .who { color: var(--walnut); }
+    .ledger .status {
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .ledger .status.sealed { color: var(--copper-text); font-weight: 500; }
+
+    .stamp {
+      position: absolute;
+      right: -1rem;
+      bottom: -1.6rem;
+      width: 5.2rem;
+      height: 5.2rem;
+      border-radius: 50%;
+      border: 2px dashed var(--copper-graphic);
+      color: var(--copper-text);
+      background: var(--paper);
+      display: grid;
+      place-content: center;
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 0.625rem; /* 10px — the PWA's minimum text size */
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      line-height: 1.7;
+      transform: rotate(-8deg);
+      box-shadow: 0 1px 0 var(--territory);
+    }
+    .stamp::before {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      border-radius: 50%;
+      border: 1px solid var(--copper-graphic);
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .ledger li, .stamp { opacity: 0; }
+      .ledger li { animation: rise 0.5s ease-out forwards; }
+      .ledger li:nth-child(1) { animation-delay: 0.2s; }
+      .ledger li:nth-child(2) { animation-delay: 0.7s; }
+      .ledger li:nth-child(3) { animation-delay: 1.2s; }
+      .stamp { animation: stamp 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) 1.8s forwards; }
+      @keyframes rise {
+        from { opacity: 0; transform: translateY(0.4rem); }
+        to   { opacity: 1; transform: none; }
+      }
+      @keyframes stamp {
+        from { opacity: 0; transform: rotate(-8deg) scale(1.6); }
+        to   { opacity: 1; transform: rotate(-8deg) scale(1); }
+      }
+    }
+
+    /* ---- sections ---- */
+    section { padding: 3.5rem 0; }
+    h2 {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 2rem;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+    }
+    .section-eyebrow {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+
+    /* ---- demo storyboard ----
+     * DEMO-VIDEO SWAP POINT: the 60–90 s phone-screen demo (GTM step 1.3)
+     * is not recorded yet. Until it is, this stage shows the same loop as
+     * a one-shot animated storyboard on a drawn phone. When the film
+     * exists, replace the whole .demo-stage <div> with a <video> embed,
+     * e.g. <video controls playsinline poster="poster.jpg" src="demo.mp4">.
+     *
+     * Motion notes: the storyboard plays ONCE (total ≈ 3.6 s, under the
+     * WCAG 2.2.2 five-second bar for auto-playing motion, then freezes on
+     * the final state), starts only when scrolled into view (JS adds
+     * .play), is skipped entirely under prefers-reduced-motion, and
+     * renders fully-settled when JS is unavailable — the pre-animation
+     * `opacity: 0` states are scoped to `html.js` so no-JS visitors see
+     * the finished storyboard, never a blank phone. */
+    .demo-stage {
+      background: var(--surface);
+      border: 1px solid var(--territory);
+      display: grid;
+      justify-items: center;
+      gap: 1.4rem;
+      padding: 2.75rem 1.25rem 1.9rem;
+    }
+    .demo-stage .mono-note {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: center;
+    }
+    .phone {
+      width: min(16.5rem, 100%);
+      border: 2px solid var(--dock);
+      border-radius: 2rem;
+      background: var(--dock);
+      padding: 0.55rem;
+      box-shadow: 0 2px 0 var(--territory);
+    }
+    .p-screen {
+      background: var(--dock);
+      border-radius: 1.5rem;
+      padding: 1.1rem 0.85rem 1.3rem;
+      display: grid;
+      gap: 0.9rem;
+      min-height: 23rem;
+      align-content: start;
+    }
+    .p-clock {
+      font-family: var(--mono);
+      font-size: 1.6rem;
+      font-weight: 500;
+      color: var(--paper);
+      text-align: center;
+      letter-spacing: 0.06em;
+      margin-top: 0.4rem;
+    }
+    .p-date {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--nav-inactive);
+      text-align: center;
+      margin-top: -0.6rem;
+    }
+    .p-notif {
+      position: relative;
+      background: var(--surface);
+      border-radius: 0.8rem;
+      padding: 0.8rem 0.85rem 0.9rem;
+      margin-top: 1rem;
+      display: grid;
+      gap: 0.5rem;
+    }
+    /* copper-text is correct here and NOT the dock's copper-glow: this
+     * notification card is --surface (light), even though the phone around
+     * it is --dock. If a dark theme is ever added, this is the one rule to
+     * re-check — --surface would flip dark while --copper-text stayed dark
+     * too, landing on the 2.61:1 trap the palette comment above describes. */
+    .p-notif-head {
+      font-family: var(--mono);
+      font-size: 0.625rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--copper-text);
+      /* The seal hangs over the card's top-right corner; keep the header
+       * line clear of it. */
+      padding-right: 3.2rem;
+    }
+    .p-notif-body {
+      font-size: 0.85rem;
+      line-height: 1.45;
+      color: var(--ink);
+    }
+    .p-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.2rem;
+    }
+    .p-btn {
+      flex: 1;
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      padding: 0.45rem 0.4rem;
+      border-radius: 0.45rem;
+    }
+    .p-btn.ghost { color: var(--walnut); border: 1px solid var(--walnut); }
+    .p-btn.approve { color: var(--paper); background: var(--dock); border: 1px solid var(--dock); }
+    .p-seal {
+      position: absolute;
+      right: -0.5rem;
+      top: -0.85rem;
+      width: 3.6rem;
+      height: 3.6rem;
+      border-radius: 50%;
+      border: 2px dashed var(--copper-graphic);
+      background: var(--paper);
+      color: var(--copper-text);
+      display: grid;
+      place-content: center;
+      font-family: var(--mono);
+      font-size: 0.625rem;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      transform: rotate(8deg);
+    }
+    .p-row {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      color: var(--copper-glow);
+      /* --nav-inactive, not --walnut: walnut on dock is 2.02:1 and the
+       * rule all but disappears. */
+      border-top: 1px dashed var(--nav-inactive);
+      padding-top: 0.8rem;
+      margin-top: 0.4rem;
+      text-align: center;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      /* Hidden-then-animated is gated on html.js: without JS these rules
+       * never apply and the storyboard renders settled. */
+      html.js .p-notif, html.js .p-seal, html.js .p-row { opacity: 0; }
+      html.js .demo-stage.play .p-notif {
+        animation: notif-in 0.5s ease-out 0.2s forwards;
+      }
+      html.js .demo-stage.play .p-btn.approve {
+        animation: press 0.3s ease-out 1.7s;
+      }
+      html.js .demo-stage.play .p-seal {
+        animation: stamp-in 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) 2.2s forwards;
+      }
+      html.js .demo-stage.play .p-row {
+        animation: rise 0.5s ease-out 3.1s forwards;
+      }
+      @keyframes notif-in {
+        from { opacity: 0; transform: translateY(-0.6rem); }
+        to   { opacity: 1; transform: none; }
+      }
+      @keyframes press {
+        45% { transform: scale(0.94); background: var(--walnut); }
+      }
+      @keyframes stamp-in {
+        from { opacity: 0; transform: rotate(8deg) scale(1.7); }
+        to   { opacity: 1; transform: rotate(8deg) scale(1); }
+      }
+    }
+
+    /* ---- how it works ---- */
+    .steps {
+      list-style: none;
+      display: grid;
+      gap: 1.4rem;
+      margin-top: 1.75rem;
+    }
+    .steps li {
+      display: grid;
+      grid-template-columns: 2.6rem 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+    .step-glyph {
+      display: grid;
+      justify-items: center;
+      gap: 0.35rem;
+      padding-top: 0.2rem;
+    }
+    .step-glyph svg { stroke: var(--copper-graphic); }
+    .step-glyph em {
+      font-style: normal;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--copper-text);
+      border-bottom: 1px solid var(--territory);
+      padding-bottom: 0.15rem;
+    }
+    .steps strong {
+      display: block;
+      font-family: var(--serif);
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .steps p { color: var(--muted); font-size: 0.95rem; }
+
+    /* ---- CTA ---- */
+    .cta {
+      background: var(--surface);
+      border-top: 1px solid var(--territory);
+      text-align: center;
+    }
+    .cta .seal { margin: 0 auto 1.25rem; }
+    .cta p.lead {
+      max-width: 30rem;
+      margin: 0 auto 2rem;
+      color: var(--muted);
+    }
+    /* Inverting primary button: deliberately --ink, NOT --dock. This is the
+     * one dark-looking surface that SHOULD flip with the theme — see the
+     * :hover rule below, which uses --ink as text — whereas the footer band
+     * and the phone must stay dark unconditionally, which is what --dock is
+     * for. 14.06:1 in loom, and it sidesteps the copper-on-paper text
+     * pitfalls entirely. (Not the PWA's own primary Button, which is a
+     * copper-outline treatment — see components/Button.tsx.) */
+    .button {
+      display: inline-block;
+      background: var(--ink);
+      color: var(--paper);
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-decoration: none;
+      padding: 1rem 1.75rem;
+      border: 1px solid var(--ink);
+      min-height: 44px;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .button:hover {
+      background: transparent;
+      color: var(--ink);
+    }
+    .cta .fine {
+      margin-top: 1rem;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+
+    /* ---- footer: the dock band ---- */
+    footer {
+      margin-top: 3.5rem;
+      background: var(--dock);
+      color: var(--paper);
+      padding-top: 2.75rem;
+      padding-bottom: 2.75rem;
+    }
+    footer .wrap {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+    .f-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+    }
+    .f-name {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.3em;
+      color: var(--paper);
+    }
+    .f-sub {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      color: var(--nav-inactive);
+      margin-top: 0.2rem;
+    }
+    .f-meta {
+      text-align: right;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      color: var(--nav-inactive);
+      display: grid;
+      gap: 0.25rem;
+    }
+    .f-meta .motto { color: var(--copper-glow); }
+    @media (max-width: 480px) {
+      footer .wrap { flex-direction: column; align-items: flex-start; }
+      .f-meta { text-align: left; }
+    }
+
+    @media (max-width: 480px) {
+      .ledger li { grid-template-columns: 2.9rem 1fr; }
+      .ledger .status { grid-column: 2; }
+      .stamp { bottom: -1.1rem; width: 4.6rem; height: 4.6rem; }
+    }
+  </style>
 </head>
 <body>
 
-<svg class="grain" width="100%" height="100%" aria-hidden="true"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2"/></filter><rect width="100%" height="100%" filter="url(#n)"/></svg>
-
-<div class="wrap">
-
-<header>
-  <div class="entry-meta">
-    <span><b>ENTRY</b> 001</span>
-    <span><b>REGISTER</b> SYAHI.SH</span>
-    <span><b>PLACE</b> BENGALURU, IN</span>
-    <span><b>EST</b> 2026</span>
-  </div>
-  <div class="hero-grid">
-    <div>
-      <div class="devanagari">स्याही &nbsp;·&nbsp; ink</div>
-      <h1>Syahi<span class="drop" aria-hidden="true"></span></h1>
-      <p class="thesis">An AI venture studio run by <em>one human and her agents.</em></p>
-      <p class="sub">Agents do the work. A person signs it. Everything ships with a receipt. That's the whole method, and the company is the demo.</p>
+  <header>
+    <div class="wrap">
+      <a class="wordmark" href="/">
+        <!-- placeholder-seal (#203): header mark -->
+        <svg class="seal" width="30" height="30" viewBox="0 0 64 64" aria-hidden="true">
+          <circle cx="32" cy="32" r="30" fill="none" stroke="var(--copper-graphic)" stroke-width="2.5" stroke-dasharray="2.6 2.4" />
+          <circle cx="32" cy="32" r="24" fill="none" stroke="var(--copper-graphic)" stroke-width="1.8" />
+          <text x="32" y="41.5" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-style="italic" font-size="28" fill="var(--ink)">S</text>
+        </svg>
+        <span>SIGNET</span>
+      </a>
+      <span class="byline">a Syahi product</span>
     </div>
-    <div class="hero-side">
-      <img class="hero-mark" src="art/inkpot.webp" alt="Engraving of an Indian brass inkpot with a reed pen, the Syahi house mark" width="900" height="900">
-      <div class="hero-mark-cap">the house mark · dawat &amp; qalam</div>
-    </div>
-  </div>
-</header>
+  </header>
 
-<main>
+  <main>
+    <div class="hero wrap">
+      <!-- placeholder-seal (#203): decorative ghost watermark -->
+      <svg class="hero-watermark" viewBox="0 0 64 64" aria-hidden="true">
+        <circle cx="32" cy="32" r="30" fill="none" stroke="var(--territory)" stroke-width="0.8" stroke-dasharray="1.3 1.2" />
+        <circle cx="32" cy="32" r="24" fill="none" stroke="var(--territory)" stroke-width="0.5" />
+        <text x="32" y="41.5" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-style="italic" font-size="28" fill="none" stroke="var(--territory)" stroke-width="0.4">S</text>
+      </svg>
+      <p class="eyebrow">The decision ledger for personal AI agents</p>
+      <h1>Agents do the work. <em>You keep the say-so.</em></h1>
+      <p class="lede">
+        Signet runs your agents around the clock. Anything consequential
+        (spending, sending, deleting) stops and waits for your approval on your
+        phone. Every decision is sealed into a ledger you can always read back.
+      </p>
 
-  <!-- SECTION I · PRODUCT -->
-  <div class="section-head">
-    <span class="roman">I</span>
-    <span class="label">Product</span>
-    <span class="lede">Software we ship.</span>
-  </div>
-
-  <article class="plate" id="signet">
-    <div class="margin-note">the seal is the product; the ledger is the moat</div>
-    <div class="plate-fig">
-      <img src="art/ring.webp" alt="Copperplate engraving of an ornate signet ring bearing an ink-drop emblem" width="900" height="900" loading="lazy">
-      <div class="figcap"><span>the signet ring</span></div>
-    </div>
-    <div class="plate-body">
-      <h3>Signet</h3>
-      <p class="prose"><b>Push-to-approve for your agents, with a decision ledger.</b> Your agents merge, deploy, reply, and publish. Signet is the seal: approvals from your phone, and a compounding record of every yes and no with the context that shaped it.</p>
-      <div class="receipt">
-        <div class="row"><span class="k">NO.</span><span>001</span></div>
-        <div class="row"><span class="k">ITEM</span><span>The approval layer for one-person companies</span></div>
-        <div class="row"><span class="k">RECORDS</span><span>every yes, every no, and why</span></div>
-        <div class="row"><span class="k">STATUS</span><span class="open">FOUNDING USERS · OPEN</span></div>
-        <div class="row"><span class="k">ACT</span><span><a href="mailto:hello@syahi.sh?subject=Signet%20founding%20user">write to hello@syahi.sh</a></span></div>
-      </div>
-      <div class="seal" aria-hidden="true">
-        <img src="art/seal.webp" alt="" width="300" height="300">
-      </div>
-    </div>
-  </article>
-
-  <!-- SECTION II · SERVICES -->
-  <div class="section-head">
-    <span class="roman">II</span>
-    <span class="label">Services</span>
-    <span class="lede">Work we do for clients, receipts included.</span>
-  </div>
-
-  <article class="plate" id="katha">
-    <div class="margin-note">every sentence verified against the source</div>
-    <div class="plate-fig">
-      <img src="art/gramophone.webp" alt="Copperplate engraving of a vintage gramophone" width="900" height="900" loading="lazy">
-      <div class="figcap"><span>the horn</span></div>
-    </div>
-    <div class="plate-body">
-      <h3>Katha Audio</h3>
-      <p class="prose"><b>Finished, verified Hindi audiobooks for publishers.</b> Manuscript in, retail-ready audio out. Every sentence verified against the source, pronunciation handled, delivered to the channels that welcome disclosed AI narration.</p>
-      <div class="receipt">
-        <div class="row"><span class="k">NO.</span><span>002</span></div>
-        <div class="row"><span class="k">ITEM</span><span>Catalogue-scale audiobook production</span></div>
-        <div class="row"><span class="k">FOR</span><span>publishers, ed-techs, rights holders</span></div>
-        <div class="row"><span class="k">STATUS</span><span class="open">FIRST TITLES · IN PRODUCTION</span></div>
-        <div class="row"><span class="k">ACT</span><span><a href="mailto:hello@syahi.sh?subject=Katha%20Audio">enquire for your catalogue</a></span></div>
-      </div>
-      <div class="seal" aria-hidden="true">
-        <img src="art/seal.webp" alt="" width="300" height="300">
+      <div class="ledger" role="img" aria-label="A Signet ledger: an agent requests approval to send three invoice reminders, you approve from your lock screen, the agent sends them, and the decision is sealed on the record.">
+        <div class="ledger-head">
+          <span>Decision ledger</span>
+          <span>today</span>
+        </div>
+        <ol>
+          <li>
+            <span class="t">09:14</span>
+            <span><span class="who">invoice-chaser</span> asks to send 3 payment reminders</span>
+            <span class="status">awaiting your seal</span>
+          </li>
+          <li>
+            <span class="t">09:15</span>
+            <span><span class="who">you</span> approve from the lock screen</span>
+            <span class="status sealed">sealed</span>
+          </li>
+          <li>
+            <span class="t">09:15</span>
+            <span><span class="who">invoice-chaser</span> sends the reminders</span>
+            <span class="status">on the record</span>
+          </li>
+        </ol>
+        <div class="stamp" aria-hidden="true">Sealed<br />by you</div>
       </div>
     </div>
-  </article>
 
-  <article class="plate" id="studio">
-    <div class="margin-note">no bodyshop hours; systems, installed</div>
-    <div class="plate-fig">
-      <img src="art/loom.webp" alt="Copperplate engraving of a wooden handloom" width="900" height="900" loading="lazy">
-      <div class="figcap"><span>the loom</span></div>
-    </div>
-    <div class="plate-body">
-      <h3>Studio Services</h3>
-      <p class="prose"><b>The system we run, installed for you.</b> Agent workflows, capture-to-corpus knowledge systems, and automation for founders and small teams. Productized, receipted, no bodyshop hours.</p>
-      <div class="receipt">
-        <div class="row"><span class="k">NO.</span><span>003</span></div>
-        <div class="row"><span class="k">ITEM</span><span>Agent systems, done for you</span></div>
-        <div class="row"><span class="k">PROOF</span><span>this studio runs on the same loop</span></div>
-        <div class="row"><span class="k">STATUS</span><span class="open">ENQUIRIES · OPEN</span></div>
-        <div class="row"><span class="k">ACT</span><span><a href="https://cal.com/surabhipradhan/25-min-research-chat">book a conversation</a></span></div>
+    <section aria-labelledby="demo-heading">
+      <div class="wrap">
+        <p class="section-eyebrow">Ninety seconds, one phone screen</p>
+        <h2 id="demo-heading">Watch a decision happen</h2>
+        <!-- DEMO-VIDEO SWAP POINT: replace this .demo-stage <div> with the
+             real <video> embed once the demo is recorded (GTM step 1.3). -->
+        <div class="demo-stage">
+          <!-- role="img" belongs on the drawing itself, NOT on .demo-stage:
+               it makes its whole subtree presentational, which would drop
+               the .mono-note caption below — the one element that discloses
+               this is a stand-in, not the real demo. -->
+          <div class="phone" role="img" aria-label="An illustration of a phone lock screen at 09:14. A Signet notification from the agent invoice-chaser asks: send 3 payment reminders to overdue clients? Below Decline and Approve buttons, a copper seal marks it sealed, and a ledger line reads: 09:15, sealed, on the record.">
+            <div class="p-screen">
+              <div class="p-clock">09:14</div>
+              <div class="p-date">Thu · your lock screen</div>
+              <div class="p-notif">
+                <div class="p-notif-head">Signet · invoice-chaser</div>
+                <p class="p-notif-body">Send 3 payment reminders to overdue clients?</p>
+                <div class="p-actions">
+                  <span class="p-btn ghost">Decline</span>
+                  <span class="p-btn approve">Approve</span>
+                </div>
+                <div class="p-seal">Sealed</div>
+              </div>
+              <div class="p-row">09:15 · sealed · on the record</div>
+            </div>
+          </div>
+          <p class="mono-note">Demo film in production. This is the loop it will show</p>
+        </div>
       </div>
-      <div class="seal" aria-hidden="true">
-        <img src="art/seal.webp" alt="" width="300" height="300">
+    </section>
+
+    <section aria-labelledby="how-heading">
+      <div class="wrap">
+        <p class="section-eyebrow">How it works</p>
+        <h2 id="how-heading">Four moments, in order</h2>
+        <ol class="steps">
+          <li>
+            <span class="step-glyph" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="10" /><line x1="9.6" y1="8" x2="9.6" y2="16" /><line x1="14.4" y1="8" x2="14.4" y2="16" /></svg>
+              <em>01</em>
+            </span>
+            <div>
+              <strong>An agent reaches a consequential step</strong>
+              <p>Anything that spends money, messages a human, or destroys data pauses instead of proceeding.</p>
+            </div>
+          </li>
+          <li>
+            <span class="step-glyph" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 6-2.5 8-2.5 8h17S18 14 18 8" /><path d="M10 20a2.2 2.2 0 0 0 4 0" /></svg>
+              <em>02</em>
+            </span>
+            <div>
+              <strong>Your phone gets the ask</strong>
+              <p>A push notification with exactly what the agent wants to do and why, readable in five seconds.</p>
+            </div>
+          </li>
+          <li>
+            <span class="step-glyph" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" stroke-dasharray="2.2 2" /><path d="M8 12.5l2.6 2.6L16 9.5" /></svg>
+              <em>03</em>
+            </span>
+            <div>
+              <strong>You approve or decline</strong>
+              <p>One tap. The agent continues, or it doesn't. No terminal, no dashboard hunt.</p>
+            </div>
+          </li>
+          <li>
+            <span class="step-glyph" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="1.5" /><line x1="8" y1="8" x2="16" y2="8" /><line x1="8" y1="12" x2="16" y2="12" /><line x1="8" y1="16" x2="12.5" y2="16" /></svg>
+              <em>04</em>
+            </span>
+            <div>
+              <strong>The decision is sealed</strong>
+              <p>Who asked, what you decided, what happened next. A permanent entry in your ledger.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="cta" aria-labelledby="cta-heading">
+      <div class="wrap">
+        <!-- placeholder-seal (#203): CTA mark -->
+        <svg class="seal" width="40" height="40" viewBox="0 0 64 64" aria-hidden="true">
+          <circle cx="32" cy="32" r="30" fill="none" stroke="var(--copper-graphic)" stroke-width="2.5" stroke-dasharray="2.6 2.4" />
+          <circle cx="32" cy="32" r="24" fill="none" stroke="var(--copper-graphic)" stroke-width="1.8" />
+          <text x="32" y="41.5" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-style="italic" font-size="28" fill="var(--ink)">S</text>
+        </svg>
+        <p class="section-eyebrow">Founding users</p>
+        <h2 id="cta-heading">Be one of the first ten</h2>
+        <p class="lead">
+          We're onboarding a small founding cohort by hand: a 30-minute call
+          where we set up your agents and your first approval rules together.
+        </p>
+        <!-- BOOKING-LINK SWAP POINT: replace the mailto below with the
+             Cal.com "founding user setup call" event URL once it exists
+             (GTM step 1.5). The address is the role mailbox hello@syahi.sh
+             (Porkbun forwarding → the maintainer's inbox), not a personal
+             address — see the README's booking-link note. -->
+        <a class="button" href="https://cal.com/surabhipradhan/25-min-research-chat">Book a call with the founder</a>
+        <p class="fine">Founding users pay from day one: $15 to $25 a month, locked for life, set with the first ten. If it is not worth $15 to you, we want to know why.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="f-brand">
+        <!-- placeholder-seal (#203): footer mark, paper-on-ink -->
+        <svg class="seal" width="34" height="34" viewBox="0 0 64 64" aria-hidden="true">
+          <circle cx="32" cy="32" r="30" fill="none" stroke="var(--copper-glow)" stroke-width="2.5" stroke-dasharray="2.6 2.4" />
+          <circle cx="32" cy="32" r="24" fill="none" stroke="var(--copper-glow)" stroke-width="1.8" />
+          <text x="32" y="41.5" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-style="italic" font-size="28" fill="var(--paper)">S</text>
+        </svg>
+        <div>
+          <div class="f-name">SIGNET</div>
+          <div class="f-sub">a Syahi product</div>
+        </div>
+      </div>
+      <div class="f-meta">
+        <span class="motto">ink · seal · parchment</span>
+        <span>© 2026 Syahi</span>
       </div>
     </div>
-  </article>
+  </footer>
 
-  <!-- SECTION III · MEDIA -->
-  <div class="section-head">
-    <span class="roman">III</span>
-    <span class="label">Media</span>
-    <span class="lede">What we teach and tell.</span>
-  </div>
-
-  <article class="plate" id="papermachine">
-    <div class="margin-note">plates, not thumbnails</div>
-    <div class="plate-fig">
-      <img src="art/cube.webp" alt="Engraving of a paper cube pinned like a specimen, its front face washed in teal" width="900" height="900" loading="lazy">
-      <div class="figcap"><span>the token cube, pinned</span></div>
-    </div>
-    <div class="plate-body">
-      <h3>Paper Machine</h3>
-      <p class="prose"><b>AI and ML explained like a naturalist's field guide.</b> Plates, not thumbnails. Every episode is a specimen: pinned, labelled, and drawn until the mechanism is visible.</p>
-      <div class="receipt">
-        <div class="row"><span class="k">NO.</span><span>004</span></div>
-        <div class="row"><span class="k">ITEM</span><span>Vintage field-guide AI explainers</span></div>
-        <div class="row"><span class="k">STATUS</span><span class="open">NOW SHOWING</span></div>
-        <div class="row"><span class="k">ACT</span><span><a href="https://youtube.com/@papermachine07">watch on YouTube</a></span></div>
-      </div>
-      <div class="seal" aria-hidden="true">
-        <img src="art/seal.webp" alt="" width="300" height="300">
-      </div>
-    </div>
-  </article>
-
-  <article class="plate" id="visualreads">
-    <div class="margin-note">literature in sixty seconds</div>
-    <div class="plate-fig">
-      <img src="art/book.webp" alt="Engraving of an open book with a beam of light and images rising from its pages" width="900" height="900" loading="lazy">
-      <div class="figcap"><span>the projection</span></div>
-    </div>
-    <div class="plate-body">
-      <h3>Visual Reads</h3>
-      <p class="prose"><b>Books, retold as cinematic illustrated shorts.</b> Literature in sixty seconds, drawn by machines with taste supplied by a human.</p>
-      <div class="receipt">
-        <div class="row"><span class="k">NO.</span><span>005</span></div>
-        <div class="row"><span class="k">ITEM</span><span>Illustrated story shorts</span></div>
-        <div class="row"><span class="k">STATUS</span><span class="open">SCREENING NOW</span></div>
-        <div class="row"><span class="k">ACT</span><span><a href="https://www.instagram.com/visual.reads/">watch on Instagram</a></span></div>
-      </div>
-      <div class="seal" aria-hidden="true">
-        <img src="art/seal.webp" alt="" width="300" height="300">
-      </div>
-    </div>
-  </article>
-
-  <div class="colophon inview-target">
-    <span class="label">Colophon</span>
-    <p>Ink is how intent becomes record. Every venture here runs on the same loop: agents draft, a human approves, the decision gets written down. We think that loop, not the models, is what the next decade of small companies is made of.</p>
-  </div>
-
-</main>
-
-<footer>
-  <div class="sig-line"><span class="sig">Surabhi Pradhan</span></div>
-  <div class="sig-cap">Proprietor · one human, and her agents</div>
-  <div class="foot-links">
-    <a href="mailto:hello@syahi.sh">hello@syahi.sh</a>
-    <a href="https://cal.com/surabhipradhan/25-min-research-chat">book a chat</a>
-    <a href="https://x.com/surabhipradhan">x</a>
-    <a href="https://github.com/surpradhan">github</a>
-    <span class="place">Bengaluru, India · est. 2026</span>
-  </div>
-</footer>
-
-</div>
-
-<script>
-(function(){
-  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  document.querySelectorAll('.draw path,.draw circle,.draw ellipse,.draw line,.draw rect')
-    .forEach(function(el){ el.setAttribute('pathLength','1'); });
-  var io = new IntersectionObserver(function(entries){
-    entries.forEach(function(e){
-      if(e.isIntersecting){ e.target.classList.add('inview'); io.unobserve(e.target); }
+  <script>
+    /* Starts the demo storyboard when it scrolls into view. All hidden
+     * pre-animation states are scoped to html.js (added in <head>), so if
+     * this script never runs the storyboard simply renders settled. */
+    addEventListener('DOMContentLoaded', function () {
+      var stage = document.querySelector('.demo-stage');
+      if (!stage) return;
+      if (!('IntersectionObserver' in window)) { stage.classList.add('play'); return; }
+      /* threshold 0: any intersection starts it. A fractional threshold
+       * can never be reached if the stage ever grows taller than the
+       * viewport, which would leave the phone permanently blank. */
+      var io = new IntersectionObserver(function (entries) {
+        for (var i = 0; i < entries.length; i++) {
+          if (entries[i].isIntersecting) {
+            stage.classList.add('play');
+            io.disconnect();
+            return;
+          }
+        }
+      }, { threshold: 0 });
+      io.observe(stage);
     });
-  },{threshold:0.3});
-  document.querySelectorAll('.plate').forEach(function(p){ io.observe(p); });
-})();
-</script>
+  </script>
 
 </body>
 </html>
