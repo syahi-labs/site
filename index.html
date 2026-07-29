@@ -175,24 +175,7 @@
   .receipt a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--ink);font-weight:500}
   .receipt a:hover{color:var(--wax);border-bottom-color:var(--wax)}
 
-  /* wax seal */
-  .seal{
-    position:absolute;right:-6px;top:46px;width:92px;height:92px;z-index:2;
-    opacity:0;transform:scale(2.4) rotate(-18deg);
-    pointer-events:none;mix-blend-mode:multiply;
-  }
-  .seal img{width:100%;height:auto;display:block}
-  .inview .seal{
-    animation:stamp .5s .9s cubic-bezier(.2,1.5,.35,1) forwards;
-  }
-  @keyframes stamp{
-    0%{opacity:0;transform:scale(2.4) rotate(-18deg)}
-    55%{opacity:1;transform:scale(.92) rotate(-7deg)}
-    100%{opacity:1;transform:scale(1) rotate(-8deg)}
-  }
-  .seal svg{width:100%;height:100%;filter:drop-shadow(0 2px 3px rgba(34,26,14,.25))}
-
-  /* marginalia */
+    /* marginalia */
   .margin-note{
     position:absolute;left:-118px;top:86px;width:88px;
     font-family:'Fraunces',serif;font-style:italic;font-size:13px;line-height:1.5;
@@ -250,15 +233,15 @@
     .section-head .lede{margin-left:0;width:100%}
     .plate{grid-template-columns:1fr;gap:34px;padding:52px 0}
     .plate-fig{max-width:250px}
-    .seal{width:66px;height:66px;top:6px;right:0;bottom:auto}
+    
     .colophon{padding:36px 24px}
     .foot-links .place{margin-left:0;width:100%}
   }
   @media(prefers-reduced-motion:reduce){
     *{animation:none!important;transition:none!important}
-    .entry-meta,.devanagari,h1,.thesis,.sub,.seal{opacity:1;transform:none}
+    .entry-meta,.devanagari,h1,.thesis,.sub,
     .draw path,.draw circle,.draw ellipse,.draw line,.draw rect{stroke-dasharray:none;stroke-dashoffset:0}
-    .seal{transform:scale(1) rotate(-8deg)}
+    
   }
 </style>
 </head>
@@ -330,9 +313,6 @@
         <div class="row"><span class="k">STATUS</span><span class="open">FOUNDING USERS · OPEN</span></div>
         <div class="row"><span class="k">ACT</span><span><a href="https://cal.com/surabhipradhan/25-min-research-chat">book a call with the founder</a></span></div>
       </div>
-      <div class="seal" aria-hidden="true">
-        <img src="art/seal.webp" alt="" width="300" height="300">
-      </div>
     </div>
   </article>
 
@@ -359,9 +339,6 @@
         <div class="row"><span class="k">STATUS</span><span class="open">FIRST TITLES · IN PRODUCTION</span></div>
         <div class="row"><span class="k">ACT</span><span><a href="mailto:hello@syahi.sh?subject=Katha%20Audio">enquire for your catalogue</a></span></div>
       </div>
-      <div class="seal" aria-hidden="true">
-        <img src="art/seal.webp" alt="" width="300" height="300">
-      </div>
     </div>
   </article>
 
@@ -380,9 +357,6 @@
         <div class="row"><span class="k">PROOF</span><span>this studio runs on the same loop</span></div>
         <div class="row"><span class="k">STATUS</span><span class="open">ENQUIRIES · OPEN</span></div>
         <div class="row"><span class="k">ACT</span><span><a href="https://cal.com/surabhipradhan/25-min-research-chat">book a conversation</a></span></div>
-      </div>
-      <div class="seal" aria-hidden="true">
-        <img src="art/seal.webp" alt="" width="300" height="300">
       </div>
     </div>
   </article>
@@ -408,9 +382,6 @@
         <div class="row"><span class="k">ITEM</span><span>Vintage field-guide AI explainers</span></div>
         <div class="row"><span class="k">STATUS</span><span class="open">NOW SHOWING</span></div>
         <div class="row"><span class="k">ACT</span><span><a href="https://youtube.com/@papermachine07">watch on YouTube</a></span></div>
-      </div>
-      <div class="seal" aria-hidden="true">
-        <img src="art/seal.webp" alt="" width="300" height="300">
       </div>
     </div>
   </article>
