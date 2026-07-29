@@ -301,20 +301,24 @@
   <article class="plate" id="signet">
     <div class="margin-note">the seal is the product; the ledger is the moat</div>
     <div class="plate-fig">
-      <svg class="signet-mark" viewBox="0 0 64 64" role="img" aria-label="The Signet mark: a rounded seal bearing an ink-drop curve" width="900" height="900">
-        <g fill="none" stroke="#221A0E">
-          <rect x="5.75" y="5.75" width="52.5" height="52.5" rx="18.125" style="stroke-width:.9"></rect>
-          <rect x="14.5" y="14.5" width="35" height="35" rx="12" style="stroke-width:.65"></rect>
-          <circle cx="32" cy="32" r="13.25" style="stroke-width:.9"></circle>
-          <g transform="rotate(-26 32 32)">
-            <path d="M 32,20.75 A 5.625,5.625 0 0 0 32,32 A 5.625,5.625 0 0 1 32,43.25" style="stroke-width:.65"></path>
-          </g>
-        </g>
-        <g transform="rotate(-26 32 32)">
-          <circle cx="32" cy="43.25" r="1.75" style="fill:#221A0E;stroke:none"></circle>
+      <svg class="signet-mark" viewBox="0 0 512 512" role="img" aria-label="The Signet brand seal: an S-curve carved through an ink core, sealed with a copper wax dot" width="900" height="900">
+        <defs>
+          <mask id="plate-seal-carve">
+            <rect x="0" y="0" width="512" height="512" style="fill:#fff"></rect>
+            <g transform="rotate(-26 256 256)">
+              <path d="M 256,166 A 45,45 0 0 0 256,256 A 45,45 0 0 1 256,346" style="fill:none;stroke:#000;stroke-width:26;stroke-linecap:round"></path>
+              <circle cx="256" cy="346" r="20" style="fill:#000;stroke:none"></circle>
+            </g>
+          </mask>
+        </defs>
+        <rect x="46" y="46" width="420" height="420" rx="145" style="fill:none;stroke:#221A0E;stroke-width:24"></rect>
+        <rect x="116" y="116" width="280" height="280" rx="96" style="fill:none;stroke:#221A0E;stroke-width:20"></rect>
+        <circle cx="256" cy="256" r="106" mask="url(#plate-seal-carve)" style="fill:#221A0E;stroke:none"></circle>
+        <g transform="rotate(-26 256 256)">
+          <circle cx="256" cy="346" r="14" style="fill:#B06325;stroke:none"></circle>
         </g>
       </svg>
-      <div class="figcap"><span>the seal &middot; mark of signet</span></div>
+      <div class="figcap"><span>the brand seal &middot; carved, then sealed</span></div>
     </div>
     <div class="plate-body">
       <h3>Signet</h3>
