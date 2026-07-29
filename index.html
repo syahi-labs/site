@@ -113,12 +113,12 @@
     text-transform:uppercase;color:var(--ink-soft);margin-top:14px;
     display:flex;justify-content:space-between;
   }
-  .plate-fig img{height:auto;
+  .plate-fig img,.plate-fig svg.signet-mark{height:auto;
     width:100%;display:block;mix-blend-mode:multiply;
     opacity:0;transform:translateY(14px);
     transition:opacity 1.1s cubic-bezier(.2,.7,.2,1),transform 1.1s cubic-bezier(.2,.7,.2,1);
   }
-  .inview .plate-fig img{opacity:1;transform:none}
+  .inview .plate-fig img,.inview .plate-fig svg.signet-mark{opacity:1;transform:none}
   .hero-grid{display:grid;grid-template-columns:1fr 300px;gap:40px;align-items:center}
   .hero-mark{mix-blend-mode:multiply;width:100%;max-width:300px;height:auto;
     opacity:0;animation:rise 1s .9s cubic-bezier(.2,.8,.2,1) forwards}
@@ -301,8 +301,20 @@
   <article class="plate" id="signet">
     <div class="margin-note">the seal is the product; the ledger is the moat</div>
     <div class="plate-fig">
-      <img src="art/ring.webp" alt="Copperplate engraving of an ornate signet ring bearing an ink-drop emblem" width="900" height="900" loading="lazy">
-      <div class="figcap"><span>the signet ring</span></div>
+      <svg class="signet-mark" viewBox="0 0 64 64" role="img" aria-label="The Signet mark: a rounded seal bearing an ink-drop curve" width="900" height="900">
+        <g fill="none" stroke="#221A0E">
+          <rect x="5.75" y="5.75" width="52.5" height="52.5" rx="18.125" style="stroke-width:.9"></rect>
+          <rect x="14.5" y="14.5" width="35" height="35" rx="12" style="stroke-width:.65"></rect>
+          <circle cx="32" cy="32" r="13.25" style="stroke-width:.9"></circle>
+          <g transform="rotate(-26 32 32)">
+            <path d="M 32,20.75 A 5.625,5.625 0 0 0 32,32 A 5.625,5.625 0 0 1 32,43.25" style="stroke-width:.65"></path>
+          </g>
+        </g>
+        <g transform="rotate(-26 32 32)">
+          <circle cx="32" cy="43.25" r="1.75" style="fill:#221A0E;stroke:none"></circle>
+        </g>
+      </svg>
+      <div class="figcap"><span>the seal &middot; mark of signet</span></div>
     </div>
     <div class="plate-body">
       <h3>Signet</h3>
@@ -312,7 +324,7 @@
         <div class="row"><span class="k">ITEM</span><span>The approval layer for one-person companies</span></div>
         <div class="row"><span class="k">RECORDS</span><span>every yes, every no, and why</span></div>
         <div class="row"><span class="k">STATUS</span><span class="open">FOUNDING USERS · OPEN</span></div>
-        <div class="row"><span class="k">ACT</span><span><a href="mailto:hello@syahi.sh?subject=Signet%20founding%20user">write to hello@syahi.sh</a></span></div>
+        <div class="row"><span class="k">ACT</span><span><a href="https://cal.com/surabhipradhan/25-min-research-chat">book a call with the founder</a></span></div>
       </div>
       <div class="seal" aria-hidden="true">
         <img src="art/seal.webp" alt="" width="300" height="300">
