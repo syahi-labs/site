@@ -47,6 +47,7 @@
     position:fixed;inset:0;pointer-events:none;z-index:50;opacity:.05;
   }
   #inklayer{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:40}
+  #fluidlayer{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:39;mix-blend-mode:multiply}
   .wrap{max-width:1060px;margin:0 auto;padding:0 28px;position:relative}
   .mono{font-family:'IBM Plex Mono',monospace}
 
@@ -93,6 +94,11 @@
     opacity:0;animation:rise .8s .75s cubic-bezier(.2,.8,.2,1) forwards;
   }
   @keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+  .hero-ventures{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--ink-soft);margin-top:34px;
+    opacity:0;animation:rise .8s .85s cubic-bezier(.2,.8,.2,1) forwards;
+  }
 
   /* ---------- section dividers ---------- */
   .section-head{
@@ -222,6 +228,7 @@
     font-family:'Fraunces',serif;font-size:clamp(19px,2.6vw,24px);
     line-height:1.55;max-width:700px;
   }
+  .colophon p + p{margin-top:18px}
 
   /* ---------- footer ---------- */
   footer{padding:84px 0 88px}
@@ -273,6 +280,7 @@
 <body>
 
 <svg class="grain" width="100%" height="100%" aria-hidden="true"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2"/></filter><rect width="100%" height="100%" filter="url(#n)"/></svg>
+<canvas id="fluidlayer" aria-hidden="true"></canvas>
 <canvas id="inklayer" aria-hidden="true"></canvas>
 
 <div class="wrap">
@@ -289,7 +297,8 @@
       <div class="devanagari">स्याही &nbsp;·&nbsp; ink</div>
       <h1>Syahi<svg class="drop" viewBox="20 8 60 84" aria-hidden="true"><path d="M 66 8 C 65.02 21.97 67.12 34.14 74.57 44.79 A 30 30 0 1 1 22.81 49.32 C 32.11 29.38 57.23 25.98 66 8 Z"/></svg></h1>
       <p class="thesis">An AI venture studio run by <em>one human and her&nbsp;agents.</em></p>
-      <p class="sub">Agents build everything here: Signet for approvals and decision checks, Studio Services for AI agent systems plus ML and analytics integration, Katha Audio for audiobooks and other bulk audio work, and Paper Machine for AI education. Surabhi Pradhan signs every one, eleven years into AI, ML, and analytics. The company is the demo.</p>
+      <p class="sub">Agents do the work. A person signs it. Everything ships with a receipt. That's the whole method, and the company is the demo.</p>
+      <p class="hero-ventures">four&nbsp;ventures &middot; signet &middot; studio&nbsp;services &middot; katha&nbsp;audio &middot; paper&nbsp;machine</p>
     </div>
     <div class="hero-side">
       <img class="hero-mark" src="art/inkpot.webp" alt="Engraving of an Indian brass inkpot with a reed pen, the Syahi house mark" width="900" height="900">
@@ -416,6 +425,7 @@
   <div class="colophon inview-target">
     <span class="label">Colophon</span>
     <p>Ink is how intent becomes record. Every venture here runs on the same loop: agents draft, a human approves, the decision gets written down. We think that loop, not the models, is what the next decade of small companies is made of.</p>
+    <p>Surabhi Pradhan signs everything that leaves here, eleven years into AI, ML and analytics.</p>
   </div>
 
 </main>
@@ -493,8 +503,11 @@
     }
   }
 
-  /* click splats, everywhere */
+  function fluidOn(){ return document.documentElement.classList.contains('fluid'); }
+
+  /* click splats, everywhere (unless the fluid layer has taken over) */
   window.addEventListener('pointerdown', function(e){
+    if(fluidOn()) return;
     splat(e.clientX, e.clientY, 1);
   }, {passive:true});
 
@@ -510,12 +523,14 @@
       if(lx === null){ lx = x; ly = y; return; }
       var dx = x - lx, dy = y - ly, d = Math.hypot(dx, dy);
       if(d < 5) return;
-      var steps = Math.min(3, d/10 | 0) + 1;
-      for(var i = 0; i < steps; i++){
-        var t = (i + 1) / steps;
-        add({x: lx + dx*t + (Math.random()-.5)*2, y: ly + dy*t + (Math.random()-.5)*2,
-             r: Math.min(2.6, Math.max(.7, 2.6 - d*.03)), a:.2,
-             vx:0, vy:.12, ttl: 450 + Math.random()*200});
+      if(!fluidOn()){
+        var steps = Math.min(3, d/10 | 0) + 1;
+        for(var i = 0; i < steps; i++){
+          var t = (i + 1) / steps;
+          add({x: lx + dx*t + (Math.random()-.5)*2, y: ly + dy*t + (Math.random()-.5)*2,
+               r: Math.min(2.6, Math.max(.7, 2.6 - d*.03)), a:.2,
+               vx:0, vy:.12, ttl: 450 + Math.random()*200});
+        }
       }
       lx = x; ly = y;
 
@@ -543,9 +558,31 @@
       drop.style.animation = 'none';
       void drop.offsetWidth;
       drop.style.animation = 'dropfall .7s cubic-bezier(.3,1.6,.4,1) backwards';
-      var r = drop.getBoundingClientRect();
-      splat(r.left + r.width*.5, r.bottom - r.height*.12, .8);
+      if(!fluidOn()){
+        var r = drop.getBoundingClientRect();
+        splat(r.left + r.width*.5, r.bottom - r.height*.12, .8);
+      }
     });
+  }
+
+  /* ---- fluid ink upgrade: desktop + WebGL only, loaded after the page ---- */
+  if(fine){
+    var fluidTried = false;
+    var tryFluid = function(){
+      if(fluidTried || window.innerWidth <= 820 || document.readyState !== 'complete') return;
+      fluidTried = true;
+      var probe = document.createElement('canvas');
+      var glp = probe.getContext('webgl2') || probe.getContext('webgl');
+      if(!glp) return;
+      var s = document.createElement('script');
+      s.src = 'fluid.js';
+      s.onload = function(){
+        if(window.__fluidOK) document.documentElement.classList.add('fluid');
+      };
+      document.body.appendChild(s);
+    };
+    window.addEventListener('load', tryFluid);
+    window.addEventListener('pointermove', tryFluid, {passive:true});
   }
 })();
 </script>
