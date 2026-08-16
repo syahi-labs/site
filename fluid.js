@@ -103,10 +103,15 @@ pointers.push(new pointerPrototype());
 const { gl, ext } = getWebGLContext(canvas);
 
 if (isMobile()) {
-    config.DYE_RESOLUTION = 512;
+    // Syahi mobile tune: smaller sim, cheaper pressure solve
+    Object.assign(config, {
+        SIM_RESOLUTION: 96,
+        DYE_RESOLUTION: 384,
+        PRESSURE_ITERATIONS: 16,
+    });
 }
 if (!ext.supportLinearFiltering) {
-    config.DYE_RESOLUTION = 512;
+    config.DYE_RESOLUTION = Math.min(config.DYE_RESOLUTION, 512);
     config.SHADING = false;
     config.BLOOM = false;
     config.SUNRAYS = false;
@@ -846,7 +851,7 @@ let bloomFramebuffers = [];
 let sunrays;
 let sunraysTemp;
 
-let ditheringTexture = createTextureAsync('LDR_LLL1_0.png');
+let ditheringTexture = null; // bloom off; texture fetch removed
 
 const blurProgram            = new Program(blurVertexShader, blurShader);
 const copyProgram            = new Program(baseVertexShader, copyShader);
@@ -1368,7 +1373,7 @@ function correctRadius (radius) {
 }
 
 window.addEventListener('pointermove', e => {
-    if (e.pointerType && e.pointerType !== 'mouse') return;
+    if (!e.isPrimary) return;
     let pointer = pointers[0];
     let posX = scaleByPixelRatio(e.clientX);
     let posY = scaleByPixelRatio(e.clientY);
@@ -1381,13 +1386,28 @@ window.addEventListener('pointermove', e => {
 }, { passive: true });
 
 window.addEventListener('pointerdown', e => {
-    if (e.pointerType && e.pointerType !== 'mouse') return;
+    if (!e.isPrimary) return;
+    if (e.pointerType !== 'mouse') {
+        // touch: anchor the pointer here so the drag starts from the finger
+        let posX = scaleByPixelRatio(e.clientX);
+        let posY = scaleByPixelRatio(e.clientY);
+        updatePointerDownData(pointers[0], 1, posX, posY);
+    }
     let x = e.clientX / window.innerWidth;
     let y = 1.0 - e.clientY / window.innerHeight;
     let c = generateColor();
     c.r *= 3.0; c.g *= 3.0; c.b *= 3.0;
     splat(x, y, (Math.random() - 0.5) * 600, (Math.random() - 0.5) * 600, c);
     wakeFluid();
+}, { passive: true });
+
+window.addEventListener('pointerup', e => {
+    // touch: forget the anchor so the next touch does not streak across
+    if (e.pointerType !== 'mouse') pointers[0].id = -1;
+}, { passive: true });
+
+window.addEventListener('pointercancel', e => {
+    if (e.pointerType !== 'mouse') pointers[0].id = -1;
 }, { passive: true });
 
 let heroDrop = document.querySelector('h1 .drop');
@@ -1514,6 +1534,7 @@ function getTextureScale (texture, width, height) {
 
 function scaleByPixelRatio (input) {
     let pixelRatio = window.devicePixelRatio || 1;
+    if (isMobile()) pixelRatio = Math.min(pixelRatio, 1.5);
     return Math.floor(input * pixelRatio);
 }
 
@@ -1527,7 +1548,7 @@ function hashCode (s) {
     return hash;
 };
 if (window.__fluidDebugHook) {
-    window.__fluidTest = { splat: splat, step: update, canvas: canvas, pointers: pointers, gl: gl, ext: ext, dye: function(){ return dye; } };
+    window.__fluidTest = { splat: splat, step: update, canvas: canvas, pointers: pointers, gl: gl, ext: ext, config: config, dye: function(){ return dye; } };
 }
 window.__fluidOK = true;
 } catch (e) {

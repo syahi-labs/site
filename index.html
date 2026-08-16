@@ -565,25 +565,24 @@
     });
   }
 
-  /* ---- fluid ink upgrade: desktop + WebGL only, loaded after the page ---- */
-  if(fine){
-    var fluidTried = false;
-    var tryFluid = function(){
-      if(fluidTried || window.innerWidth <= 820 || document.readyState !== 'complete') return;
-      fluidTried = true;
-      var probe = document.createElement('canvas');
-      var glp = probe.getContext('webgl2') || probe.getContext('webgl');
-      if(!glp) return;
-      var s = document.createElement('script');
-      s.src = 'fluid.js';
-      s.onload = function(){
-        if(window.__fluidOK) document.documentElement.classList.add('fluid');
-      };
-      document.body.appendChild(s);
+  /* ---- fluid ink upgrade: any device with WebGL, loaded after the page ---- */
+  var fluidTried = false;
+  var tryFluid = function(){
+    if(fluidTried || document.readyState !== 'complete') return;
+    fluidTried = true;
+    var probe = document.createElement('canvas');
+    var glp = probe.getContext('webgl2') || probe.getContext('webgl');
+    if(!glp) return;
+    var s = document.createElement('script');
+    s.src = 'fluid.js';
+    s.onload = function(){
+      if(window.__fluidOK) document.documentElement.classList.add('fluid');
     };
-    window.addEventListener('load', tryFluid);
-    window.addEventListener('pointermove', tryFluid, {passive:true});
-  }
+    document.body.appendChild(s);
+  };
+  window.addEventListener('load', tryFluid);
+  window.addEventListener('pointermove', tryFluid, {passive:true});
+  window.addEventListener('pointerdown', tryFluid, {passive:true});
 })();
 </script>
 
