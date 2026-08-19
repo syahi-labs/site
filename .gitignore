@@ -1,1 +1,11 @@
 .DS_Store
+
+# local-only: brand sources, stationery, stamps — not for the public repo
+/brand/
+
+# local-only: spare plates; only the four live plates below are tracked
+/art/*
+!/art/cube.webp
+!/art/gramophone.webp
+!/art/inkpot.webp
+!/art/loom.webp
