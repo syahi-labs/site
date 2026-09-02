@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Katha Audio · every sentence verified against the source</title>
+<meta name="description" content="Katha Audio builds Hindi audiobooks for rights-holders whose catalog has no audio. Agents produce, every sentence is checked against the printed text, a human signs off.">
+<meta property="og:title" content="Katha Audio · every sentence verified">
+<meta property="og:description" content="Hindi audiobooks for rights-holders whose catalog has no audio. Manuscript in, retail-ready audio out.">
+<meta property="og:url" content="https://syahi.sh/katha/">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="/favicon.ico?v=2" sizes="48x48">
+<link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml">
+<style>
+  :root{
+    --ink:#221A0E;
+    --parchment:#F0E8D2;
+    --parchment-deep:#E6DBBE;
+    --ink-soft:rgba(34,26,14,.6);
+    --ink-faint:rgba(34,26,14,.16);
+    --wax:#8E2F1E;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:var(--parchment);color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  .grain{position:fixed;inset:0;pointer-events:none;z-index:50;opacity:.05}
+  .wrap{max-width:960px;margin:0 auto;padding:0 28px;position:relative}
+  .mono{font-family:'IBM Plex Mono',monospace}
+
+  header{padding:84px 0 64px}
+  .crumb{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.12em;
+    color:var(--ink-soft);border-bottom:1px solid var(--ink-faint);
+    padding-bottom:14px;margin-bottom:56px;display:flex;gap:28px;flex-wrap:wrap;
+  }
+  .crumb a{color:var(--ink);text-decoration:none;font-weight:500}
+  .crumb a:hover{color:var(--wax)}
+  .hero-grid{display:grid;grid-template-columns:1fr 260px;gap:44px;align-items:center}
+  @media(max-width:760px){.hero-grid{grid-template-columns:1fr}.hero-side{display:none}}
+  .devanagari{
+    font-family:'Fraunces',serif;font-size:15px;letter-spacing:.4em;text-transform:uppercase;
+    color:var(--ink-soft);margin-bottom:18px;
+  }
+  h1{
+    font-family:'Fraunces',serif;font-weight:600;
+    font-size:clamp(38px,6vw,64px);line-height:1.04;letter-spacing:-.02em;
+    text-wrap:balance;
+  }
+  .sub{
+    margin-top:22px;color:var(--ink-soft);max-width:520px;
+    font-size:clamp(17px,2.2vw,20px);font-family:'Fraunces',serif;
+  }
+  .hero-fig img{width:100%;height:auto;display:block;mix-blend-mode:multiply}
+  .figcap{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--ink-soft);text-align:center;margin-top:10px;
+  }
+
+  .section-head{
+    display:flex;align-items:baseline;gap:22px;position:relative;
+    margin:84px 0 30px;padding-bottom:12px;border-bottom:1.5px solid var(--ink);
+  }
+  .section-head .roman{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(28px,3.5vw,40px)}
+  .section-head .label{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.3em;
+    text-transform:uppercase;color:var(--ink-soft);
+  }
+
+  .beats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:26px}
+  @media(max-width:760px){.beats{grid-template-columns:1fr}}
+  .beat{border:1.5px solid var(--ink);padding:24px 22px}
+  .beat .n{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.2em;color:var(--ink-soft)}
+  .beat strong{display:block;font-family:'Fraunces',serif;font-weight:600;font-size:21px;margin:10px 0 8px}
+  .beat p{color:var(--ink-soft);font-size:15px;line-height:1.6}
+  .spine{
+    margin-top:26px;padding:18px 22px;border-left:2.5px solid var(--wax);
+    font-family:'Fraunces',serif;font-size:clamp(18px,2.4vw,22px);line-height:1.5;max-width:640px;
+  }
+
+  .fit{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:26px}
+  @media(max-width:720px){.fit{grid-template-columns:1fr}}
+  .fit-card{border:1.5px solid var(--ink);padding:24px 22px}
+  .fit-card.no{border-style:dashed;border-color:var(--ink-soft)}
+  .fit-card h3{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.24em;
+    text-transform:uppercase;color:var(--ink-soft);font-weight:500;margin-bottom:14px;
+  }
+  .fit-card ul{list-style:none}
+  .fit-card li{padding:7px 0;border-bottom:1px solid var(--ink-faint);font-size:15.5px}
+  .fit-card li:last-child{border-bottom:0}
+
+  .slot{
+    border:1.5px dashed var(--ink-soft);padding:34px 30px;text-align:center;
+  }
+  .slot .slot-tag{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.24em;
+    text-transform:uppercase;color:var(--ink-soft);display:block;margin-bottom:14px;
+  }
+  .slot p{max-width:520px;margin:0 auto;color:var(--ink-soft);font-size:15.5px}
+  .slot .bar{
+    margin:20px auto 0;max-width:420px;height:34px;border:1px solid var(--ink-faint);
+    display:flex;align-items:center;padding:0 12px;gap:10px;
+  }
+  .slot .bar .dot{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--ink-soft)}
+  .slot .bar .line{flex:1;height:1.5px;background:var(--ink-faint)}
+  .slot .bar .t{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft)}
+
+  .ask{margin-top:0}
+  .ask p{max-width:620px;color:var(--ink-soft)}
+  .ask .cta-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:26px}
+  .btn{
+    display:inline-block;text-decoration:none;font-weight:500;font-size:16px;
+    padding:12px 26px;border:1.5px solid var(--ink);color:var(--ink);
+  }
+  .btn.primary{background:var(--ink);color:var(--parchment)}
+  .btn:hover{background:var(--wax);border-color:var(--wax);color:var(--parchment)}
+  .fine{margin-top:14px;font-size:13.5px;color:var(--ink-soft)}
+
+  footer{padding:72px 0 80px}
+  .foot-links{
+    display:flex;flex-wrap:wrap;gap:12px 34px;align-items:baseline;
+    color:var(--ink-soft);font-size:15px;border-top:1px solid var(--ink-faint);padding-top:26px;
+  }
+  .foot-links a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--ink-faint)}
+  .foot-links a:hover{border-bottom-color:var(--ink)}
+  .foot-links .place{margin-left:auto;font-family:'Fraunces',serif;font-style:italic}
+
+  .torn{
+    background:#FDFAF1;padding:7%;
+    -webkit-mask-size:100% 100%;mask-size:100% 100%;
+    -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+    -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27400%27%20height%3D%27400%27%3E%3Cfilter%20id%3D%27t%27%20x%3D%27-25%25%27%20y%3D%27-25%25%27%20width%3D%27150%25%27%20height%3D%27150%25%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.02%27%20numOctaves%3D%275%27%20seed%3D%2723%27/%3E%3CfeDisplacementMap%20in%3D%27SourceGraphic%27%20scale%3D%2744%27%20xChannelSelector%3D%27R%27%20yChannelSelector%3D%27G%27/%3E%3C/filter%3E%3Crect%20x%3D%2728%27%20y%3D%2728%27%20width%3D%27344%27%20height%3D%27344%27%20fill%3D%27%23fff%27%20filter%3D%27url%28%23t%29%27/%3E%3C/svg%3E");
+    mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27400%27%20height%3D%27400%27%3E%3Cfilter%20id%3D%27t%27%20x%3D%27-25%25%27%20y%3D%27-25%25%27%20width%3D%27150%25%27%20height%3D%27150%25%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.02%27%20numOctaves%3D%275%27%20seed%3D%2723%27/%3E%3CfeDisplacementMap%20in%3D%27SourceGraphic%27%20scale%3D%2744%27%20xChannelSelector%3D%27R%27%20yChannelSelector%3D%27G%27/%3E%3C/filter%3E%3Crect%20x%3D%2728%27%20y%3D%2728%27%20width%3D%27344%27%20height%3D%27344%27%20fill%3D%27%23fff%27%20filter%3D%27url%28%23t%29%27/%3E%3C/svg%3E");
+  }
+  .torn img{-webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27400%27%20height%3D%27400%27%3E%3Cfilter%20id%3D%27t%27%20x%3D%27-25%25%27%20y%3D%27-25%25%27%20width%3D%27150%25%27%20height%3D%27150%25%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.03%27%20numOctaves%3D%274%27%20seed%3D%2711%27/%3E%3CfeDisplacementMap%20in%3D%27SourceGraphic%27%20scale%3D%2726%27%20xChannelSelector%3D%27R%27%20yChannelSelector%3D%27G%27/%3E%3C/filter%3E%3Crect%20x%3D%2719%27%20y%3D%2719%27%20width%3D%27362%27%20height%3D%27362%27%20fill%3D%27%23fff%27%20filter%3D%27url%28%23t%29%27/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27400%27%20height%3D%27400%27%3E%3Cfilter%20id%3D%27t%27%20x%3D%27-25%25%27%20y%3D%27-25%25%27%20width%3D%27150%25%27%20height%3D%27150%25%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.03%27%20numOctaves%3D%274%27%20seed%3D%2711%27/%3E%3CfeDisplacementMap%20in%3D%27SourceGraphic%27%20scale%3D%2726%27%20xChannelSelector%3D%27R%27%20yChannelSelector%3D%27G%27/%3E%3C/filter%3E%3Crect%20x%3D%2719%27%20y%3D%2719%27%20width%3D%27362%27%20height%3D%27362%27%20fill%3D%27%23fff%27%20filter%3D%27url%28%23t%29%27/%3E%3C/svg%3E")}
+</style>
+</head>
+<body>
+
+<svg class="grain" width="100%" height="100%" aria-hidden="true"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2"/></filter><rect width="100%" height="100%" filter="url(#n)"/></svg>
+
+<div class="wrap">
+
+<header>
+  <div class="crumb">
+    <span><a href="/">SYAHI</a> · KATHA AUDIO</span>
+    <span>ENTRY 003</span>
+    <span>BENGALURU, IN</span>
+  </div>
+  <div class="hero-grid">
+    <div>
+      <div class="devanagari">कथा &nbsp;·&nbsp; katha</div>
+      <h1>Every sentence verified against the source.</h1>
+      <p class="sub">Hindi audiobooks for rights-holders whose catalog has no audio. Manuscript in, retail-ready audio out.</p>
+    </div>
+    <div class="hero-side">
+      <div class="torn hero-fig"><img src="/art/gramophone.webp" alt="Copperplate engraving of a vintage gramophone" width="900" height="900"></div>
+      <div class="figcap">the horn</div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <div class="section-head">
+    <span class="roman">I</span>
+    <span class="label">The method is the pitch</span>
+  </div>
+  <div class="beats">
+    <div class="beat">
+      <span class="n">01</span>
+      <strong>Agents produce</strong>
+      <p>Narration, pronunciation, pacing, chapter marks. The production line is agentic end to end, which is how a catalog gets through it.</p>
+    </div>
+    <div class="beat">
+      <span class="n">02</span>
+      <strong>Every sentence checked</strong>
+      <p>Each recorded sentence is verified against the printed text. Not spot-checked. Checked. A dropped line or a wrong number fails the title, not the listener.</p>
+    </div>
+    <div class="beat">
+      <span class="n">03</span>
+      <strong>A human signs off</strong>
+      <p>Nothing ships on a machine's say-so. A person approves the title, and the sign-off leaves a receipt.</p>
+    </div>
+  </div>
+  <p class="spine">The same approval system that runs this studio runs these recordings. Agents draft, a person signs, the record keeps the receipt.</p>
+
+  <div class="section-head">
+    <span class="roman">II</span>
+    <span class="label">Who it's for</span>
+  </div>
+  <div class="fit">
+    <div class="fit-card">
+      <h3>For</h3>
+      <ul>
+        <li>Rights-holders with audio-dark catalogs</li>
+        <li>Publishers who want titles out, not a project</li>
+        <li>Ed-techs with course texts worth hearing</li>
+        <li>Anyone who needs the audio faithful to the page</li>
+      </ul>
+    </div>
+    <div class="fit-card no">
+      <h3>Not for</h3>
+      <ul>
+        <li>Indie authors looking for a marketplace</li>
+        <li>Anyone expecting an Audible</li>
+        <li>Anyone expecting a Pocket FM</li>
+        <li>Undisclosed synthetic narration. Ours is disclosed, always</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section-head">
+    <span class="roman">III</span>
+    <span class="label">The sample</span>
+  </div>
+  <div class="slot">
+    <span class="slot-tag">Promised only when true</span>
+    <p>One minute of one title will play here, with the printed line highlighted as it is read. The verification, audible and visible. First titles are in production. Nothing plays until it's real.</p>
+    <div class="bar" aria-hidden="true"><span class="dot"></span><span class="line"></span><span class="t">0:00 / 1:00</span></div>
+  </div>
+
+  <div class="section-head">
+    <span class="roman">IV</span>
+    <span class="label">The ask</span>
+  </div>
+  <div class="ask">
+    <p>Bring a catalog, or one title you care about. We'll tell you what it takes to produce it, faithfully and disclosed, and where it can land. Titles go to the audiobook stores that welcome disclosed AI narration; the exact list is named per title, in writing, before production starts.</p>
+    <div class="cta-row">
+      <a class="btn primary" href="mailto:hello@syahi.sh?subject=Katha%20Audio%3A%20catalogue%20enquiry">enquire for your catalogue</a>
+      <a class="btn" href="https://wa.me/918951449537?text=Katha%20Audio%3A%20I%20have%20a%20catalogue%20to%20discuss">WhatsApp the studio</a>
+    </div>
+    <p class="fine">A conversation first. No checkout, no commitment.</p>
+  </div>
+
+</main>
+
+<footer>
+  <div class="foot-links">
+    <a href="/">syahi.sh</a>
+    <a href="mailto:hello@syahi.sh">hello@syahi.sh</a>
+    <a href="https://wa.me/918951449537">+91 89514 49537</a>
+    <span class="place">a Syahi venture · Bengaluru, India</span>
+  </div>
+</footer>
+
+</div>
+
+</body>
+</html>
