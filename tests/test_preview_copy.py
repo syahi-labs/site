@@ -5,6 +5,7 @@
 # og:image:alt and the twitter pair). The base now emits the preview's own words from the optional front matter
 # `og_title`, `og_description` and `og_image_alt`, and falls back on the title and description. This compares
 # what each ported page emits with what its snapshot (tests/parity/) said, tag by tag, so no preview can drift.
+# Task 9d adds the services page: today's preview was its title and description, so it carries no preview front matter.
 import re
 from html import unescape
 from pathlib import Path
@@ -27,6 +28,7 @@ PAGES = [
     ("site-refund.html", "syahi.sh", "refund.html", "content/refund.html"),
     ("signet.html", "syahi.sh", "signet.html", "content/signet.html"),
     ("katha-index.html", "syahi.sh", "katha.html", "content/katha.html"),
+    ("services.html", "syahi.sh", "services/quote.html", "content/services/quote.html"),
     ("katha-index.html", "katha.syahi.sh", "index.html", "katha/content/index.html"),
 ]
 IDS = [f"{host}/{built}" for _, host, built, _ in PAGES]

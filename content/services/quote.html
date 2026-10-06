@@ -1,0 +1,135 @@
+---
+title: "Quote in Ten Minutes · Syahi"
+description: "An enquiry lands on WhatsApp. A draft quote goes back in ten minutes, priced off your own rate card. You check it. You send it."
+updated: 2026-10-06
+approved: 2026-10-06
+layout: page
+css: quote
+schema: [Service]
+audience: owner
+claims: [qtm-quote-time, qtm-live-time, qtm-firm-size, qtm-guarantee-day, qtm-check-time, org-locality]
+---
+{# Ported word for word from studioservices-landing c66925f (tests/parity/services.html). Markup-only changes, none of
+   them copy: the page's own footer is the shared footer; the hero, a <header> today, is a <div class="hero"> so the
+   shared header is the page's one banner; the page's own CSS is tokens/pages/quote.css; the drawn scene's three
+   pieces carry data-sample; the figures render through claims (the two promises the home card registers are
+   reused); the sticky thumb button stays and is hidden by CSS alone, so the page's one script is gone. The three
+   WhatsApp links are today's, byte for byte (the Worker stamps campaigns onto them later). #}
+<div class="hero">
+  <p class="plate-mark">Syahi · <span lang="hi">स्याही</span></p>
+  <h1>Quote in<br>Ten Minutes.</h1>
+  <p class="hero-thesis">Buyers pick a vendor within hours. Most quotes take a day.<br class="wide-only"> We close that gap.</p>
+  <div class="hero-cta">
+    <a class="cta" href="https://wa.me/918951449537?text=Hi%2C%20I%20quote%20custom%20work%20and%20want%20to%20know%20more%20about%20Quote%20in%20Ten%20Minutes.">Message us on WhatsApp</a>
+    <a class="quiet-link" href="mailto:hello@syahi.sh">or write to hello@syahi.sh</a>
+  </div>
+</div>
+
+<section class="scene" aria-label="How a quote gets made">
+  <h2 class="section-label">How it looks on your phone</h2>
+  <div class="scene-grid">
+
+    <div class="scene-col">
+      <p class="scene-step">The enquiry arrives</p>
+      <div class="bubble bubble-in" data-sample>
+        <p>2BHK in Marathahalli, laminate finish, wardrobe + kitchen. Budget?</p>
+        <span class="bubble-meta">10:42 am</span>
+      </div>
+    </div>
+
+    <div class="scene-arrow" aria-hidden="true" data-sample>
+      <span class="arrow-line"></span>
+      <span class="arrow-label">10 min</span>
+      <span class="arrow-line"></span>
+    </div>
+
+    <div class="scene-col">
+      <p class="scene-step">The draft comes back</p>
+      <div class="quote-card" aria-hidden="true" data-sample>
+        <div class="quote-card-head">
+          <span class="draft-stamp">Draft</span>
+          <span class="quote-card-title">Quotation · wardrobe + kitchen</span>
+        </div>
+        <table class="quote-lines">
+          <tbody>
+            <tr><td>Wardrobe, 7 ft · laminate</td><td class="amt"><span class="redact"></span></td></tr>
+            <tr><td>Kitchen, L-shape · laminate</td><td class="amt"><span class="redact"></span></td></tr>
+            <tr><td>Loft storage</td><td class="amt"><span class="redact"></span></td></tr>
+            <tr><td>Hardware &amp; fittings</td><td class="amt"><span class="redact"></span></td></tr>
+            <tr class="total"><td>Total, from your rate card</td><td class="amt"><span class="redact wide"></span></td></tr>
+          </tbody>
+        </table>
+        <p class="quote-card-note">Priced off your rate card. Rates stay yours.<span class="quote-card-time">10:52 am</span></p>
+      </div>
+      <div class="approve-step">
+        <span class="approve-check" aria-hidden="true">✓</span>
+        <p>You check it. You send it.</p>
+      </div>
+    </div>
+
+  </div>
+  <p class="scene-close">The draft waits for you. Nothing goes out on its own.</p>
+</section>
+
+<section class="offer">
+  <div class="offer-field">
+    <h2 class="section-label">For</h2>
+    <p>Owner-run firms, roughly {{ claim("qtm-firm-size") }}, quoting custom work off their own rate card, on WhatsApp.</p>
+  </div>
+  <div class="offer-field">
+    <h2 class="section-label">You end up with</h2>
+    <p>A draft quote back in {{ claim("qtm-quote-time") }} on every enquiry, priced off your rate card, checked and sent by you. A weekly receipt showing every quote it drafted.</p>
+  </div>
+  <div class="offer-shape">
+    <p>Fixed price. {{ claim("qtm-live-time", "short") }} install.<br>Guarantee in writing before the build starts.</p>
+    <p class="offer-shape-note">Amounts on the first call.</p>
+  </div>
+</section>
+
+<section class="rules">
+  <p class="rule">The system drafts. You send. Every quote, every time.</p>
+  <p class="rule">The guarantee is in writing before we start.</p>
+</section>
+
+<section class="coda">
+  <p class="coda-line">The quote is the first desk we take over. When it runs, you'll see which one comes next.</p>
+  <h2 class="section-label">What comes after the quote desk</h2>
+  <p class="coda-body">Follow-ups that chase themselves. A Monday report that writes itself. Enquiries sorted before you wake up. One system at a time. Each one drafts, you approve, and a weekly receipt shows what it did.</p>
+</section>
+
+<section class="facts" aria-label="Who runs it">
+  <h2 class="section-label">Who runs it</h2>
+  <p class="fact-strip">
+    <span>One founder</span><span class="dot">·</span>
+    <span>{{ claim("org-locality") }}</span><span class="dot">·</span>
+    <span>Agents draft, she signs</span><span class="dot">·</span>
+    <span>Every draft our agents make waits for her yes in Signet</span>
+  </p>
+</section>
+
+<section class="faq">
+  <h2 class="section-label">Asked before you ask</h2>
+  <details>
+    <summary>What if it quotes wrong?</summary>
+    <p>It can't send anything. You send, not it. Every draft waits for your check. A wrong draft costs you {{ claim("qtm-check-time") }}, not a customer.</p>
+  </details>
+  <details>
+    <summary>Do I need new software?</summary>
+    <p>No. It works on the WhatsApp you already use. Your customers notice nothing except a faster quote.</p>
+  </details>
+  <details>
+    <summary>What happens after the first {{ claim("qtm-guarantee-day", "short") }}?</summary>
+    <p>A retainer exists. The amount, like everything else, comes on the first call.</p>
+  </details>
+  <details>
+    <summary>Hindi or English enquiries?</summary>
+    <p>Both. It drafts in the language the enquiry came in.</p>
+  </details>
+</section>
+
+<section class="closing">
+  <p class="closing-line">The next enquiry decides in hours.<br>Answer it in {{ claim("qtm-quote-time") }}.</p>
+  <a class="cta" href="https://wa.me/918951449537?text=Hi%2C%20I%20quote%20custom%20work%20and%20want%20to%20know%20more%20about%20Quote%20in%20Ten%20Minutes.">Message us on WhatsApp</a>
+</section>
+
+<a class="cta cta-sticky" href="https://wa.me/918951449537?text=Hi%2C%20I%20quote%20custom%20work%20and%20want%20to%20know%20more%20about%20Quote%20in%20Ten%20Minutes.">Message us on WhatsApp</a>
