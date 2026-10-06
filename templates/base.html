@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ page.title }}</title>
+<meta name="description" content="{{ page.description }}">
+<link rel="canonical" href="{{ canonical }}">
+<meta property="og:title" content="{{ page.title }}">
+<meta property="og:description" content="{{ page.description }}">
+<meta property="og:url" content="{{ canonical }}">
+<meta property="og:type" content="website">
+<meta property="og:image" content="{{ og_image }}">
+<link rel="stylesheet" href="/assets/tokens.css">
+<link rel="stylesheet" href="/assets/base.css">
+{% for block in jsonld %}
+<script type="application/ld+json">{{ block }}</script>
+{% endfor %}
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="wordmark" href="/">{{ site.name }}</a>
+    <nav aria-label="Main">
+      <details class="nav-menu">
+        <summary>Menu</summary>
+        <ul>
+          {% for tab in tabs %}
+          <li><a href="{{ tab.href }}"{% if tab.current %} aria-current="{{ tab.current }}"{% endif %}>{{ tab.label }}</a></li>
+          {% endfor %}
+        </ul>
+      </details>
+      <a class="cta" href="{{ site.cta.href }}">{{ site.cta.label }}</a>
+    </nav>
+  </div>
+</header>
+<main id="main">
+{% block main %}{% endblock %}
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-stack">
+    <nav aria-label="Company profiles">
+      <ul class="link-row">
+        {% for link in site.profiles %}
+        <li><a href="{{ link.href }}">{{ link.label }}</a></li>
+        {% endfor %}
+      </ul>
+    </nav>
+    <p class="legal">{{ claim("org-legal-name") }}, {{ claim("org-llpin") }}, Bengaluru</p>
+    <nav aria-label="Policies">
+      <ul class="link-row">
+        {% for link in site.policies %}
+        <li><a href="{{ link.href }}">{{ link.label }}</a></li>
+        {% endfor %}
+      </ul>
+    </nav>
+    <p class="made-by">Drafted with AI from our own records. Checked and approved by Surabhi Pradhan on {{ page.approved|date }}.</p>
+  </div>
+</footer>
+</body>
+</html>

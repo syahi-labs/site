@@ -1,0 +1,74 @@
+/* Interim tokens. Today's palette under role names; the UI phase re-values them.
+   Pages and components use roles (--ground, --act), never raw values.
+
+   Contrast, measured against WCAG 2.2 relative luminance:
+     --ink on --ground        14.06:1    --ink on --ground-deep   12.47:1
+     --muted on --ground       5.91:1    --muted on --ground-deep  5.24:1
+     --act on --ground         6.67:1    --act on --ground-deep    5.92:1
+     --ground on --act         6.67:1    --ground on --ink        14.06:1
+   All text pairs clear 4.5:1. tests/test_tokens.py keeps it that way.
+   --rule and --hair are decorative hairlines, not text or controls. */
+:root{
+  color-scheme:light;
+
+  /* colour: roles */
+  --ground:#F0E8D2;        /* page */
+  --ground-deep:#E6DBBE;   /* footer, quiet panels */
+  --ink:#221A0E;           /* text */
+  --muted:#5F5646;         /* secondary text; today's #746C5C was 4.25:1, this is 5.91:1 */
+  --rule:rgba(34,26,14,.16);
+  --hair:rgba(34,26,14,.09);
+  --act:#8E2F1E;           /* the one action colour: the call button */
+  --focus:var(--ink);
+
+  /* type: families. Self-hosted files arrive with the assets task; system fallbacks until then. */
+  --font-serif:'Fraunces','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif;
+  --font-sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --font-deva:'Tiro Devanagari Hindi','Noto Serif Devanagari','Kohinoor Devanagari','Devanagari Sangam MN',serif;
+
+  /* type: scale, 11 to 52 px, in rem so a reader's own text size still applies */
+  --fs-micro:.6875rem;     /* 11px */
+  --fs-small:.8125rem;     /* 13px */
+  --fs-ui:.9375rem;        /* 15px */
+  --fs-body:1.0625rem;     /* 17px */
+  --fs-lead:1.25rem;       /* 20px */
+  --fs-h3:1.5rem;          /* 24px */
+  --fs-h2:1.875rem;        /* 30px */
+  --fs-h1:2.375rem;        /* 38px */
+  --fs-display:3.25rem;    /* 52px */
+  --lh-tight:1.15;
+  --lh-body:1.65;
+
+  /* spacing: 4px steps up to 96px */
+  --space-1:.25rem;
+  --space-2:.5rem;
+  --space-3:.75rem;
+  --space-4:1rem;
+  --space-5:1.5rem;
+  --space-6:2rem;
+  --space-7:3rem;
+  --space-8:4rem;
+  --space-9:6rem;
+
+  /* layout */
+  --wrap:66.25rem;         /* 1060px */
+  --gutter:clamp(1rem,5vw,1.75rem);
+  --measure:66ch;
+  --tap:2.75rem;           /* 44px: smallest comfortable touch target */
+  --radius:2px;
+
+  /* motion */
+  --dur-fast:180ms;
+  --dur-base:320ms;
+  --dur-slow:1200ms;
+  --ease:cubic-bezier(.2,.8,.2,1);
+  --travel:22px;           /* how far things move when they appear */
+}
+
+/* Reduced motion: fades only. Nothing travels, nothing scrolls on its own. */
+@media (prefers-reduced-motion: reduce){
+  :root{
+    --travel:0px;
+  }
+}

@@ -1,0 +1,204 @@
+/* Base styles: reset, type, links, focus, header, footer. Uses tokens.css only. */
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+@media (prefers-reduced-motion: no-preference){html{scroll-behavior:smooth}}
+body,h1,h2,h3,h4,p,figure,blockquote,dl,dd{margin:0}
+img,picture,svg,video{display:block;max-width:100%;height:auto}
+input,button,textarea,select{font:inherit}
+
+body{
+  min-height:100vh;
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--font-sans);
+  font-size:var(--fs-body);
+  line-height:var(--lh-body);
+  -webkit-font-smoothing:antialiased;
+}
+main{flex:1 0 auto}
+
+/* Devanagari: tracking breaks conjuncts, so it is always normal. */
+:lang(hi){letter-spacing:normal}
+:lang(hi){font-family:var(--font-deva)}
+
+h1,h2,h3,h4{
+  font-family:var(--font-serif);
+  font-weight:600;
+  line-height:var(--lh-tight);
+  letter-spacing:-.01em;
+  text-wrap:balance;
+}
+h1{font-size:clamp(var(--fs-h2),6vw,var(--fs-display))}
+h2{font-size:clamp(var(--fs-h3),4vw,var(--fs-h1))}
+h3{font-size:var(--fs-lead)}
+h4{font-size:var(--fs-body)}
+
+.wrap{width:100%;max-width:var(--wrap);margin-inline:auto;padding-inline:var(--gutter)}
+.flow > * + *{margin-top:var(--space-4)}
+.page{padding-block:var(--space-7)}
+.page > :where(p,ul,ol){max-width:var(--measure)}
+
+/* Links: underlined, so colour is never the only cue. */
+a{
+  color:inherit;
+  text-decoration:underline;
+  text-decoration-thickness:1px;
+  text-underline-offset:.2em;
+  transition:color var(--dur-fast) var(--ease);
+}
+a:hover{color:var(--act)}
+
+/* Focus: one clear ring for everything that takes focus. */
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+
+/* Skip link: off screen until it has focus. */
+.skip{
+  position:absolute;
+  top:-5rem;
+  left:var(--space-3);
+  z-index:10;
+  padding:var(--space-2) var(--space-4);
+  background:var(--ink);
+  color:var(--ground);
+  font-size:var(--fs-ui);
+  text-decoration:none;
+}
+.skip:focus{top:var(--space-3)}
+
+/* Header */
+.site-header{border-bottom:1px solid var(--rule)}
+.bar{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  column-gap:var(--space-4);
+  padding-block:var(--space-2);
+}
+.wordmark{
+  display:inline-flex;
+  align-items:center;
+  min-height:var(--tap);
+  font-family:var(--font-serif);
+  font-size:var(--fs-h3);
+  font-weight:600;
+  letter-spacing:-.01em;
+  text-decoration:none;
+}
+.wordmark:hover{color:inherit}
+.site-header nav{
+  flex:1 1 0;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:flex-end;
+  column-gap:var(--space-2);
+}
+
+/* The call button: the one place --act is used as a fill. */
+.cta{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:var(--tap);
+  padding:0 var(--space-4);
+  background:var(--act);
+  color:var(--ground);
+  border-radius:var(--radius);
+  font-size:var(--fs-ui);
+  font-weight:500;
+  line-height:1.2;
+  text-decoration:none;
+  white-space:nowrap;
+  transition:background-color var(--dur-fast) var(--ease);
+}
+.cta:hover{background:var(--ink);color:var(--ground)}
+
+/* Nav menu. One set of links lives in a <details>, so the menu works with no script.
+   Narrow screens: the summary opens and closes it.
+   Wide screens: where the browser supports ::details-content, the summary is hidden and
+   the links are always shown. Browsers without it keep the working toggle. */
+.nav-menu summary{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:var(--space-2);
+  min-height:var(--tap);
+  padding-inline:var(--space-3);
+  font-size:var(--fs-ui);
+  cursor:pointer;
+  list-style:none;
+}
+.nav-menu summary::-webkit-details-marker{display:none}
+.nav-menu summary::after{
+  content:"";
+  width:.45em;
+  height:.45em;
+  margin-top:-.2em;
+  border-right:1.5px solid currentColor;
+  border-bottom:1.5px solid currentColor;
+  transform:rotate(45deg);
+}
+.nav-menu[open] summary::after{margin-top:.2em;transform:rotate(-135deg)}
+.nav-menu ul{margin:0;padding:0;list-style:none;border-top:1px solid var(--rule)}
+.nav-menu li + li{border-top:1px solid var(--hair)}
+.nav-menu li a{
+  display:flex;
+  align-items:center;
+  min-height:var(--tap);
+  padding-inline:var(--space-2);
+  text-decoration:none;
+}
+.nav-menu li a:hover,
+.nav-menu li a[aria-current]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.35em}
+
+@media (max-width: 39.99em){
+  /* Open: the links take their own row under the wordmark and the call button drops below them,
+     so what you see is the order you tab in. */
+  .nav-menu[open]{flex:1 0 100%}
+  .nav-menu[open] ~ .cta{flex:1 0 100%;margin-block:var(--space-3)}
+}
+@supports selector(:has(*)){
+  @media (max-width: 39.99em){
+    .bar:has(.nav-menu[open]) nav{flex-basis:100%}
+  }
+}
+@media (min-width: 40em){
+  .bar{padding-block:var(--space-3)}
+  .site-header nav{flex:0 1 auto;column-gap:var(--space-5)}
+}
+@supports selector(::details-content){
+  @media (min-width: 40em){
+    .nav-menu > summary{display:none}
+    .nav-menu::details-content{content-visibility:visible}
+    .nav-menu ul{display:flex;gap:var(--space-5);border-top:0}
+    .nav-menu li + li{border-top:0}
+    .nav-menu li a{padding-inline:0}
+  }
+}
+
+/* Footer: profiles, legal line, policies, made-by line. */
+.site-footer{
+  margin-top:var(--space-9);
+  padding-block:var(--space-7);
+  background:var(--ground-deep);
+  border-top:1px solid var(--rule);
+  color:var(--muted);
+  font-size:var(--fs-small);
+}
+.site-footer a:hover{color:var(--ink)}
+.footer-stack{display:grid;gap:var(--space-4)}
+.link-row{display:flex;flex-wrap:wrap;gap:var(--space-1) var(--space-5);margin:0;padding:0;list-style:none}
+.link-row a{display:inline-block;padding-block:var(--space-2)}
+.legal{letter-spacing:.02em}
+.made-by{
+  padding-top:var(--space-4);
+  border-top:1px solid var(--rule);
+  font-family:var(--font-serif);
+  font-size:var(--fs-ui);
+  font-style:italic;
+}
