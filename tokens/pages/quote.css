@@ -5,7 +5,7 @@
 
    Today's page (studioservices-landing c66925f) was ink-dark with a brass accent and a WhatsApp-green button, and
    had a palette of its own. Where each colour went (D19, one colour set):
-     --ink #0f0d0a (the dark ground)   --ground          the page
+     --ink as the dark ground          --ground          the page
      --ink-raised (cards)              --ground-deep     the chat bubble and the sample quote card
      --paper (text)                    --ink             text
      --paper-dim (secondary text)      --muted           the plate mark, step labels, notes, FAQ answers, the fact strip
@@ -298,6 +298,9 @@
   }
   /* the button takes 60px at the bottom of the viewport, so the footer's last line sits above it */
   .site-footer{padding-bottom:calc(var(--space-7) + var(--tap))}
+  /* and a control the browser scrolls into view stops above the button, its gap and one more, so the button
+     never covers focus (WCAG 2.2 SC 2.4.11) */
+  html{scroll-padding-bottom:calc(var(--space-4) + var(--tap) + var(--space-4))}
 }
 @supports (animation-timeline:view()){
   @media (max-width:39.99em){

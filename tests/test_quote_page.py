@@ -323,13 +323,13 @@ def test_the_buttons_and_the_quiet_link_keep_their_classes_and_text(main):
 
 # ---- claims ----
 
-# (id, text, short, source): the claims this page adds or extends
+# (id, text, short, source): the claims this page adds, extends or reuses
 CLAIMS = {
     "qtm-firm-size": ("5 to 50 people", None, "Services page, 2026-10-06"),
     "qtm-check-time": ("ten seconds", None, "Services page, 2026-10-06"),
     "qtm-quote-time": ("ten minutes", None, "Services page, 2026-10-06"),
     "qtm-live-time": ("two weeks", "Two-week", "Services page, 2026-10-06"),
-    "qtm-guarantee-day": ("day 30", "30 days", "Terms of service, 2026-09-12"),
+    "qtm-running-period": ("30 days", None, "Offer doc, 2026-08-24"),
     "org-locality": ("Bengaluru", None, "MCA record"),
 }
 
@@ -351,7 +351,7 @@ def test_no_id_repeats_and_the_ids_this_page_reuses_exist_once():
 
 # (figure as the page prints it, the claim that must be the only way it gets there)
 FIGURES = [("5 to 50 people", "qtm-firm-size"), ("ten minutes", "qtm-quote-time"), ("Two-week", "qtm-live-time"),
-           ("30 days", "qtm-guarantee-day"), ("ten seconds", "qtm-check-time"), ("Bengaluru", "org-locality")]
+           ("30 days", "qtm-running-period"), ("ten seconds", "qtm-check-time"), ("Bengaluru", "org-locality")]
 
 
 def test_each_figure_reaches_the_page_only_through_its_claim(main, register):
@@ -375,16 +375,26 @@ def test_the_two_promises_the_home_card_registers_are_reused_here_not_restated(m
     assert 'claim("qtm-quote-time")' in home and 'claim("qtm-live-time")' in home      # the one id each, on the home too
 
 
-def test_the_thirty_days_are_the_guarantee_day_in_its_other_form(main, register):
-    # "What happens after the first 30 days?" is the same fact as terms and refund's "day 30": one claim, two forms.
-    claim = register.get("qtm-guarantee-day")
-    assert re.findall(r"\d+", claim.text) == re.findall(r"\d+", claim.short) == ["30"]
-    assert 'What happens after the first <span data-claim="qtm-guarantee-day">30 days</span>?' in main
+def test_the_running_period_and_the_guarantee_day_are_two_claims_because_they_are_two_facts(main, register):
+    # "What happens after the first 30 days?" is the included running period (offer doc: 30 days of running it with
+    # weekly receipts, then the retainer). The guarantee day is when the turnaround guarantee is measured (terms,
+    # refund). Both are 30 today; either can move alone (a longer first run does not move the guarantee), so each
+    # has its own id, and neither has a form that stands in for the other.
+    running, guarantee = register.get("qtm-running-period"), register.get("qtm-guarantee-day")
+    assert running.id != guarantee.id and running.text == "30 days" and guarantee.text == "day 30"
+    assert running.short is None and guarantee.short is None
+    assert running.source != guarantee.source
+    assert 'What happens after the first <span data-claim="qtm-running-period">30 days</span>?' in main
+    assert "qtm-guarantee-day" not in claim_ids(main) and "qtm-guarantee-day" not in page().claims
+    # and the two are not the same id by accident of spelling in the register's source
+    text = (REPO / "data" / "claims.yaml").read_text(encoding="utf-8")
+    assert len(re.findall(r"(?m)^- id: qtm-(?:running-period|guarantee-day)$", text)) == 2
 
 
 def test_the_firm_size_and_the_check_time_sit_in_their_sentences(main):
     assert 'Owner-run firms, roughly <span data-claim="qtm-firm-size">5 to 50 people</span>, quoting custom work' in main
     assert 'A wrong draft costs you <span data-claim="qtm-check-time">ten seconds</span>, not a customer.' in main
+    assert '<summary>What happens after the first <span data-claim="qtm-running-period">30 days</span>?</summary>' in main
 
 
 def test_the_description_states_the_quote_time_the_claim_registers(register):
@@ -477,6 +487,10 @@ def test_the_page_names_its_own_sheet_and_the_build_publishes_it(dist, html):
     assert (dist / "assets" / "pages" / "quote.css").read_text(encoding="utf-8") == css()
 
 
+def test_the_sheet_names_no_hex_colour_even_in_its_comments():
+    assert not re.search(r"#[0-9a-fA-F]{3,8}\b", css())     # the header names today's colours by their token roles, not their values
+
+
 def test_the_sheet_uses_no_remote_url_no_import_and_no_script_hook():
     assert "@import" not in css() and "url(http" not in css() and "url(data" not in css()
     assert ".js " not in css() and "html.js" not in css() and ".is-hidden" not in css()
@@ -553,6 +567,17 @@ def test_the_footers_last_line_clears_the_sticky_button_on_narrow_screens():
     narrow = media_block(css(), "@media (max-width:39.99em)")
     footer = rule(".site-footer", narrow)
     assert "padding-bottom:calc(var(--space-7) + var(--tap))" in footer       # 92px below the made-by line; the button takes 60
+
+
+def test_focus_scrolled_into_view_stops_above_the_sticky_button(register):
+    # WCAG 2.2 SC 2.4.11: a fixed bar must not fully cover a focused control. The browser keeps a scrolled-to control
+    # inside the scrollport minus its scroll-padding, so the padding is the bar's whole footprint: the gap under it,
+    # its height (the base .cta's --tap) and a gap above it.
+    narrow = media_block(css(), "@media (max-width:39.99em)")
+    bar = rule(".cta-sticky", narrow)
+    assert "bottom:var(--space-4)" in bar and "padding-bottom" not in bar
+    assert "scroll-padding-bottom:calc(var(--space-4) + var(--tap) + var(--space-4))" in rule("html", narrow)
+    assert "scroll-padding" not in css().replace(narrow, "")      # wide screens have no bar, so nothing is reserved for it
 
 
 def test_the_sticky_button_steps_aside_while_the_closing_one_is_on_screen_where_the_browser_can_say_so():

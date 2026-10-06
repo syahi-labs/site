@@ -7,7 +7,7 @@ layout: page
 css: quote
 schema: [Service]
 audience: owner
-claims: [qtm-quote-time, qtm-live-time, qtm-firm-size, qtm-guarantee-day, qtm-check-time, org-locality]
+claims: [qtm-quote-time, qtm-live-time, qtm-firm-size, qtm-running-period, qtm-check-time, org-locality]
 ---
 {# Ported word for word from studioservices-landing c66925f (tests/parity/services.html). Markup-only changes, none of
    them copy: the page's own footer is the shared footer; the hero, a <header> today, is a <div class="hero"> so the
@@ -118,7 +118,7 @@ claims: [qtm-quote-time, qtm-live-time, qtm-firm-size, qtm-guarantee-day, qtm-ch
     <p>No. It works on the WhatsApp you already use. Your customers notice nothing except a faster quote.</p>
   </details>
   <details>
-    <summary>What happens after the first {{ claim("qtm-guarantee-day", "short") }}?</summary>
+    <summary>What happens after the first {{ claim("qtm-running-period") }}?</summary>
     <p>A retainer exists. The amount, like everything else, comes on the first call.</p>
   </details>
   <details>

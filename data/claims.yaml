@@ -136,12 +136,9 @@
   source: "Terms of service, 2026-09-12"
   updated: 2026-10-06
   status: live
-# The day the Quote in Ten Minutes guarantee is measured. Terms and refund both state it. The offer page's
-# "first 30 days" is the same fact (the window the guarantee runs in, after which the retainer starts), so it
-# is this claim's short form: if the day moves, the page moves with it.
+# The day the Quote in Ten Minutes guarantee is measured. Terms and refund both state it.
 - id: qtm-guarantee-day
   text: "day 30"
-  short: "30 days"
   source: "Terms of service, 2026-09-12"
   updated: 2026-10-06
   status: live
@@ -279,6 +276,14 @@
 - id: qtm-firm-size
   text: "5 to 50 people"
   source: "Services page, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+# The included running period: how long we run the install, weekly receipts included, before the retainer starts.
+# The offer page's FAQ says it. It is a fact of its own, not the guarantee day (qtm-guarantee-day): both are
+# 30 today, and either can move without the other.
+- id: qtm-running-period
+  text: "30 days"
+  source: "Offer doc, 2026-08-24"
   updated: 2026-10-06
   status: live
 # How long checking one draft takes: the cost of a wrong draft, as the FAQ answers "What if it quotes wrong?".
