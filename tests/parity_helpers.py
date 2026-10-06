@@ -123,10 +123,14 @@ LINK_MOVES = (
         "Same file bytes; the shared assets tree replaces the old art folder, which the new build does not serve.")),
     LinkMove("https://syahi.sh/art/gramophone.webp", "/assets/img/gramophone.webp", reason=(
         "Same file bytes; the katha pitch no longer hotlinks the other host, each host serves its own copy from /assets/img.")),
-    # Signet's own footer linked the main site by its full address, because it lived on another host. In the one
-    # site the same pages are linked by path. Each lands in the shared header or footer, which replace that nav.
+    # Signet's and the services page's own footers linked the main site by its full address, because they lived on
+    # another host. In the one site the same pages are linked by path. Each lands in the shared header or footer,
+    # which replace that nav.
     LinkMove("https://syahi.sh/", "/", reason=(
         "Signet's page moves into the one site, so its footer's link to the main site is the shared wordmark's link to the home page.")),
+    LinkMove("https://syahi.sh", "/", reason=(
+        "The services page's own footer linked the main site by its bare address, because it lived on another host. "
+        "In the one site that link is the shared wordmark's link to the home page.")),
     LinkMove("https://syahi.sh/contact", "/contact", reason=(
         "Signet's page moves into the one site, so a link to the contact page is a path; the shared footer's policy row carries it.")),
     LinkMove("https://syahi.sh/privacy", "/privacy", reason=(

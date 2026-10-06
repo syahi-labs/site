@@ -107,7 +107,7 @@ ICON_LINKS = (
 
 @pytest.mark.parametrize("host", HOSTS)
 def test_every_page_links_the_favicons_the_apple_icon_and_the_theme_colour(real_site, host):
-    pages = sorted((real_site.out / host).glob("*.html"))
+    pages = sorted((real_site.out / host).rglob("*.html"))
     assert pages
     for page in pages:
         html = page.read_text(encoding="utf-8")

@@ -182,7 +182,8 @@
   updated: 2026-10-06
   status: live
 # The Quote in Ten Minutes promises, as the home card says them. The offer page states the same two, so
-# it reuses these ids.
+# it reuses these ids. The install time has the adjective form the offer line opens a sentence with
+# ("Two-week install."), so its short form carries the capital.
 - id: qtm-quote-time
   text: "ten minutes"
   source: "Services page, 2026-10-06"
@@ -190,6 +191,7 @@
   status: live
 - id: qtm-live-time
   text: "two weeks"
+  short: "Two-week"
   source: "Services page, 2026-10-06"
   updated: 2026-10-06
   status: live
@@ -265,6 +267,29 @@
 - id: signet-battery-refused-why
   text: "one recipient wasn't on the approved list, one body had drifted off template"
   source: "Signet live battery, 2026-08-31"
+  updated: 2026-10-06
+  status: live
+
+# ---- the Quote in Ten Minutes page ----
+
+# Who the offer is for, as the offer page says it ("roughly 5 to 50 people"; the word "roughly" is the page's).
+- id: qtm-firm-size
+  text: "5 to 50 people"
+  source: "Services page, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+# The included running period: how long we run the install, weekly receipts included, before the retainer starts.
+# The offer page's FAQ says it. It is a fact of its own, not the guarantee day (qtm-guarantee-day): both are
+# 30 today, and either can move without the other.
+- id: qtm-running-period
+  text: "30 days"
+  source: "Offer doc, 2026-08-24"
+  updated: 2026-10-06
+  status: live
+# How long checking one draft takes: the cost of a wrong draft, as the FAQ answers "What if it quotes wrong?".
+- id: qtm-check-time
+  text: "ten seconds"
+  source: "Services page, 2026-10-06"
   updated: 2026-10-06
   status: live
 

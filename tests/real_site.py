@@ -1,10 +1,10 @@
 """A build of the real site inputs, for tests that check the pages that ship.
 
 The real inputs are copied to a throwaway root and built into a throwaway out directory. A page of the
-main host that Task 9 ports in a later part (now only /services/quote, which the home page links to) gets a
-stand-in until the real page exists, so the whole build can be held to zero problems now and keeps being
-held to it as each real page lands. The home page was the first stand-in retired (9b), /signet the second
-(9c); 9d retires the last by adding its page. A stand-in is only ever written where no real page is.
+main host that Task 9 ports in a later part gets a stand-in until the real page exists, so the whole build can
+be held to zero problems now and keeps being held to it as each real page lands. The home page was the first
+stand-in retired (9b), /signet the second (9c), /services/quote the last (9d): STAND_INS is empty, and the
+mechanism stays for the next ported page. A stand-in is only ever written where no real page is.
 """
 import shutil
 from pathlib import Path
@@ -23,7 +23,7 @@ layout: page
 ---
 <h1>Stand-in</h1>
 """
-STAND_INS = ("services/quote.html",)
+STAND_INS = ()
 
 
 class RealSite(NamedTuple):

@@ -106,3 +106,15 @@ removed_elements:
       reason: >-
         The one inline script, which only set a class on the root element for styles that never used it. The
         build's pages carry no script except structured data, and the page's sheet has no rule that reads the class.
+  services.html:
+    - match: "<footer>"
+      reason: >-
+        The page's own footer (the Syahi mark, three links and a row of four policy links) is replaced by the
+        shared footer. Where each link went: the link to the main site is the shared wordmark's link to the home
+        page; contact, privacy, terms and refunds are the shared footer's policy row; the WhatsApp number's link
+        and the email link are the hero's two links (the same targets; the number itself is on /contact).
+    - match: "<script>"
+      reason: >-
+        The one inline script, which only hid the sticky WhatsApp button while the closing one was on screen. The
+        build's pages carry no script except structured data. The button stays, and a CSS scroll-driven animation
+        hides it the same way in the browsers that have them; its words and its link are not changed.

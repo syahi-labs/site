@@ -195,7 +195,7 @@ def test_the_share_image_is_todays_og_png_and_is_published(dist, html):
 
 
 def test_no_page_in_the_build_repeats_an_id(dist):
-    for path in sorted(dist.glob("*.html")):
+    for path in sorted(dist.rglob("*.html")):
         ids = re.findall(r'\bid="([^"]+)"', path.read_text(encoding="utf-8"))
         assert len(ids) == len(set(ids)), (path.name, [i for i in ids if ids.count(i) > 1])
 
