@@ -37,3 +37,25 @@ def test_release_exits_1_while_pages_are_pending(mini_root):
     assert run("--root", str(mini_root)).returncode == 0
     r = run("--root", str(mini_root), "--release")
     assert r.returncode == 1 and "pending" in r.stderr
+
+def test_warnings_are_printed_and_do_not_fail_the_build(mini_root):
+    # the fixture's Services tab points at a pending page: a dev build says so and still exits 0
+    r = run("--root", str(mini_root))
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "warning:" in r.stderr and "/services" in r.stderr and "pending" in r.stderr
+    assert "error:" not in r.stderr and "3 warning(s)" in r.stdout
+
+def test_warnings_are_printed_beside_the_problems_of_a_failed_build(mini_root):
+    sig = mini_root / "content" / "signet.html"
+    sig.write_text(sig.read_text(encoding="utf-8").replace("<h1>", "<h1>We leverage ", 1), encoding="utf-8")
+    r = run("--root", str(mini_root))
+    assert r.returncode == 1
+    assert "error:" in r.stderr and "buzzword" in r.stderr and "warning:" in r.stderr
+
+def test_a_clean_build_with_no_warnings_says_nothing_of_them(mini_root):
+    (mini_root / "site.yaml").write_text(
+        (mini_root / "site.yaml").read_text(encoding="utf-8").replace("pending_pages: [/services]", "pending_pages: []")
+        .replace("  - {label: Services, href: /services}\n", ""), encoding="utf-8")
+    r = run("--root", str(mini_root))
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "warning" not in (r.stdout + r.stderr)

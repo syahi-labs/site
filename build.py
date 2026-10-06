@@ -25,12 +25,15 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     result = build(args.root, args.out, release=args.release)
+    for warning in result.warnings:
+        print(f"warning: {warning}", file=sys.stderr)
     for problem in result.problems:
         print(f"error: {problem}", file=sys.stderr)
+    noted = f", {len(result.warnings)} warning(s)" if result.warnings else ""
     if result.problems:
-        print(f"build failed: {len(result.problems)} problem(s)", file=sys.stderr)
+        print(f"build failed: {len(result.problems)} problem(s){noted}", file=sys.stderr)
         return 1
-    print(f"built {len(result.pages)} page(s) for {', '.join(result.outputs)} into {args.out}")
+    print(f"built {len(result.pages)} page(s) for {', '.join(result.outputs)} into {args.out}{noted}")
     return 0
 
 

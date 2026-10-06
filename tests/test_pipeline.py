@@ -110,7 +110,7 @@ def test_each_host_has_its_own_robots(mini_root, tmp_path):
 def test_pages_are_written_at_their_clean_url_paths(mini_root, tmp_path):
     (mini_root / "content" / "deep").mkdir()
     (mini_root / "content" / "deep" / "page.html").write_text(
-        "---\ntitle: Deep\ndescription: d\nupdated: 2026-10-06\napproved: 2026-10-06\nlayout: page\n---\n<p>x</p>\n", encoding="utf-8")
+        "---\ntitle: Deep\ndescription: d\nupdated: 2026-10-06\napproved: 2026-10-06\nlayout: page\n---\n<h1>x</h1>\n", encoding="utf-8")
     assert build(mini_root, tmp_path / "dist").problems == []
     s = tmp_path / "dist" / "syahi.sh"
     assert (s / "deep" / "page.html").is_file() and (s / "signet.html").is_file() and (s / "index.html").is_file()
@@ -119,7 +119,7 @@ def test_pages_are_written_at_their_clean_url_paths(mini_root, tmp_path):
 def test_the_sitemap_lists_live_pages_only(mini_root, tmp_path):
     # /services is pending and also has a file: it must still stay out of the sitemap and llms.txt.
     (mini_root / "content" / "services.html").write_text(
-        "---\ntitle: Services Draft\ndescription: not live\nupdated: 2026-10-06\napproved: 2026-10-06\nlayout: page\n---\n<p>x</p>\n", encoding="utf-8")
+        "---\ntitle: Services Draft\ndescription: not live\nupdated: 2026-10-06\napproved: 2026-10-06\nlayout: page\n---\n<h1>x</h1>\n", encoding="utf-8")
     assert build(mini_root, tmp_path / "dist").problems == []
     s = tmp_path / "dist" / "syahi.sh"
     assert sitemap_locs(s / "sitemap.xml") == ["https://syahi.example/", "https://syahi.example/signet"]
@@ -353,8 +353,12 @@ def test_an_out_that_is_a_dangling_symlink_is_refused(mini_root, tmp_path):
 
 # ---- release mode ----
 
+SERVICES_PAGE = "---\ntitle: Services\ndescription: d\nupdated: 2026-10-06\napproved: 2026-10-06\nlayout: page\n---\n<h1>Services</h1>\n"
+
 def test_release_with_no_pending_pages_is_clean(mini_root, tmp_path):
+    # nothing pending means every tab is a real page: the Services tab needs its file, or sitecheck rightly fails the dead link
     edit(mini_root / "site.yaml", "pending_pages: [/services]", "pending_pages: []")
+    (mini_root / "content" / "services.html").write_text(SERVICES_PAGE, encoding="utf-8")
     assert build(mini_root, tmp_path / "dist", release=True).problems == []
 
 def test_release_names_the_tab_that_points_at_a_pending_page(mini_root, tmp_path):
@@ -375,6 +379,7 @@ def test_a_dev_build_allows_links_to_pending_pages(mini_root, tmp_path):
 
 def test_release_ignores_links_to_pages_that_are_not_pending(mini_root, tmp_path):
     edit(mini_root / "site.yaml", "pending_pages: [/services]", "pending_pages: [/media]")
+    (mini_root / "content" / "services.html").write_text(SERVICES_PAGE, encoding="utf-8")
     problems = build(mini_root, tmp_path / "dist", release=True).problems
     assert problems and all("/services" not in p for p in problems)
 
