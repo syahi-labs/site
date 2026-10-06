@@ -57,6 +57,11 @@ class SchemaError(Exception):
     """A page asks for structured data we cannot or will not emit. The message names the page file."""
 
 
+def page_url(base_url: str, slug: str) -> str:
+    """The clean URL of a page: no .html, no trailing slash, except the root. The one place the rule lives."""
+    return base_url + slug
+
+
 @dataclass(frozen=True)
 class _Context:
     page: Page
@@ -73,7 +78,7 @@ class _Context:
 
     @property
     def page_url(self) -> str:
-        return self.site.base_url + self.page.slug
+        return page_url(self.site.base_url, self.page.slug)
 
     def entity(self, fragment: str, path: str = "/") -> str:
         return f"{self.entity_base}{path}#{fragment}"
