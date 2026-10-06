@@ -14,7 +14,11 @@ import subprocess
 from pathlib import Path
 
 # git's "this is not a failure, there is just no history for the file" messages (read under LC_ALL=C).
-NO_HISTORY = ("not a git repository", "does not have any commits yet")
+# The no-repo message is matched through its "(or any" clause, which both genuine wordings carry
+# ("...(or any of the parent directories)", and "...(or any parent up to mount point /tmp)" across a
+# filesystem boundary). A `.git` file pointing at a gitdir that is gone (a deleted worktree) says only
+# "not a git repository: <path>", and that is a broken checkout, not a new file.
+NO_HISTORY = ("not a git repository (or any", "does not have any commits yet")
 
 
 class GitDateError(Exception):

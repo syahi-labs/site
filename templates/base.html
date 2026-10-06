@@ -21,7 +21,11 @@
 <a class="skip" href="#main">Skip to content</a>
 <header class="site-header">
   <div class="wrap bar">
+    {% if site.header == "katha" %}
+    <a class="wordmark wordmark-katha" href="/">Katha Audio</a>
+    {% else %}
     <a class="wordmark" href="/">{{ site.name }}</a>
+    {% endif %}
     <nav aria-label="Main">
       <details class="nav-menu">
         <summary>Menu</summary>
