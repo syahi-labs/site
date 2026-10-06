@@ -10,3 +10,8 @@
 !/art/inkpot.webp
 !/art/loom.webp
 .claude/
+
+# build output and tooling
+dist/
+.venv/
+__pycache__/
