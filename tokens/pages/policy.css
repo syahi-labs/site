@@ -1,0 +1,132 @@
+/* The policy pages: contact, privacy, terms and refund. One sheet, because they are one kind of page:
+   a kicker, the h1, a thesis and the date, then numbered sections of plain prose. Layout and type roles
+   only. Every colour and every font family comes from tokens.css, and the guard in tests/css_guard.py
+   fails this folder on a raw colour, a literal family or a redefined token. Sizes and spacing use the
+   scales (--fs-*, --space-*) wherever one fits.
+   The section head (.section-head, .roman, .label) is also in katha-index.css. Hoist it into base.css
+   when a third page uses it.
+   Text pairs used, all in test_tokens TEXT_PAIRS: ink on ground, muted on ground. */
+
+.page > section + section{margin-top:var(--space-8)}
+.page-head + section{margin-top:var(--space-7)}
+
+/* The head */
+.page-head > * + *{margin-top:var(--space-4)}
+.devanagari{
+  font-family:var(--font-serif);
+  font-size:var(--fs-ui);
+  letter-spacing:.4em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.thesis{
+  max-width:38rem;
+  margin-top:var(--space-5);
+  font-family:var(--font-serif);
+  font-size:var(--fs-lead);
+  line-height:1.45;
+  text-wrap:balance;
+}
+.updated{
+  margin-top:var(--space-5);
+  font-family:var(--font-mono);
+  font-size:var(--fs-micro);
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+/* Section heads: a roman numeral and a label over a rule */
+.section-head{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:baseline;
+  gap:var(--space-2) var(--space-5);
+  margin-bottom:var(--space-3);
+  padding-bottom:var(--space-3);
+  border-bottom:1px solid var(--ink);
+}
+.roman{font-family:var(--font-serif);font-size:var(--fs-h2);font-weight:600;line-height:var(--lh-tight)}
+.section-head .label{
+  font-family:var(--font-mono);
+  font-size:var(--fs-small);
+  letter-spacing:.3em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.lede{margin-left:auto;font-family:var(--font-serif);font-size:var(--fs-ui);font-style:italic;color:var(--muted)}
+
+/* Prose */
+.doc{max-width:var(--measure)}
+.doc > * + *{margin-top:var(--space-4)}
+.doc b{font-weight:600}
+.doc ul,.doc ol{margin:0;padding-left:var(--space-5)}
+.doc li + li{margin-top:var(--space-2)}
+.doc li::marker{color:var(--muted)}
+.doc h2{margin-top:var(--space-6);font-size:var(--fs-lead)}
+.doc h2 + p{margin-top:var(--space-2)}
+
+/* The contact page's two tables */
+.kv{border-top:1px solid var(--rule)}
+.kv > div{
+  display:grid;
+  grid-template-columns:11.25rem minmax(0,1fr);
+  gap:var(--space-4);
+  padding-block:var(--space-3);
+  border-bottom:1px solid var(--rule);
+}
+.kv dt{
+  padding-top:.3rem;
+  font-family:var(--font-mono);
+  font-size:var(--fs-micro);
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.kv dd{overflow-wrap:anywhere}
+
+/* The terms page's pricing plate: a boxed note with its label sitting on the border */
+.plate{
+  position:relative;
+  max-width:var(--measure);
+  margin-top:var(--space-6);
+  padding:var(--space-6) var(--space-6) var(--space-5);
+  border:1.5px solid var(--ink);
+}
+.plate .label{
+  position:absolute;
+  top:-.7rem;
+  left:var(--space-5);
+  padding:0 var(--space-3);
+  background:var(--ground);
+  font-family:var(--font-mono);
+  font-size:var(--fs-small);
+  letter-spacing:.3em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.plate .price{
+  font-family:var(--font-serif);
+  font-size:var(--fs-h1);
+  font-weight:600;
+  letter-spacing:-.02em;
+  line-height:var(--lh-tight);
+}
+.plate .price small{
+  display:block;
+  margin-top:var(--space-2);
+  font-family:var(--font-mono);
+  font-size:var(--fs-micro);
+  font-weight:400;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.plate .price + .price{margin-top:var(--space-5)}
+.plate .fine{margin-top:var(--space-5);font-size:var(--fs-ui);color:var(--muted)}
+
+@media (max-width:47.5em){
+  .lede{margin-left:0;width:100%}
+  .kv > div{grid-template-columns:minmax(0,1fr);gap:var(--space-1)}
+  .plate{padding:var(--space-5) var(--space-4) var(--space-4)}
+}

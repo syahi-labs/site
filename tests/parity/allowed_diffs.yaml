@@ -17,3 +17,23 @@ katha-index.html:
     reason: Step number of the second beat, drawn as the list marker. Same reason as 01.
   - text: "03"
     reason: Step number of the third beat, drawn as the list marker. Same reason as 01.
+
+# The four policy pages. Each page's own header strip (an entry number, a ledger link, the place and the
+# year) is the only text that does not move into <main>: the shared header replaces it, as it replaces
+# every ported page's own chrome. The h1, the thesis and the date under it are kept, word for word.
+site-contact.html:
+  - text: "ENTRY P-04 LEDGER SYAHI.SH PLACE BENGALURU, IN EST 2026"
+    reason: >-
+      The page's own header strip. The shared header (wordmark, tabs, Book a call) replaces it.
+site-privacy.html:
+  - text: "ENTRY P-01 LEDGER SYAHI.SH PLACE BENGALURU, IN EST 2026"
+    reason: >-
+      The page's own header strip. The shared header (wordmark, tabs, Book a call) replaces it.
+site-terms.html:
+  - text: "ENTRY P-02 LEDGER SYAHI.SH PLACE BENGALURU, IN EST 2026"
+    reason: >-
+      The page's own header strip. The shared header (wordmark, tabs, Book a call) replaces it.
+site-refund.html:
+  - text: "ENTRY P-03 LEDGER SYAHI.SH PLACE BENGALURU, IN EST 2026"
+    reason: >-
+      The page's own header strip. The shared header (wordmark, tabs, Book a call) replaces it.
