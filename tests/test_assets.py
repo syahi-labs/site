@@ -5,6 +5,7 @@
 # outside consumer asks for by a fixed URL keep a stable copy too), subsets the self-hosted fonts against each
 # host's own text, and the base template links the hashed URLs for both hosts.
 import hashlib
+import io
 import re
 import struct
 from pathlib import Path
@@ -292,9 +293,16 @@ def test_a_file_in_a_name_the_build_writes_itself_is_a_problem_and_never_replace
     stylesheets(root)
     manifest, problems = publish_tree(root, tmp_path / "out")
     assert "img/a.webp" in manifest                                          # the rest still published
-    if not name.startswith("fonts/"):                                         # fonts/ is the sources' own folder
-        assert any(name in p and "reserved" in p for p in problems), problems
+    assert any(name in p and "reserved" in p for p in problems), problems
     assert not any(b"display:none" in p.read_bytes() for p in (tmp_path / "out").rglob("*") if p.is_file())
+
+
+def test_the_font_sources_and_their_licence_record_are_inputs_not_problems(tmp_path):
+    root = tree(tmp_path / "root", {"fonts/src/x.ttf": b"x", "fonts/LICENSES.md": b"l", "img/a.webp": b"x"})
+    stylesheets(root)
+    manifest, problems = publish_tree(root, tmp_path / "out")
+    assert not any("reserved" in p or "fonts/" in p for p in problems), problems
+    assert sorted(manifest) == ["base.css", "img/a.webp", "tokens.css"]
 
 
 def test_a_feed_or_cname_hidden_in_assets_still_fails_the_build(mini_root, tmp_path):
@@ -679,3 +687,125 @@ def test_the_whole_real_build_is_byte_identical_run_to_run(real_site, tmp_path):
     assert again.problems == real_site.result.problems
     listing = lambda out: sorted((p.relative_to(out).as_posix(), sha(p)) for p in out.rglob("*") if p.is_file())
     assert listing(tmp_path / "again") == listing(real_site.out)
+
+
+# ---- fix round 1: case, generated content, joiners, noscript, the cache ----
+
+INTER = ASSETS / "fonts" / "src" / "Inter[opsz,wght].ttf"
+
+
+def subset_cmap(tmp_path: Path, text: str, src: Path = INTER) -> set[int]:
+    return set(TTFont(str(subset_font(src, text, tmp_path / "s.woff2"))).getBestCmap())
+
+
+def test_lowercase_text_keeps_its_capitals_for_text_transform(tmp_path):
+    cmap = subset_cmap(tmp_path, "subject")
+    assert {ord(c) for c in "SUBJECT"} <= cmap and {ord(c) for c in "subject"} <= cmap
+    assert ord("Q") not in cmap
+
+
+def test_capitals_in_the_text_keep_their_lowercase_too(tmp_path):
+    assert ord("j") in subset_cmap(tmp_path, "J")
+
+
+def test_case_is_handled_beyond_ascii(tmp_path):
+    assert {0xE9, 0xC9} <= subset_cmap(tmp_path, "\u00e9")                      # e acute and E acute
+
+
+def test_a_host_whose_text_is_lowercase_ships_the_capitals_its_uppercase_rule_draws(mini_root, tmp_path):
+    page = mini_root / "content" / "index.html"
+    page.write_text(page.read_text(encoding="utf-8") + "\n<p>quartz jinx</p>\n", encoding="utf-8")
+    (mini_root / "tokens" / "base.css").write_text("body{font-family:var(--font-sans)}p{text-transform:uppercase}", encoding="utf-8")
+    result = build(mini_root, tmp_path / "dist")
+    assert not [p for p in result.problems if "font" in p], result.problems
+    inter = next((tmp_path / "dist" / "syahi.sh" / "assets" / "fonts").glob("inter.*.woff2"))
+    assert {ord(c) for c in "QUARTZJINX"} <= set(TTFont(str(inter)).getBestCmap())
+
+
+def test_css_content_strings_are_decoded_escape_and_literal():
+    css = (".a::before{content:\"\\2212\\00A0\"}.b::after{content:'\\2713 ok'}.c::before{content:\"\u00bd\";color:red}"
+           ".d{content:none}.e{content:counter(n) \" \\2192\"}.f{content:\"a\\\nb\"}")
+    assert assets.css_content_text(css) == "\u2212\u00a0\u2713ok\u00bd \u2192ab"
+
+
+def test_a_stylesheets_content_glyphs_reach_the_latin_subsets(mini_root, tmp_path):
+    (mini_root / "tokens" / "base.css").write_text(
+        'body{font-family:var(--font-sans)}.m::before{content:"\\2212"}.l::after{content:"\u00bd"}', encoding="utf-8")
+    result = build(mini_root, tmp_path / "dist")
+    assert not [p for p in result.problems if "font" in p], result.problems
+    inter = next((tmp_path / "dist" / "syahi.sh" / "assets" / "fonts").glob("inter.*.woff2"))
+    cmap = set(TTFont(str(inter)).getBestCmap())
+    assert {0x2212, 0xBD} <= cmap
+
+
+def test_the_real_pages_content_glyphs_are_in_the_subset(real_site):
+    inter = next((real_site.out / "syahi.sh" / "assets" / "fonts").glob("inter.*.woff2"))
+    assert {0x2212, 0x2713} <= set(TTFont(str(inter)).getBestCmap())
+
+
+def test_joiners_are_kept(tmp_path):
+    src = ASSETS / "fonts" / "src" / "TiroDevanagariHindi-Regular.ttf"
+    assert {0x200C, 0x200D} <= assets._unicodes("\u0915\u094d\u200d\u0937\u200c")
+    assert 0x0915 in subset_cmap(tmp_path, "\u0915\u094d\u200d\u0937", src)
+
+
+def test_noscript_text_counts():
+    latin, _ = assets.page_text("<body><p>a</p><noscript><p>Zebra</p></noscript><script>var q</script></body>")
+    assert latin == "aZebra"
+
+
+def poison(cache: Path, data: bytes) -> list[Path]:
+    entries = sorted(cache.glob("*.woff2"))
+    for entry in entries:
+        entry.write_bytes(data)
+    return entries
+
+
+def test_a_damaged_cache_entry_is_rebuilt_not_trusted(tmp_path, monkeypatch):
+    monkeypatch.setenv("SITEBUILD_CACHE", str(tmp_path / "cache"))
+    src = ASSETS / "fonts" / "src" / "IBMPlexMono-Regular.ttf"
+    good = subset_font(src, "Hello", tmp_path / "a.woff2").read_bytes()
+    assert poison(tmp_path / "cache", b"garbage")
+    assert subset_font(src, "Hello", tmp_path / "b.woff2").read_bytes() == good
+
+
+def test_a_cache_entry_missing_a_requested_glyph_is_rebuilt(tmp_path, monkeypatch):
+    monkeypatch.setenv("SITEBUILD_CACHE", str(tmp_path / "cache"))
+    src = ASSETS / "fonts" / "src" / "IBMPlexMono-Regular.ttf"
+    wanted = subset_font(src, "Hello", tmp_path / "a.woff2").read_bytes()
+    (entry,) = (tmp_path / "cache").glob("*.woff2")
+    entry.write_bytes(subset_font(src, "x", tmp_path / "small.woff2").read_bytes())    # a valid font, wrong glyphs
+    out = subset_font(src, "Hello", tmp_path / "b.woff2")
+    assert out.read_bytes() == wanted and ord("H") in TTFont(str(out)).getBestCmap()
+
+
+def test_the_recipe_is_part_of_the_cache_key(tmp_path, monkeypatch):
+    monkeypatch.setenv("SITEBUILD_CACHE", str(tmp_path / "cache"))
+    src = ASSETS / "fonts" / "src" / "IBMPlexMono-Regular.ttf"
+    subset_font(src, "Hello", tmp_path / "a.woff2")
+    monkeypatch.setattr(assets, "_RECIPE", assets._RECIPE + " changed")
+    subset_font(src, "Hello", tmp_path / "b.woff2")
+    assert len(list((tmp_path / "cache").glob("*.woff2"))) == 2
+
+
+def test_the_default_cache_is_in_the_users_own_cache_folder(tmp_path, monkeypatch):
+    monkeypatch.delenv("SITEBUILD_CACHE", raising=False)
+    monkeypatch.delenv("XDG_CACHE_HOME", raising=False)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    assert assets._cache_dir() == tmp_path / ".cache" / "syahi-sitebuild"
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "xdg"))
+    assert assets._cache_dir() == tmp_path / "xdg" / "syahi-sitebuild"
+    monkeypatch.setenv("SITEBUILD_CACHE", str(tmp_path / "mine"))
+    assert assets._cache_dir() == tmp_path / "mine"
+    assert (assets._cache_dir() / "x").name == "x" and "tmp" not in assets._cache_dir().parts[-1]
+
+
+def test_a_subset_does_not_depend_on_the_clock(monkeypatch):
+    import time
+    src = ASSETS / "fonts" / "src" / "Fraunces[SOFT,WONK,opsz,wght].ttf"
+    digest = hashlib.sha256(src.read_bytes()).hexdigest()
+    codepoints = tuple(sorted(assets._unicodes("Hello")))
+    first = assets._subset_bytes(digest, str(src), codepoints)
+    time.sleep(1.1)
+    assert assets._subset_bytes(digest, str(src), codepoints) == first
+    assert TTFont(io.BytesIO(first))["head"].modified == TTFont(str(src))["head"].modified

@@ -560,10 +560,10 @@ def _publish_asset_tree(source: Path, target: Path, problems: list[str]) -> dict
                 problems.append(f"{path}: {name} must never be part of the build output")
             elif path.is_symlink():
                 problems.append(f"{path}: a symbolic link in assets/ is never published (it could reach files outside the repo)")
-            elif relative.parts[0] in assets.BUILD_OWNED:
-                continue    # the vendored font sources: input to the font pipeline, not an asset
+            elif relative.parts[0] in assets.BUILD_OWNED and (relative.parts[:2] == ("fonts", "src") or relative.as_posix() == "fonts/LICENSES.md"):
+                continue    # the vendored font sources and their licence record: input, not an asset
             elif relative.parts[0] in RESERVED_ASSETS:
-                problems.append(f"{path}: assets/{relative.parts[0]} is reserved for the build's own stylesheets and is not published")
+                problems.append(f"{path}: assets/{relative.parts[0]} is reserved for what the build writes itself (stylesheets and subset fonts) and is not published")
             else:
                 folder_out = target / relative.parent
                 data = path.read_bytes()

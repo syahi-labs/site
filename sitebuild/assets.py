@@ -18,7 +18,6 @@ import html
 import io
 import os
 import re
-import tempfile
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from pathlib import Path, PurePosixPath
@@ -88,7 +87,7 @@ def publish(src: Path, out_dir: Path, url_base: str = URL_BASE) -> str:
 
 
 _VOID = frozenset("area base br col embed hr img input link meta source track wbr".split())
-_SKIPPED = frozenset({"script", "style", "template", "noscript", "head", "title"})
+_SKIPPED = frozenset({"script", "style", "template", "head", "title"})   # noscript text is shown, so it counts
 
 
 class _Text(HTMLParser):
@@ -188,8 +187,46 @@ def faces_needed(css_texts: list[str], text: str, hindi: str) -> list[Face]:
     return needed
 
 
+_JOINERS = "‌‍"      # ZWNJ and ZWJ shape Devanagari conjuncts but are not "printable"
+
+
 def _unicodes(text: str) -> set[int]:
-    return {ord(char) for char in text if char.isprintable() or char in " "} | _BASELINE
+    """The code points to keep: those of `text` in both cases, then the baseline.
+
+    A stylesheet may set `text-transform` (uppercase, capitalize), so the page's "Subject" can be drawn as
+    "SUBJECT". Both cases of every cased character are kept, for any script that has them, instead of
+    guessing which rules apply where.
+    """
+    kept = {char for char in text if char.isprintable() or char in " " + _JOINERS}
+    for char in list(kept):
+        kept.update(char.upper() + char.lower())
+    return {ord(char) for char in kept if char.isprintable() or char in " " + _JOINERS} | _BASELINE
+
+
+_CONTENT = re.compile(r"""\bcontent\s*:\s*(?P<value>(?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|[^;}"'])*)""", re.S)
+_CSS_STRING = re.compile(r""""((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'""", re.S)
+_CSS_ESCAPE = re.compile(r"\\(?:([0-9a-fA-F]{1,6})[ \t\r\n\f]?|(\r\n|[\n\r\f])|(.))", re.S)
+
+
+def css_content_text(css: str) -> str:
+    """The characters of every `content:` string in a stylesheet, CSS escapes decoded.
+
+    `content:"\2713 ok"` is a check mark and "ok": one optional space ends an escape, and a backslash before a
+    line break continues the string. Generated text is drawn in a Latin family, so a glyph a stylesheet names
+    must be in the subset or it falls back to a system font.
+    """
+    def decode(match: re.Match) -> str:
+        if match.group(1):
+            code = int(match.group(1), 16)
+            return chr(code) if 0 < code <= 0x10FFFF and not 0xD800 <= code <= 0xDFFF else "�"
+        return "" if match.group(2) else match.group(3)
+
+    found = []
+    for rule in _CONTENT.finditer(css):
+        for string in _CSS_STRING.finditer(rule["value"]):
+            body = string.group(1) if string.group(1) is not None else string.group(2)
+            found.append(_CSS_ESCAPE.sub(decode, body))
+    return "".join(found)
 
 
 def _subset_bytes(source_digest: str, source_path: str, codepoints: tuple[int, ...]) -> bytes:
@@ -204,7 +241,7 @@ def _subset_bytes(source_digest: str, source_path: str, codepoints: tuple[int, .
     options.notdef_outline = True
     options.drop_tables = [*options.drop_tables, "meta"]
     options.recalc_timestamp = False
-    font = TTFont(source_path)
+    font = TTFont(source_path, recalcTimestamp=False)      # a rebuilt head.modified would make the bytes depend on the clock
     subsetter = subset.Subsetter(options)
     subsetter.populate(unicodes=codepoints)
     subsetter.subset(font)
@@ -215,14 +252,34 @@ def _subset_bytes(source_digest: str, source_path: str, codepoints: tuple[int, .
         if pinned:
             font = instancer.instantiateVariableFont(font, pinned, inplace=False)
     buffer = io.BytesIO()
+    font.recalcTimestamp = False
     font.flavor = "woff2"
     font.save(buffer)
     return buffer.getvalue()
 
 
+# Everything `_subset_bytes` does besides the source and the characters. Change it with that function, so an
+# entry made by an older recipe is never read back as the new one's.
+_RECIPE = "woff2 layout=* names=* hinting=off notdef=outline drop+=meta pin-axes-except=" + ",".join(KEPT_AXES) + " v1"
+
+
 def _cache_dir() -> Path:
-    """Where subsets are remembered between builds: SITEBUILD_CACHE, or a folder under the system temp directory."""
-    return Path(os.environ.get("SITEBUILD_CACHE") or Path(tempfile.gettempdir()) / "syahi-sitebuild-cache")
+    """Where subsets are remembered between builds: SITEBUILD_CACHE, else a folder in the user's own cache."""
+    if os.environ.get("SITEBUILD_CACHE"):
+        return Path(os.environ["SITEBUILD_CACHE"])
+    base = os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache"
+    return Path(base) / "syahi-sitebuild"
+
+
+def _covers(data: bytes, source_path: str, codepoints: tuple[int, ...]) -> bool:
+    """Whether `data` parses as a font whose cmap holds every requested code point the source font has."""
+    from fontTools.ttLib import TTFont
+
+    try:
+        wanted = set(codepoints) & set(TTFont(source_path, lazy=True).getBestCmap())
+        return wanted <= set(TTFont(io.BytesIO(data), lazy=True).getBestCmap())
+    except Exception:
+        return False
 
 
 def _cached_subset(source_digest: str, source_path: str, codepoints: tuple[int, ...]) -> bytes:
@@ -232,15 +289,17 @@ def _cached_subset(source_digest: str, source_path: str, codepoints: tuple[int, 
     """
     from fontTools import version as fonttools_version
 
-    key = hashlib.sha256(f"{fonttools_version}|{KEPT_AXES}|{source_digest}|{codepoints}".encode()).hexdigest()
+    key = hashlib.sha256(f"{fonttools_version}|{_RECIPE}|{source_digest}|{codepoints}".encode()).hexdigest()
     entry = _cache_dir() / f"{key}.woff2"
     try:
-        return entry.read_bytes()
+        cached = entry.read_bytes()
+        if _covers(cached, source_path, codepoints):     # a damaged or foreign file is rebuilt, never trusted
+            return cached
     except OSError:
         pass
     data = _subset_bytes(source_digest, source_path, codepoints)
     try:
-        entry.parent.mkdir(parents=True, exist_ok=True)
+        entry.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         scratch = entry.with_name(f"{entry.name}.{os.getpid()}.tmp")
         scratch.write_bytes(data)
         os.replace(scratch, entry)
@@ -300,6 +359,7 @@ def publish_fonts(assets_src: Path, assets_out: Path, css_texts: list[str], text
     sizes: dict[str, int] = {}
     problems: list[str] = []
     rules: list[str] = []
+    text += "".join(css_content_text(css) for css in css_texts)       # generated text is drawn in a Latin face
     for face in faces_needed(css_texts, text, hindi):
         source = assets_src / FONT_SOURCES / face.source
         if source.is_symlink():
