@@ -6,7 +6,11 @@ wants to check one sheet. Task 9's pages add their own sheets and are covered as
 
 Banned in a page sheet:
   - a raw colour: hex, rgb(), hsl(), hwb(), lab(), lch(), oklab(), oklch(), color(), or a CSS named colour;
-  - a literal font family, in `font-family` or in the `font` shorthand.
+  - a literal font family, in `font-family` or in the `font` shorthand;
+  - a declaration of any custom property that tokens.css defines (`--font-serif: Georgia`, `--ground: ...`,
+    `--space-4: ...`), and an `@property` rule naming one. A page asks for a token with var(); only
+    tokens.css gives it a value, so a page cannot recolour or re-type the system by redefining a name.
+    A page may make custom properties of its own. Custom property names are case sensitive.
 Allowed:
   - `transparent`, `currentColor` and the CSS-wide keywords;
   - a font family only as a `var(--font-...)` token that tokens.css defines, so a page can ask for the
@@ -56,6 +60,7 @@ FONT_KEYWORDS = frozenset(
 NUMBER_OR_LENGTH = re.compile(r"[+-]?(?:\d+\.?\d*|\.\d+)[a-z%]*", re.I)
 DECLARATION = re.compile(r"(?<![\w-])(?P<prop>[\w-]+)\s*:\s*(?P<value>[^;{}]*?)\s*(?=[;}])")
 SIMPLE_VAR = re.compile(r"var\(\s*(--[\w-]+)\s*\)")
+AT_PROPERTY = re.compile(r"@property\s+(--[\w-]+)")
 
 
 def top_level(value, separators):
@@ -113,16 +118,24 @@ def colour_problems(value, where):
     return found
 
 
+def redefinition(name, where):
+    """The one message for a page that gives a value to a name tokens.css owns."""
+    return f"{where}: redefines {name}, which tokens.css defines (change it there; a page only reads it with var({name}))"
+
+
 def page_css_violations(css, families=FONT_TOKENS):
     """Everything in a page stylesheet that breaks the rule above. Comments, strings and url() are read as
     nothing, and only declaration values are scanned, so a class called .red or a content string is fine."""
     css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
     css = re.sub(r"\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*'", '""', css)   # a string stays visible as ""
     css = re.sub(r"url\([^)]*\)", "url()", css)
-    found = []
+    found = [redefinition(name, "@property " + name) for name in AT_PROPERTY.findall(css) if name in DECLARED_TOKENS]
     for declaration in DECLARATION.finditer(css):
-        prop, value = declaration.group("prop").lower(), re.sub(r"\s*!important$", "", declaration.group("value"), flags=re.I)
+        name = declaration.group("prop")                                 # custom properties are case sensitive
+        prop, value = name.lower(), re.sub(r"\s*!important$", "", declaration.group("value"), flags=re.I)
         where = f"{prop}: {value}"
+        if name in DECLARED_TOKENS:
+            found.append(redefinition(name, where))
         if prop == "font-family":
             found += [] if value.lower() in CSS_WIDE else family_problems(value, prop, families)
         elif prop == "font":

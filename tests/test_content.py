@@ -135,3 +135,56 @@ def test_non_html_files_are_ignored(tmp_path):
     write(tmp_path / "signet.html", FM)
     write(tmp_path / "notes.txt", "not a page")
     assert [p.slug for p in load_pages(tmp_path)] == ["/signet"]
+
+
+# ---- draft pages: new or changed copy she has not approved yet ----
+
+def test_draft_defaults_to_false(tmp_path):
+    write(tmp_path / "signet.html", FM)
+    (page,) = load_pages(tmp_path)
+    assert page.draft is False
+
+
+def test_draft_true_loads_and_approved_may_be_left_out(tmp_path):
+    text = "\n".join(l for l in FM.splitlines() if not l.startswith("approved:")).replace("layout: page", "layout: page\ndraft: true")
+    write(tmp_path / "signet.html", text + "\n")
+    (page,) = load_pages(tmp_path)
+    assert page.draft is True and page.approved is None
+
+
+def test_a_draft_may_still_carry_a_date(tmp_path):
+    write(tmp_path / "signet.html", FM.replace("layout: page", "layout: page\ndraft: true"))
+    (page,) = load_pages(tmp_path)
+    assert page.draft is True and page.approved == datetime.date(2026, 10, 6)
+
+
+@pytest.mark.parametrize("draft", ["false", "False", "no"])
+def test_a_page_that_is_not_a_draft_still_needs_approved(tmp_path, draft):
+    text = "\n".join(l for l in FM.splitlines() if not l.startswith("approved:")).replace("layout: page", f"layout: page\ndraft: {draft}")
+    write(tmp_path / "signet.html", text + "\n")
+    with pytest.raises(ContentError) as e:
+        load_pages(tmp_path)
+    assert "signet.html" in str(e.value) and "approved" in str(e.value)
+
+
+def test_a_page_with_no_draft_key_and_no_approved_fails_naming_both(tmp_path):
+    text = "\n".join(l for l in FM.splitlines() if not l.startswith("approved:")) + "\n"
+    write(tmp_path / "signet.html", text)
+    with pytest.raises(ContentError) as e:
+        load_pages(tmp_path)
+    assert "approved" in str(e.value) and "draft" in str(e.value)
+
+
+@pytest.mark.parametrize("bad", ['"true"', "1", "0", "[true]", "maybe", "~", "''"])
+def test_draft_must_be_a_real_boolean(tmp_path, bad):
+    write(tmp_path / "x.html", FM.replace("layout: page", f"layout: page\ndraft: {bad}"))
+    with pytest.raises(ContentError) as e:
+        load_pages(tmp_path)
+    assert "x.html" in str(e.value) and "draft" in str(e.value)
+
+
+def test_an_impossible_approved_date_on_a_draft_is_still_an_error(tmp_path):
+    write(tmp_path / "x.html", FM.replace("approved: 2026-10-06", "approved: 2026-13-01").replace("layout: page", "layout: page\ndraft: true"))
+    with pytest.raises(ContentError) as e:
+        load_pages(tmp_path)
+    assert "x.html" in str(e.value) and "date" in str(e.value)

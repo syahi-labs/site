@@ -57,6 +57,10 @@ class SiteEnvironment(jinja2.sandbox.SandboxedEnvironment):
     def __init__(self, site: SiteConfig, **options):
         super().__init__(**options)
         self.site = site
+        # The default share image's pixel size, read from the file when the environment is made.
+        # None when the file is absent; `default_og_error` says why when it is there but unreadable.
+        self.default_og_size: tuple[int, int] | None = None
+        self.default_og_error: str | None = None
 
     def is_safe_attribute(self, obj, attr, value):
         # The sandbox blocks dunders and unsafe callables, but a Path is ordinary: `page.source`
@@ -82,10 +86,23 @@ def make_env(root: Path, site: SiteConfig, claims: ClaimRegister) -> SiteEnviron
         """The claim's text, escaped, in a span that names it so the checks can find it."""
         return Markup('<span data-claim="{}">{}</span>').format(id, claims.text(id, form))
 
+    env.default_og_size, env.default_og_error = _image_size(Path(root) / DEFAULT_OG_IMAGE.lstrip("/"))
     env.globals["site"] = site
     env.globals["claim"] = claim
     env.filters["date"] = format_date
     return env
+
+
+def _image_size(path: Path) -> tuple[tuple[int, int] | None, str | None]:
+    """(width, height) of an image file, or (None, None) when there is no such file, or (None, reason)."""
+    from PIL import Image   # the one place the page renderer needs it; Task 7's pipeline uses it everywhere
+    try:
+        with Image.open(path) as image:
+            return image.size, None
+    except FileNotFoundError:
+        return None, None
+    except (OSError, ValueError, Image.DecompressionBombError) as err:   # UnidentifiedImageError is an OSError
+        return None, f"{type(err).__name__}: {err}"
 
 
 def render_page(env: SiteEnvironment, page: Page, jsonld: list[dict]) -> str:
@@ -128,11 +145,16 @@ def _render(env: SiteEnvironment, page: Page, jsonld: list[dict]) -> str:
     site = env.site
     layout = env.get_template(_layout_template(page))
     body = Markup(env.from_string(page.body).render(page=page))
+    og_image = _og_image(site, page)
+    # Only the default image's size is known. A page that names its own image gets no size tags.
+    if page.og_image is None and env.default_og_error:
+        raise RenderError(f"{page.source}: the default og:image {DEFAULT_OG_IMAGE} has no readable size ({env.default_og_error})")
     return layout.render(
         page=page,
         body=body,
         canonical=_canonical(site, page),
-        og_image=_og_image(site, page),
+        og_image=og_image,
+        og_image_size=env.default_og_size if page.og_image is None else None,
         tabs=[NavTab(tab.label, tab.href, _current(page.slug, tab.href)) for tab in site.tabs],
         jsonld=[_jsonld_block(node, number, page) for number, node in enumerate(jsonld, start=1)],
     )

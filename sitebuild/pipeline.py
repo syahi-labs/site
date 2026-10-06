@@ -2,7 +2,8 @@
 
 `build` loads and validates every input, renders each page of syahi.sh and
 katha.syahi.sh into `out/<host>/`, writes each host's sitemap and robots.txt
-(and syahi.sh's llms.txt), publishes the stylesheets and each page's own, and runs the checks.
+(and syahi.sh's llms.txt), publishes the stylesheets, the assets/ tree and each page's own stylesheet,
+and runs the checks.
 
 The checks (the `checks` package) run inside the build, so a page that fails one fails the build:
   - per rendered page: copycheck (the copy in <main>, told the page's audience) and htmlcheck;
@@ -23,6 +24,7 @@ from __future__ import annotations
 
 import ast
 import datetime
+import os
 import re
 import shutil
 from contextlib import contextmanager
@@ -220,6 +222,7 @@ def _build_host(root: Path, out: Path, item: _Loaded, claims: ClaimRegister, rel
     problems.extend(_publish_page_css(root, host_out, rendered_pages))
     if release:
         problems.extend(_release_site_problems(item))
+        problems.extend(_release_draft_problems(item))
     _site_checks(host_out, item, release, result)
     result.outputs[host.name] = host_out
     result.pages.extend(item.pages)
@@ -326,6 +329,13 @@ def _release_site_problems(item: _Loaded) -> list[str]:
     return problems
 
 
+def _release_draft_problems(item: _Loaded) -> list[str]:
+    """A release build refuses a draft page, one problem per page. A draft is copy no one has approved,
+    and the made-by line already says so; shipping it would publish what she has not read."""
+    return [f"{page.source}: release build: page is a draft (not yet approved); approve it and remove `draft: true`"
+            for page in item.pages if page.draft]
+
+
 class _MainLinks(HTMLParser):
     """The href of every link inside <main>: the page's own links, not the header and footer chrome."""
 
@@ -388,11 +398,19 @@ def _write(path: Path, text: str) -> None:
 
 STYLESHEETS = ("tokens.css", "base.css")
 PAGE_CSS_DIR = Path("tokens") / "pages"
+ASSETS_DIR = "assets"
+# Names under assets/ that the build writes itself: the shared stylesheets and the page stylesheets.
+# A source file there would shadow a real stylesheet, so it is refused rather than published.
+RESERVED_ASSETS = (*STYLESHEETS, "pages")
 
 
 def _publish_assets(root: Path, host_out: Path) -> list[str]:
-    """Copy the stylesheets to host_out/assets/ under their own names, so the base template's links resolve.
+    """Copy the stylesheets and then the assets/ tree to host_out/assets/, byte for byte and unhashed.
 
+    The stylesheets keep their own names, so the base template's links resolve. The tree (art, brand
+    mark, share image, favicons) keeps its folders. A dotfile is never an asset (.DS_Store, .gitkeep).
+    A symbolic link is refused and not followed, so nothing outside the repo can reach the public
+    output. A file in a name the build writes itself (see RESERVED_ASSETS) is refused too.
     Task 7 replaces this one function with the hashed asset pipeline. Returns problems, never raises.
     """
     problems = []
@@ -404,6 +422,34 @@ def _publish_assets(root: Path, host_out: Path) -> list[str]:
         target = host_out / "assets" / name
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source, target)
+    problems.extend(_publish_asset_tree(root / ASSETS_DIR, host_out / "assets"))
+    return problems
+
+
+def _publish_asset_tree(source: Path, target: Path) -> list[str]:
+    """Copy every file under `source` to the same relative path under `target`. No folder is not a problem."""
+    if source.is_symlink():
+        return [f"{source}: the assets folder is a symbolic link; refusing to publish through it"]
+    if not source.is_dir():
+        return []
+    problems = []
+    # os.walk does not follow links, so a linked folder shows up in `dirs` and is never entered.
+    for folder, dirs, files in os.walk(source):
+        here = Path(folder)
+        dirs[:] = sorted(name for name in dirs if not name.startswith("."))
+        for name in sorted(files + [name for name in dirs if (here / name).is_symlink()]):
+            path = here / name
+            relative = path.relative_to(source)
+            if name.startswith("."):
+                continue
+            if path.is_symlink():
+                problems.append(f"{path}: a symbolic link in assets/ is never published (it could reach files outside the repo)")
+            elif relative.parts[0] in RESERVED_ASSETS:
+                problems.append(f"{path}: assets/{relative.parts[0]} is reserved for the build's own stylesheets and is not published")
+            else:
+                destination = target / relative
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(path, destination)
     return problems
 
 

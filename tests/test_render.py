@@ -306,3 +306,28 @@ def test_render_page_refuses_an_environment_make_env_did_not_make():
     with pytest.raises(TypeError) as err:
         render_page(jinja2.Environment(), page(), [])
     assert "make_env" in str(err.value)
+
+
+# ---- draft pages say so in the made-by line ----
+
+DRAFT_LINE = "Drafted with AI from our own records. Not yet approved."
+
+
+def draft_page(**changes):
+    return dataclasses.replace(page(), approved=None, draft=True, **changes)
+
+
+def test_a_draft_made_by_line_is_exact_and_claims_no_approval(env):
+    html = render_page(env, draft_page(), [])
+    assert f'<p class="made-by">{DRAFT_LINE}</p>' in html
+    assert "Checked and approved" not in html and "Surabhi Pradhan" not in html.split("<footer")[1]
+
+
+def test_a_draft_that_carries_a_date_still_says_not_yet_approved(env):
+    html = render_page(env, dataclasses.replace(page(), draft=True), [])
+    assert f'<p class="made-by">{DRAFT_LINE}</p>' in html and "Checked and approved" not in html
+
+
+def test_a_page_that_is_not_a_draft_keeps_the_approved_line(env):
+    html = render_page(env, page(), [])
+    assert "Checked and approved by Surabhi Pradhan on 6 Oct 2026." in html and "Not yet approved" not in html

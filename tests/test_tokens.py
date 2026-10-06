@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from css_guard import FONT_TOKENS, NAMED_COLOURS, page_css_violations
+from css_guard import DECLARED_TOKENS, FONT_TOKENS, NAMED_COLOURS, page_css_violations
 
 REPO = Path(__file__).resolve().parents[1]
 TOKENS = (REPO / "tokens" / "tokens.css").read_text(encoding="utf-8")
@@ -280,6 +280,10 @@ def test_the_named_colour_list_is_css_color_4s():
     "a{content:'red'}", 'a{content:"Georgia #fff"}', "a{background:url(#red)}",
     "a:hover{color:var(--act)}", "a{transition:background-color var(--dur-fast) var(--ease)}",
     "a{--x:var(--ink)}",
+    # a page may make its own custom properties; only the names tokens.css defines are tokens.css's alone
+    "a{--card-gap:var(--space-4)}", "a{--card-pad:1rem}", "a{--cols:3}", "a{--FONT-SERIF:inherit}",
+    "a{padding:var(--space-4)}", "a{font-family:var(--font-serif)}", ".ink{--ring:var(--ink)}",
+    "@property --card-gap{syntax:'<length>';inherits:false;initial-value:1rem}",
     "a{color:var(--ink) /* red */}", "a{/* #fff */color:var(--ink);/* rgb(1,2,3) Georgia */}",
     "a{counter-reset:red-count}", "a{animation-name:fade-gold-in}", "a{list-style:zero-padded inside}",
     # sizes and spacing are not policed
@@ -311,6 +315,14 @@ def test_the_page_css_guard_lets_these_through(fine):
     "a{font:caption}", "a{font:italic 600 1rem monospace}", "a{font:12px}", "a{font:12px/1.4}",
     "a{font:var(--fs-nope) var(--font-serif)}", "a{font:12px/var(--lh-nope) var(--font-serif)}",
     "@font-face{font-family:'Fraunces';src:url(f.woff2)}",
+    # redefining a custom property tokens.css defines: the way around the family and colour rules
+    "a{--font-serif:Georgia}", ":root{--font-serif:Georgia,serif}", "a{--font-serif:serif}",
+    "a{--font-serif:var(--font-sans)}", "a{ --font-serif : Georgia }", "a{--font-mono:monospace!important}",
+    "a{--ground:var(--ink)}", "a{--ink:var(--ground)}", "a{--act:var(--ink)}", ":root{--ground:#fff}",
+    ":root{--space-4:2rem}", "a{--fs-body:20px}", "a{--lh-body:1}", "a{--wrap:100%}", "a{--travel:99px}",
+    "@media (min-width:40em){:root{--gutter:0}}",
+    "@property --font-serif{syntax:'*';inherits:true;initial-value:Georgia}",
+    "@property --ink{syntax:'<color>';inherits:true}",
 ])
 def test_the_page_css_guard_catches_these(bad):
     assert page_css_violations(bad), bad
@@ -321,3 +333,35 @@ def test_every_named_colour_is_caught_in_any_case(name):
     assert page_css_violations("a{color:%s}" % name)
     assert page_css_violations("a{border:1px solid %s}" % name.upper())
     assert page_css_violations("a{background:%s}" % name.capitalize())
+
+
+# ---- a page sheet may not redefine what tokens.css defines ----
+
+def test_the_guard_knows_every_custom_property_tokens_css_defines():
+    names = set(re.findall(r"(--[\w-]+)\s*:", re.search(r":root\s*\{(.*?)\}", TOKENS, re.S).group(1)))
+    assert DECLARED_TOKENS == names
+    assert {"--font-serif", "--font-sans", "--font-mono", "--font-deva", "--ground", "--ink", "--act",
+            "--space-4", "--fs-body", "--lh-body", "--wrap", "--travel"} <= DECLARED_TOKENS
+
+
+@pytest.mark.parametrize("name", sorted(DECLARED_TOKENS))
+def test_every_token_name_is_refused_as_a_page_property_with_any_value(name):
+    for value in ("var(--x)", "1rem", "inherit", "Georgia"):
+        found = page_css_violations(f"a{{{name}:{value}}}")
+        assert any(name in item and "tokens.css" in item for item in found), (name, value, found)
+    assert page_css_violations("@property %s{syntax:'*';inherits:true}" % name)
+
+
+def test_the_message_says_what_to_do():
+    (found,) = page_css_violations("a{--font-serif:Georgia}")
+    assert found.startswith("--font-serif:") and "tokens.css" in found and "redefin" in found
+
+
+def test_a_name_that_differs_only_in_case_is_a_different_property():
+    # custom property names are case sensitive, so --Ink is not --ink
+    assert page_css_violations("a{--Ink:var(--ground)}") == []
+
+
+def test_other_names_and_a_token_used_not_defined_stay_clean():
+    assert page_css_violations("a{--ink-soft:var(--muted);color:var(--ink);padding:var(--space-4)}") == []
+    assert page_css_violations("a{--space-4x:2rem}") == []

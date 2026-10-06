@@ -1,8 +1,12 @@
 # The public claims register: every public fact, once, by id. Both hosts read this one file.
 # Each `source` is a short public label. Private evidence lives in the corpus, never here.
-# Task 9 adds the rest of the org-* facts and the main host's.
+# A fact two pages state is one claim, so the pages can never disagree. A fact that only happens to share
+# a value with another (two different 30-day windows) is its own claim.
 
-# The footer's legal line on both hosts: "<name>, <llpin>, Bengaluru". The LLPIN claim carries its own label.
+# ---- the organisation: the footer, structured data and llms.txt, on both hosts ----
+
+# The footer's legal line: "<name>, <llpin>, Bengaluru". The LLPIN claim carries its own label; its short
+# form is the bare number, for a table that supplies the label itself.
 - id: org-legal-name
   text: "SYAHI TECHNOLOGIES LLP"
   source: "MCA record"
@@ -10,11 +14,164 @@
   status: live
 - id: org-llpin
   text: "LLPIN ADB-1993"
+  short: "ADB-1993"
+  source: "MCA record"
+  updated: 2026-10-06
+  status: live
+- id: org-name
+  text: "Syahi"
+  source: "syahi.sh, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+- id: org-alternate-name
+  text: "स्याही"
+  source: "syahi.sh, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+- id: org-founding-date
+  text: "2026-08-13"
+  source: "MCA record"
+  updated: 2026-10-06
+  status: live
+- id: org-locality
+  text: "Bengaluru"
+  source: "MCA record"
+  updated: 2026-10-06
+  status: live
+# llms.txt only: today's summary line from the live llms.txt, word for word.
+- id: org-summary
+  text: "Syahi (स्याही, ink) is an AI venture studio in Bengaluru for businesses and institutions, to help them operate efficiently, analyze deeply and grow immensely. Agents do the work, a person approves what goes out, and every decision leaves a receipt."
+  source: "syahi.sh llms.txt, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+# The registered street address is shown on /contact and nowhere else. Structured data carries the
+# locality only, and tests/test_parity.py fails the build output if this text reaches any other file.
+- id: org-registered-address
+  text: "E-313, Nandi Meraki, Phase 1 Yelenahalli, Reliable Residency Phase 2, Off Bannerghatta Road, Bangalore 560076"
   source: "MCA record"
   updated: 2026-10-06
   status: live
 
-# katha.syahi.sh: the length of the chapter-one sample, as the page says it.
+# ---- /contact ----
+
+- id: whatsapp-number
+  text: "+91 89514 49537"
+  source: "Contact page, 2026-09-10"
+  updated: 2026-10-06
+  status: live
+- id: booking-call-length
+  text: "30 minutes"
+  source: "Booking page, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+# How fast a complaint is acknowledged: the contact page's grievance officer line and the refund page's
+# won't-play route both promise it.
+- id: grievance-ack-window
+  text: "48 hours"
+  source: "Contact page, 2026-09-10"
+  updated: 2026-10-06
+  status: live
+- id: reply-window
+  text: "three working days"
+  source: "Contact page, 2026-09-10"
+  updated: 2026-10-06
+  status: live
+- id: grievance-resolve-window
+  text: "one month"
+  source: "Contact page, 2026-09-10"
+  updated: 2026-10-06
+  status: live
+- id: law-ecommerce-rules
+  text: "Consumer Protection (E-Commerce) Rules, 2020"
+  source: "Gazette of India"
+  updated: 2026-10-06
+  status: live
+
+# ---- /privacy ----
+
+- id: law-dpdp-act
+  text: "Digital Personal Data Protection Act, 2023"
+  source: "Gazette of India"
+  updated: 2026-10-06
+  status: live
+- id: signet-deletion-window
+  text: "30 days"
+  source: "Privacy policy, 2026-09-10"
+  updated: 2026-10-06
+  status: live
+- id: privacy-request-window
+  text: "seven working days"
+  source: "Privacy policy, 2026-09-10"
+  updated: 2026-10-06
+  status: live
+- id: minor-age-limit
+  text: "under 18"
+  source: "Privacy policy, 2026-09-10"
+  updated: 2026-10-06
+  status: live
+
+# ---- /terms ----
+
+# The two founding prices as the pricing plate prints them. The Signet page ties its structured-data
+# amount to its own price line; both must say the same rupees.
+- id: signet-price-monthly
+  text: "₹1,499 a month"
+  source: "Terms of service, 2026-09-12"
+  updated: 2026-10-06
+  status: live
+- id: signet-price-yearly
+  text: "₹14,999 a year"
+  source: "Terms of service, 2026-09-12"
+  updated: 2026-10-06
+  status: live
+- id: signet-yearly-ratio
+  text: "ten months for twelve"
+  source: "Terms of service, 2026-09-12"
+  updated: 2026-10-06
+  status: live
+- id: retainer-hours
+  text: "four hours a month"
+  source: "Terms of service, 2026-09-12"
+  updated: 2026-10-06
+  status: live
+# The day the Quote in Ten Minutes guarantee is measured. Terms and refund both state it.
+- id: qtm-guarantee-day
+  text: "day 30"
+  source: "Terms of service, 2026-09-12"
+  updated: 2026-10-06
+  status: live
+
+# ---- /refund ----
+
+- id: signet-annual-refund-window
+  text: "14 days"
+  source: "Refund policy, 2026-09-12"
+  updated: 2026-10-06
+  status: live
+- id: katha-gst-treatment
+  text: "18% under SAC 998432"
+  source: "Refund policy, 2026-09-12"
+  updated: 2026-10-06
+  status: live
+- id: katha-refund-resolve-window
+  text: "30 days"
+  source: "Refund policy, 2026-09-12"
+  updated: 2026-10-06
+  status: live
+- id: refund-initiate-window
+  text: "seven working days"
+  source: "Refund policy, 2026-09-12"
+  updated: 2026-10-06
+  status: live
+- id: razorpay-refund-timing
+  text: "5 to 7 working days"
+  source: "Refund policy, 2026-09-12"
+  updated: 2026-10-06
+  status: live
+
+# ---- katha.syahi.sh ----
+
+# The length of the chapter-one sample, as the page says it.
 - id: katha-sample-length
   text: "Forty-five seconds"
   source: "katha.syahi.sh sample page, 2026-10-06"

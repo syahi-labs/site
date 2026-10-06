@@ -4,8 +4,6 @@
 # its parity with today's live page. katha.syahi.sh also serves feed.xml, which Spotify reads; nothing
 # here may ever produce one.
 import re
-import shutil
-from html.parser import HTMLParser
 from pathlib import Path
 
 import pytest
@@ -13,45 +11,22 @@ import yaml
 
 from checks import copycheck, htmlcheck
 from css_guard import page_css_violations
+from parity_helpers import PARITY, apply_allowed, link_values, words
 from sitebuild.claims import ClaimRegister
 from sitebuild.content import load_pages
-from sitebuild.pipeline import build
 from sitebuild.schema import jsonld_mismatches
 from sitebuild.site import load_site
 
 REPO = Path(__file__).resolve().parents[1]
-PARITY = Path(__file__).parent / "parity"
 KATHA = REPO / "katha"
 SNAPSHOT = PARITY / "katha-index.html"
 EM_DASH = chr(0x2014)
 
-# The real inputs the build reads, copied to a throwaway root. The main host's own pages are ported in
-# Task 9, so until they exist a stub stands in for them: only the katha host is under test here.
-REAL_INPUTS = ("katha", "data", "templates", "tokens", "assets", "content")
-STUB = """---
-title: Stand-in
-description: A stand-in for the main host's pages, which are ported separately.
-updated: 2026-10-06
-approved: 2026-10-06
-layout: page
----
-<h1>Stand-in</h1>
-"""
-
-
 @pytest.fixture(scope="module")
-def built(tmp_path_factory):
-    root = tmp_path_factory.mktemp("site")
-    for name in REAL_INPUTS:
-        if (REPO / name).is_dir():
-            shutil.copytree(REPO / name, root / name)
-    shutil.copy(REPO / "site.yaml", root / "site.yaml")
-    if not (root / "content").is_dir():
-        (root / "content").mkdir()
-        (root / "content" / "index.html").write_text(STUB, encoding="utf-8")
-    out = tmp_path_factory.mktemp("out") / "dist"
-    result = build(root, out)
-    return root, out, result
+def built(real_site):
+    """The shared build of the real inputs: (root, out, result). The main host's own pages are ported
+    in Task 9, and a stand-in fills in for any that is not there yet, so only the katha host is under test here."""
+    return real_site
 
 
 KATHA_PREFIXES = ("katha.syahi.sh", "katha/")   # its output (sitecheck, sitemap) and its source files
@@ -199,59 +174,26 @@ def test_the_beats_are_an_ordered_list_of_three(html):
         "Agents produce", "Every sentence checked", "A human signs off"]
 
 
-def test_links_and_media_are_the_old_pages_exactly(html):
-    # The same set of href and src values in the page's own content, compared whole, not as substrings.
-    attrs = lambda markup: set(re.findall(r'(?:href|src)="([^"]+)"', markup))
+HERO_OLD = "https://syahi.sh/art/gramophone.webp"   # today's page: the art lives on the other host
+HERO_NEW = "/assets/img/gramophone.webp"            # the port: the same bytes, built into this host
+
+
+def test_links_and_media_are_the_old_pages_exactly_but_for_the_hero_now_on_its_own_host(html):
+    # The same href and src values, in order, in the page's own content, compared whole, not as substrings.
     old = SNAPSHOT.read_text(encoding="utf-8").split('<div class="hero-grid">', 1)[1].split("</main>")[0]
     new = html.split("<main", 1)[1].split("</main>")[0]
-    assert attrs(new) == attrs(old)
-    assert len(attrs(old)) == 6      # the guard cannot pass by both sides being empty
+    assert link_values(old).count(HERO_OLD) == 1
+    assert link_values(new) == [HERO_NEW if value == HERO_OLD else value for value in link_values(old)]
+    assert len(link_values(old)) == 6      # the guard cannot pass by both sides being empty
+
+
+def test_the_hero_image_is_a_file_in_the_katha_hosts_own_output(built):
+    host = built[1] / "katha.syahi.sh"
+    assert (host / HERO_NEW.lstrip("/")).is_file()
+    assert (host / HERO_NEW.lstrip("/")).read_bytes() == (REPO / "assets" / "img" / "gramophone.webp").read_bytes()
 
 
 # ---- parity with today's live page ----
-
-class Text(HTMLParser):
-    """The words a reader sees: body text minus the old page's footer, scripts, styles and svg."""
-
-    SKIP = frozenset({"script", "style", "footer", "nav", "noscript", "canvas", "svg", "head"})
-
-    def __init__(self, scope: str):
-        super().__init__(convert_charrefs=True)
-        self.scope, self.depth, self.inside, self.out = scope, 0, False, []
-
-    def handle_starttag(self, tag, attrs):
-        if tag == self.scope:
-            self.inside = True
-        if tag in self.SKIP:
-            self.depth += 1
-
-    def handle_endtag(self, tag):
-        if tag in self.SKIP and self.depth:
-            self.depth -= 1
-        if tag == self.scope and self.scope == "main":
-            self.inside = False
-
-    def handle_data(self, data):
-        if self.inside and not self.depth:
-            self.out.append(data)
-
-
-def words(markup: str, scope: str) -> str:
-    parser = Text(scope)
-    parser.feed(markup)
-    return re.sub(r"\s+", " ", " ".join(parser.out)).strip()
-
-
-def apply_allowed(old: str, key: str) -> str:
-    """Remove each allowed difference from the old text, once. A stale entry is an error."""
-    entries = yaml.safe_load((PARITY / "allowed_diffs.yaml").read_text(encoding="utf-8")) or {}
-    for entry in entries.get(key, []):
-        assert entry.get("reason", "").strip(), f"allowed diff {entry['text']!r} has no reason"
-        pattern = r"(?<!\S)" + re.escape(entry["text"]) + r"(?!\S)"
-        old, removed = re.subn(pattern, "", old, count=1)
-        assert removed == 1, f"allowed diff {entry['text']!r} is not in the old page: remove the entry"
-    return re.sub(r"\s+", " ", old).strip()
-
 
 def test_main_text_is_the_old_pages_text_word_for_word(html):
     old = apply_allowed(words(SNAPSHOT.read_text(encoding="utf-8"), "body"), "katha-index.html")
