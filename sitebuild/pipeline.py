@@ -32,8 +32,14 @@ from sitebuild.schema import SchemaError, build_jsonld, jsonld_mismatches
 from sitebuild.site import SiteConfig, SiteError, load_site
 
 CLAIMS_PATH = Path("data") / "claims.yaml"
-# Everything the build reads. An output directory may not be one of these or sit inside one.
+# Everything the build reads. An output directory may not be one of these or sit inside one,
+# or the next build would read its own output as input.
 SOURCES = ("content", "templates", "tokens", "assets", "data", "katha", "site.yaml")
+# What a build writes at the top of out/, so the next build can prove a directory is its own output
+# before it deletes anything. Only a directory with this marker, holding nothing but the marker and
+# the host directories, is ever wiped.
+MARKER = ".sitebuild-output"
+MARKER_TEXT = "syahi-labs/site build output\n"
 # Files the build output must never hold: katha-feed owns both, and a copy here would shadow them.
 FORBIDDEN_OUTPUTS = ("feed.xml", "CNAME")
 
@@ -68,16 +74,18 @@ class _Loaded:
 
 
 def build(root: Path, out: Path, release: bool = False) -> BuildResult:
-    """Build both hosts from `root` into `out`, wiping `out` first. Problems are returned, not raised."""
+    """Build both hosts from `root` into `out`, wiping `out` first. Problems are returned, not raised.
+
+    `out` is wiped only if it is missing, empty, or a previous build's output (see `_wipe_refusal`).
+    Anything else is refused as a problem, and nothing is deleted or written.
+    """
     root, out = Path(root), Path(out)
     result = BuildResult()
-    refusal = _unsafe_out(root, out)
+    refusal = _unsafe_out(root, out) or _wipe_refusal(out)
     if refusal:
         result.problems.append(refusal)
         return result
-    if out.exists():
-        shutil.rmtree(out)
-    out.mkdir(parents=True)
+    _reset(out)
 
     claims, loaded = _load(root, result.problems)
     if result.problems:
@@ -90,8 +98,54 @@ def build(root: Path, out: Path, release: bool = False) -> BuildResult:
     return result
 
 
+def _wipe_refusal(out: Path) -> str | None:
+    """Why `out` may not be wiped, or None. The proof is positive, never a list of what to avoid.
+
+    Allowed: a path that does not exist, an empty directory, or a previous build's output: a real
+    directory holding the marker with its exact text and nothing else but the host directories (real
+    directories too). A symbolic link is never followed or deleted, and a file is never replaced.
+    """
+    if out.is_symlink():
+        return f"{out}: the output path is a symbolic link; refusing to build through it or delete it"
+    if not out.exists():
+        return None
+    if not out.is_dir():
+        return f"{out}: the output path is a file, not a directory; refusing to replace it"
+    found = sorted(out.iterdir())
+    if not found:
+        return None
+    if not _is_marker(out / MARKER):
+        return (f"{out}: the output directory is not empty and is not a previous build's output "
+                f"(it has no {MARKER} marker); nothing was deleted")
+    hosts = {host.name for host in HOSTS}
+    strays = [e.name for e in found if e.name != MARKER and not (e.name in hosts and e.is_dir() and not e.is_symlink())]
+    if strays:
+        return f"{out}: holds {', '.join(strays)}, which a build does not write; nothing was deleted"
+    return None
+
+
+def _is_marker(path: Path) -> bool:
+    if path.is_symlink() or not path.is_file():
+        return False
+    try:
+        return path.read_text(encoding="utf-8") == MARKER_TEXT
+    except (OSError, UnicodeDecodeError):
+        return False
+
+
+def _reset(out: Path) -> None:
+    """Empty `out` (already proven safe by `_wipe_refusal`), create it if missing, and write the marker."""
+    out.mkdir(parents=True, exist_ok=True)
+    for entry in out.iterdir():
+        if entry.is_dir() and not entry.is_symlink():
+            shutil.rmtree(entry)
+        else:
+            entry.unlink()
+    _write(out / MARKER, MARKER_TEXT)
+
+
 def _unsafe_out(root: Path, out: Path) -> str | None:
-    """Why `out` may not be wiped, or None. It must not be the root, hold the root, or touch a source."""
+    """Why `out` may not be used, or None. It must not be the root, hold the root, or touch a source."""
     root_real, out_real = root.resolve(), out.resolve()
     if out_real == root_real or out_real in root_real.parents:
         return f"{out}: the output directory must not be the site root or contain it"

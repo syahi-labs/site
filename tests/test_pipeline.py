@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from sitebuild import pipeline
-from sitebuild.pipeline import BuildResult, build
+from sitebuild.pipeline import MARKER, MARKER_TEXT, BuildResult, build
 
 SITEMAP_NS = "{http://www.sitemaps.org/schemas/sitemap/0.9}"
 
@@ -62,13 +62,16 @@ def test_the_result_names_both_hosts_and_their_pages(mini_root, tmp_path):
     assert r.outputs == {"syahi.sh": tmp_path / "dist" / "syahi.sh", "katha.syahi.sh": tmp_path / "dist" / "katha.syahi.sh"}
     assert sorted(p.slug for p in r.pages) == ["/", "/", "/404", "/signet"]
 
-def test_out_is_wiped_first(mini_root, tmp_path):
+def test_a_previous_builds_output_is_wiped_first(mini_root, tmp_path):
     out = tmp_path / "dist"
-    (out / "syahi.sh").mkdir(parents=True)
-    (out / "syahi.sh" / "stale.html").write_text("old", encoding="utf-8")
-    (out / "stray.txt").write_text("old", encoding="utf-8")
     assert build(mini_root, out).problems == []
-    assert not (out / "syahi.sh" / "stale.html").exists() and not (out / "stray.txt").exists()
+    (out / "syahi.sh" / "stale.html").write_text("old", encoding="utf-8")
+    (out / "syahi.sh" / "assets" / "stale.css").write_text("old", encoding="utf-8")
+    (out / "katha.syahi.sh" / "deep").mkdir()
+    (out / "katha.syahi.sh" / "deep" / "stale.html").write_text("old", encoding="utf-8")
+    assert build(mini_root, out).problems == []
+    assert not list(out.rglob("stale.*")) and not (out / "katha.syahi.sh" / "deep").exists()
+    assert (out / "syahi.sh" / "index.html").is_file()
 
 def test_the_output_does_not_depend_on_where_the_tree_lives(mini_root, tmp_path):
     elsewhere = tmp_path / "a" / "much" / "deeper" / "copy"
@@ -226,6 +229,127 @@ def test_an_unsafe_out_is_refused_and_nothing_is_deleted(mini_root, unsafe):
 def test_an_out_that_contains_the_root_is_refused(mini_root):
     r = build(mini_root, mini_root.parent)
     assert r.problems and (mini_root / "site.yaml").is_file()
+
+# ---- the wipe: only a previous build's output, never anything else ----
+
+def entries(d: Path) -> list[str]:
+    return sorted(str(p.relative_to(d)) for p in d.rglob("*"))
+
+def refuses(root: Path, out: Path):
+    """Build into `out` and assert it was refused with a problem naming it, and that nothing was written."""
+    r = build(root, out)
+    assert r.outputs == {} and r.pages == []
+    assert any(str(out) in p for p in r.problems), r.problems
+    return r
+
+def test_a_build_writes_the_marker_at_the_top_of_out_only(mini_root, tmp_path):
+    build(mini_root, tmp_path / "dist")
+    assert (tmp_path / "dist" / MARKER).read_text(encoding="utf-8") == MARKER_TEXT
+    assert [p for p in (tmp_path / "dist").rglob(MARKER)] == [tmp_path / "dist" / MARKER]
+
+@pytest.mark.parametrize("name", [".git", "sitebuild", "tests", "checks", "worker", "tools", ".venv", "dist-old"])
+def test_a_directory_of_the_repo_is_never_wiped(mini_root, name):
+    victim = mini_root / name
+    victim.mkdir()
+    (victim / "keep.txt").write_text("precious", encoding="utf-8")
+    before = tree_hash(mini_root)
+    refuses(mini_root, victim)
+    assert tree_hash(mini_root) == before
+
+def test_an_unrelated_non_empty_directory_outside_the_root_is_never_wiped(mini_root, tmp_path):
+    elsewhere = tmp_path / "elsewhere"
+    (elsewhere / "sub").mkdir(parents=True)
+    (elsewhere / "sub" / "keep.txt").write_text("precious", encoding="utf-8")
+    refuses(mini_root, elsewhere)
+    assert entries(elsewhere) == ["sub", "sub/keep.txt"]
+
+def test_a_directory_with_the_marker_and_a_stray_file_is_refused(mini_root, tmp_path):
+    out = tmp_path / "dist"
+    assert build(mini_root, out).problems == []
+    (out / "notes.txt").write_text("mine", encoding="utf-8")
+    before = entries(out)
+    r = refuses(mini_root, out)
+    assert any("notes.txt" in p for p in r.problems)
+    assert entries(out) == before and (out / "notes.txt").read_text(encoding="utf-8") == "mine"
+
+def test_a_marker_with_other_content_proves_nothing(mini_root, tmp_path):
+    out = tmp_path / "dist"
+    out.mkdir()
+    (out / MARKER).write_text("somebody else's tool\n", encoding="utf-8")
+    (out / "syahi.sh").mkdir()
+    refuses(mini_root, out)
+    assert (out / MARKER).read_text(encoding="utf-8") == "somebody else's tool\n"
+
+def test_a_symlinked_marker_proves_nothing(mini_root, tmp_path):
+    out = tmp_path / "dist"
+    out.mkdir()
+    real = tmp_path / "real-marker"
+    real.write_text(MARKER_TEXT, encoding="utf-8")
+    (out / MARKER).symlink_to(real)
+    (out / "syahi.sh").mkdir()
+    refuses(mini_root, out)
+    assert real.read_text(encoding="utf-8") == MARKER_TEXT and (out / "syahi.sh").is_dir()
+
+def test_a_host_directory_that_is_a_symlink_is_refused_and_its_target_survives(mini_root, tmp_path):
+    out = tmp_path / "dist"
+    assert build(mini_root, out).problems == []
+    precious = tmp_path / "precious"
+    precious.mkdir()
+    (precious / "keep.txt").write_text("precious", encoding="utf-8")
+    shutil.rmtree(out / "syahi.sh")
+    (out / "syahi.sh").symlink_to(precious, target_is_directory=True)
+    refuses(mini_root, out)
+    assert (precious / "keep.txt").read_text(encoding="utf-8") == "precious" and (out / "syahi.sh").is_symlink()
+
+def test_a_missing_out_is_built_with_its_parents(mini_root, tmp_path):
+    out = tmp_path / "not" / "yet" / "dist"
+    assert build(mini_root, out).problems == []
+    assert (out / "syahi.sh" / "index.html").is_file()
+
+def test_an_empty_out_is_built_into(mini_root, tmp_path):
+    out = tmp_path / "dist"
+    out.mkdir()
+    assert build(mini_root, out).problems == []
+    assert (out / "syahi.sh" / "index.html").is_file() and out.is_dir()
+
+def test_building_twice_into_the_same_out_is_accepted_and_identical(mini_root, tmp_path):
+    out = tmp_path / "dist"
+    assert build(mini_root, out).problems == []
+    first = tree_hash(out)
+    assert build(mini_root, out).problems == []
+    assert build(mini_root, out).problems == []
+    assert tree_hash(out) == first
+
+def test_a_failed_build_leaves_an_out_the_next_build_may_replace(mini_root, tmp_path):
+    out = tmp_path / "dist"
+    index = mini_root / "content" / "index.html"
+    good = index.read_text(encoding="utf-8")
+    index.write_text("<p>no front matter</p>", encoding="utf-8")
+    assert build(mini_root, out).problems
+    assert entries(out) == [MARKER]
+    index.write_text(good, encoding="utf-8")
+    assert build(mini_root, out).problems == []
+
+def test_an_out_that_is_a_file_is_refused_and_left_alone(mini_root, tmp_path):
+    out = tmp_path / "dist"
+    out.write_text("a file, not a directory", encoding="utf-8")
+    refuses(mini_root, out)
+    assert out.read_text(encoding="utf-8") == "a file, not a directory"
+
+def test_an_out_that_is_a_symlink_to_a_directory_is_refused_and_its_target_survives(mini_root, tmp_path):
+    target = tmp_path / "target"
+    assert build(mini_root, target).problems == []  # even a genuine previous build, reached through a link
+    before = tree_hash(target)
+    link = tmp_path / "link"
+    link.symlink_to(target, target_is_directory=True)
+    refuses(mini_root, link)
+    assert link.is_symlink() and tree_hash(target) == before
+
+def test_an_out_that_is_a_dangling_symlink_is_refused(mini_root, tmp_path):
+    link = tmp_path / "link"
+    link.symlink_to(tmp_path / "nowhere")
+    refuses(mini_root, link)
+    assert link.is_symlink() and not (tmp_path / "nowhere").exists()
 
 # ---- release mode ----
 
