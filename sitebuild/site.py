@@ -1,8 +1,9 @@
 """Load site.yaml into a validated SiteConfig.
 
 One site.yaml per host holds the chrome every page shares: base URL, header
-tabs, the one action, footer profiles and policies. Every error message starts
-with the file path.
+tabs, the one action, footer profiles and policies. `founder_profiles` is the
+one optional key: the founder's own profiles, which feed structured data and
+never the footer (D5). Every error message starts with the file path.
 """
 from __future__ import annotations
 
@@ -12,6 +13,7 @@ from pathlib import Path
 import yaml
 
 REQUIRED_KEYS = ("base_url", "name", "header", "tabs", "cta", "profiles", "policies", "pending_pages")
+OPTIONAL_KEYS = ("founder_profiles",)
 LINK_KEYS = ("label", "href")
 HEADERS = ("syahi", "katha")
 EM_DASH = chr(0x2014)
@@ -37,6 +39,7 @@ class SiteConfig:
     policies: tuple[Link, ...]
     pending_pages: frozenset[str]
     header: str
+    founder_profiles: tuple[Link, ...] = ()
 
 
 class _Loader(yaml.SafeLoader):
@@ -75,7 +78,7 @@ def load_site(path: Path) -> SiteConfig:
     missing = [key for key in REQUIRED_KEYS if key not in data]
     if missing:
         raise SiteError(f"{path}: missing required key(s): {', '.join(missing)}")
-    unknown = sorted(str(key) for key in data if key not in REQUIRED_KEYS)
+    unknown = sorted(str(key) for key in data if key not in REQUIRED_KEYS + OPTIONAL_KEYS)
     if unknown:
         raise SiteError(f"{path}: unknown key(s): {', '.join(unknown)}")
     tabs = _links(data["tabs"], "tabs", path)
@@ -90,6 +93,7 @@ def load_site(path: Path) -> SiteConfig:
         policies=_links(data["policies"], "policies", path),
         pending_pages=_pending(data["pending_pages"], path),
         header=_header(data["header"], path),
+        founder_profiles=_links(data["founder_profiles"], "founder_profiles", path) if "founder_profiles" in data else (),
     )
 
 
