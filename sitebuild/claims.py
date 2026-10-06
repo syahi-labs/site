@@ -75,6 +75,17 @@ class ClaimRegister:
         """Every id in the register, live and retired."""
         return frozenset(self.claims)
 
+    def renderings(self) -> Mapping[str, tuple[str, ...]]:
+        """Every live claim's texts by id: the full text, then the short form when it has one.
+
+        For checks that read rendered markup and need to know what a claim says (a retired claim can no longer
+        be rendered, so it is left out). Reading them does not record any claim as used.
+        """
+        return {
+            id: (claim.text,) + ((claim.short,) if claim.short is not None else ())
+            for id, claim in self.claims.items() if claim.status == "live"
+        }
+
     def get(self, id: str) -> Claim:
         """The live claim with this id. Unknown and retired ids raise ClaimError."""
         claim = self.claims.get(id) if isinstance(id, str) else None

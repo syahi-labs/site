@@ -229,3 +229,60 @@ def test_a_layout_without_main_fails_the_one_main_rule(mini_root, tmp_path):
 def test_a_page_with_a_second_main_fails_the_one_main_rule(mini_root, tmp_path):
     page = add_page(mini_root, "two.html", "<h1>Two</h1><main><p>inner</p></main>")
     assert naming(built(mini_root, tmp_path).problems, str(page), "htmlcheck: one-main")
+
+
+# ---- digits in the attributes people read or hear come from claims, and the build proves it ----
+
+LABEL = '<h1>a</h1><p><a href="/signet" aria-label="{label}"{marker}>Book</a></p>'
+
+
+def test_a_bare_digit_in_an_aria_label_fails_the_build_naming_the_page(mini_root, tmp_path):
+    page = add_page(mini_root, "label.html", LABEL.format(label="Book a 30-minute demo", marker=""))
+    (problem,) = naming(built(mini_root, tmp_path).problems, str(page), "numbers-from-claims", "htmlcheck")
+    assert '"30"' in problem and "aria-label" in problem
+
+
+def test_an_alt_with_a_digit_fails_the_build(mini_root, tmp_path):
+    page = add_page(mini_root, "alt.html", '<h1>a</h1><p><img src="/assets/brand/mark-512.png" alt="Plate 4" width="512" height="512"></p>')
+    assert naming(built(mini_root, tmp_path).problems, str(page), "numbers-from-claims", "alt=")
+
+
+def test_a_label_built_with_claim_text_and_named_in_data_claims_builds_clean(mini_root, tmp_path):
+    body = ('<h1>a</h1><p><a href="/signet" aria-label="Details: {{ claim_text(\'signet-price-line\') }}" '
+            'data-claims="signet-price-line">Details</a></p>')
+    add_page(mini_root, "label.html", body, extra="claims: [signet-price-line]\n")
+    r = built(mini_root, tmp_path)
+    assert r.problems == []
+
+
+def test_the_claim_used_only_in_an_attribute_counts_as_rendered(mini_root, tmp_path):
+    body = ('<h1>a</h1><p><a href="/signet" aria-label="Details: {{ claim_text(\'signet-price-line\') }}" '
+            'data-claims="signet-price-line">Details</a></p>')
+    page = add_page(mini_root, "label.html", body, extra="claims: [signet-price-line]\n")
+    assert not naming(built(mini_root, tmp_path).problems, str(page), "never rendered")
+    page = add_page(mini_root, "label.html", "<h1>a</h1>", extra="claims: [signet-price-line]\n")
+    assert naming(built(mini_root, tmp_path / "again").problems, str(page), "never rendered")
+
+
+def test_a_figure_typed_beside_the_claims_words_fails_the_build(mini_root, tmp_path):
+    # The claim's own words are covered by data-claims; a figure typed beside them is not.
+    body = ('<h1>a</h1><p><a href="/signet" aria-label="From \u20b92,999 a month. Plus \u20b9999 extra." '
+            'data-claims="signet-price-line">Details</a></p>')
+    page = add_page(mini_root, "label.html", body)
+    problems = naming(built(mini_root, tmp_path).problems, str(page), "numbers-from-claims")
+    assert len(problems) == 1 and '"999"' in problems[0]
+
+
+def test_a_label_typed_to_match_a_claim_fails_the_day_the_claim_moves(mini_root, tmp_path):
+    body = ('<h1>a</h1><p><a href="/signet" aria-label="From \u20b92,999 a month." '
+            'data-claims="signet-price-line">Details</a></p>')
+    page = add_page(mini_root, "label.html", body)
+    assert naming(built(mini_root, tmp_path).problems, str(page), "numbers-from-claims") == []          # it agrees today
+    claims = mini_root / "data" / "claims.yaml"
+    claims.write_text(claims.read_text(encoding="utf-8").replace("From \u20b92,999 a month.", "From \u20b93,499 a month."), encoding="utf-8")
+    assert naming(built(mini_root, tmp_path / "later").problems, str(page), "numbers-from-claims")      # the claim moved, the label did not
+
+
+def test_a_data_claims_id_that_is_not_in_the_register_fails_the_build(mini_root, tmp_path):
+    page = add_page(mini_root, "label.html", LABEL.format(label="Book a 30-minute demo", marker=' data-claims="no-such-claim"'))
+    assert naming(built(mini_root, tmp_path).problems, str(page), "numbers-from-claims", "no-such-claim")

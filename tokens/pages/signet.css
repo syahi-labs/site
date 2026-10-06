@@ -359,6 +359,13 @@
 @media (max-width:56.25em){
   .hero-watermark{display:none}
 }
+/* The stamp overhangs the ledger's right edge only where the page has room to the right of its 46rem column.
+   Below 51em the content box is the viewport less the gutter, so the stamp sits inside it (its tilted corner
+   included), and the reveal's scale-up is clipped at the column's edge instead of widening the page. */
+@media (max-width:51em){
+  .hero{overflow-x:clip}
+  .stamp{right:.4rem}
+}
 @media (max-width:45em){
   .pair-grid,.slots{grid-template-columns:1fr}
 }

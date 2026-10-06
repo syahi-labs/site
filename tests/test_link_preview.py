@@ -1,8 +1,9 @@
 # tests/test_link_preview.py
 #
 # The tags that make a shared link look right: og:image with its pixel size, twitter:card and twitter:image.
-# Today's pages had all of them; the shared base lost them, a regression this restores. The default image's
-# size is read from the file at build time, never written in the template.
+# Today's pages had all of them; the shared base lost them, a regression this restores. An image's size is read
+# from the file at build time, never written in the template: the default image's, and the page's own image's
+# when a page names one (`og_image` in its front matter).
 import re
 import struct
 import zlib
@@ -72,16 +73,27 @@ def test_the_default_image_carries_its_real_pixel_size(real_site, host):
         assert (tags["og:image:width"], tags["og:image:height"]) == (str(width), str(height)), page.name
 
 
-def test_a_page_with_its_own_image_names_it_and_carries_no_size(real_site):
-    # Only the default image's size is known at build time (render.py), so the Signet page's own share image
-    # (today's og.png, 1200 by 630) goes out without the two size tags that today's page declared.
+def test_a_page_with_its_own_image_carries_that_images_real_size(real_site):
+    # Signet's share image is today's og.png; today's page declared its 1200 by 630, and so does the port.
     own = own_images()
     assert own == {"signet.html": "/assets/brand/og-signet.png"}
     for name, image in own.items():
         tags = metas((real_site.out / "syahi.sh" / name).read_text(encoding="utf-8"))
         assert tags["og:image"] == f"https://syahi.sh{image}" and tags["twitter:image"] == tags["og:image"]
         assert tags["twitter:card"] == "summary_large_image"
-        assert "og:image:width" not in tags and "og:image:height" not in tags
+        width, height = real_png_size(REPO / image.lstrip("/"))
+        assert (width, height) == (1200, 630)
+        assert (tags["og:image:width"], tags["og:image:height"]) == (str(width), str(height))
+
+
+@pytest.mark.parametrize("host", HOSTS)
+def test_every_page_declares_the_real_pixel_size_of_the_file_it_names(real_site, host):
+    out = real_site.out / host
+    for page in sorted(out.glob("*.html")):
+        tags = metas(page.read_text(encoding="utf-8"))
+        image = out / tags["og:image"].removeprefix(f"https://{host}/")
+        assert image.is_file(), (page.name, tags["og:image"])
+        assert (tags["og:image:width"], tags["og:image:height"]) == tuple(map(str, real_png_size(image))), page.name
 
 
 def test_the_size_is_not_written_in_the_template():
@@ -110,16 +122,59 @@ def test_the_tags_follow_whatever_size_the_default_image_is(mini_root, tmp_path)
         assert (tags["og:image:width"], tags["og:image:height"]) == ("1000", "500")
 
 
-def test_a_page_with_its_own_og_image_gets_no_size_but_keeps_the_card(mini_root, tmp_path):
-    page = mini_root / "content" / "signet.html"
-    page.write_text(page.read_text(encoding="utf-8").replace("\nlayout: page\n", "\nlayout: page\nog_image: /assets/brand/mark-512.png\n", 1), encoding="utf-8")
+def use_own_image(root: Path, image: str) -> Path:
+    page = root / "content" / "signet.html"
+    page.write_text(page.read_text(encoding="utf-8").replace("\nlayout: page\n", f"\nlayout: page\nog_image: {image}\n", 1), encoding="utf-8")
+    return page
+
+
+def test_a_page_with_its_own_og_image_carries_that_images_size_and_keeps_the_card(mini_root, tmp_path):
+    use_own_image(mini_root, "/assets/brand/mark-512.png")
     assert build(mini_root, tmp_path / "dist").problems == []
     tags = metas((tmp_path / "dist" / "syahi.sh" / "signet.html").read_text(encoding="utf-8"))
     assert tags["og:image"] == "https://syahi.example/assets/brand/mark-512.png"
     assert tags["twitter:image"] == tags["og:image"] and tags["twitter:card"] == "summary_large_image"
-    assert "og:image:width" not in tags and "og:image:height" not in tags
+    assert (tags["og:image:width"], tags["og:image:height"]) == ("512", "512")     # the file's, not the default's
     home = metas((tmp_path / "dist" / "syahi.sh" / "index.html").read_text(encoding="utf-8"))
-    assert "og:image:width" in home                       # the other pages keep theirs
+    assert (home["og:image:width"], home["og:image:height"]) == ("1200", "630")    # the other pages keep the default's
+
+
+def test_the_own_image_size_follows_whatever_size_the_file_is(mini_root, tmp_path):
+    (mini_root / "assets" / "brand" / "card.png").write_bytes(png(800, 400))
+    use_own_image(mini_root, "/assets/brand/card.png")
+    assert build(mini_root, tmp_path / "dist").problems == []
+    tags = metas((tmp_path / "dist" / "syahi.sh" / "signet.html").read_text(encoding="utf-8"))
+    assert (tags["og:image:width"], tags["og:image:height"]) == ("800", "400")
+
+
+def test_an_own_image_on_another_host_has_no_file_to_read_so_it_has_no_size(mini_root, tmp_path):
+    use_own_image(mini_root, "https://cdn.syahi.example/card.png")
+    assert build(mini_root, tmp_path / "dist").problems == []
+    tags = metas((tmp_path / "dist" / "syahi.sh" / "signet.html").read_text(encoding="utf-8"))
+    assert tags["og:image"] == "https://cdn.syahi.example/card.png" and tags["twitter:card"] == "summary_large_image"
+    assert "og:image:width" not in tags and "og:image:height" not in tags
+
+
+def test_a_missing_own_image_is_a_problem_naming_the_page_and_the_file(mini_root, tmp_path):
+    page = use_own_image(mini_root, "/assets/brand/gone.png")
+    result = build(mini_root, tmp_path / "dist")
+    assert any(str(page) in p and "og_image" in p and "/assets/brand/gone.png" in p for p in result.problems), result.problems
+    assert (tmp_path / "dist" / "syahi.sh" / "index.html").is_file()               # the other pages are still built
+    assert not (tmp_path / "dist" / "syahi.sh" / "signet.html").exists()
+
+
+def test_an_unreadable_own_image_is_a_problem_naming_the_page_and_the_file(mini_root, tmp_path):
+    (mini_root / "assets" / "brand" / "card.png").write_bytes(b"not an image")
+    page = use_own_image(mini_root, "/assets/brand/card.png")
+    result = build(mini_root, tmp_path / "dist")
+    assert any(str(page) in p and "og_image" in p and "/assets/brand/card.png" in p for p in result.problems), result.problems
+
+
+@pytest.mark.parametrize("bad", ["/assets/../site.yaml", "/../site.yaml", "/assets/brand/../../site.yaml"])
+def test_an_own_image_cannot_climb_out_of_the_site_root(mini_root, tmp_path, bad):
+    page = use_own_image(mini_root, bad)
+    result = build(mini_root, tmp_path / "dist")
+    assert any(str(page) in p and "og_image" in p for p in result.problems), result.problems
 
 
 def test_a_missing_default_image_leaves_the_size_out_without_failing_the_build(mini_root, tmp_path):

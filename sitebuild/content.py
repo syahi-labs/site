@@ -15,8 +15,10 @@ import yaml
 REQUIRED_KEYS = ("title", "description", "updated", "layout")
 # `approved` is required too, unless the page is a draft (`draft: true`): new or changed copy that no one
 # has approved yet. A draft says so in its made-by line and a release build refuses it.
-OPTIONAL_KEYS = ("approved", "draft", "claims", "schema", "audience", "og_image", "css")
+OPTIONAL_KEYS = ("approved", "draft", "claims", "schema", "audience", "og_image", "css",
+                 "og_title", "og_description", "og_image_alt")
 FENCE = "---"
+EM_DASH = chr(0x2014)
 # A page stylesheet is named, never pathed: tokens/pages/<name>.css, published as assets/pages/<name>.css.
 CSS_NAME = re.compile(r"[a-z0-9][a-z0-9-]*")
 
@@ -40,6 +42,11 @@ class Page:
     source: Path
     og_image: str | None = None
     css: str | None = None     # the name of this page's own stylesheet in tokens/pages/, or None
+    # The words of the card a shared link unfurls into, when they are not the page's own title and description
+    # (today's Signet, home and Katha pages have shorter ones). None means the title or the description is used.
+    og_title: str | None = None
+    og_description: str | None = None
+    og_image_alt: str | None = None    # the share image's alt text; no tag is written without it
     draft: bool = False        # new or changed copy nobody has approved: the page says so, and cannot be released
 
 
@@ -80,6 +87,9 @@ def _load_page(path: Path, content_dir: Path) -> Page:
         source=path,
         og_image=_optional_text(meta, "og_image", path),
         css=_css_name(meta, path),
+        og_title=_preview_text(meta, "og_title", path),
+        og_description=_preview_text(meta, "og_description", path),
+        og_image_alt=_preview_text(meta, "og_image_alt", path),
         draft=draft,
     )
 
@@ -135,6 +145,14 @@ def _optional_text(meta: dict, key: str, path: Path) -> str | None:
     if meta.get(key) is None:
         return None
     return _text(meta, key, path)
+
+
+def _preview_text(meta: dict, key: str, path: Path) -> str | None:
+    """A link-preview string: a non-empty string with no em dash (the copy rules apply to it like any copy)."""
+    value = _optional_text(meta, key, path)
+    if value is not None and EM_DASH in value:
+        raise ContentError(f"{path}: '{key}' contains an em dash")
+    return value
 
 
 def _css_name(meta: dict, path: Path) -> str | None:

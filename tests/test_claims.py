@@ -316,3 +316,21 @@ def test_em_dash_in_text_names_the_id_and_field(tmp_path):
 def test_sources_of_this_task_have_no_em_dash():
     for path in (ROOT / "sitebuild" / "claims.py", ROOT / "tests" / "test_claims.py", ROOT / "data" / "claims.yaml"):
         assert EM_DASH not in path.read_text(encoding="utf-8"), path
+
+
+# ---- renderings: every live claim's texts, for checks that read rendered markup ----
+
+def test_renderings_are_the_full_text_then_the_short_form_of_each_live_claim(tmp_path):
+    register = reg(tmp_path, GOOD + LIVE_NO_SHORT)
+    assert register.renderings() == {
+        "price-example": ("Founding users start at ₹1,499 a month, after a demo.", "₹1,499 a month"),
+        "plain-line": ("A plain line.",),
+    }
+
+
+def test_renderings_leave_out_a_retired_claim_and_do_not_record_use(tmp_path):
+    text = ('- {id: live-one, text: "30 minutes", short: "30-minute", source: s, updated: 2026-10-06, status: live}\n'
+            '- {id: old-one, text: "gone", source: s, updated: 2026-10-06, status: retired}\n')
+    register = reg(tmp_path, text)
+    assert register.renderings() == {"live-one": ("30 minutes", "30-minute")}
+    assert register.used == set()

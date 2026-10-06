@@ -3,8 +3,10 @@
 `check(html, audience)` returns one finding per problem as "<rule-id>: <detail>". No findings means
 the copy is clean. The copy is the text of `<main>`, plus the page `<title>` and the
 `<meta name="description">`, which are copy too. A finding from the title or description reads
-"<rule-id>: title: ..." or "<rule-id>: description: ...". Header, footer and the rest of the head
-are not read.
+"<rule-id>: title: ..." or "<rule-id>: description: ...". The words a shared link's preview card says
+(og:title, og:description, og:image:alt) are copy too, read when they are not the page's own title and
+description, and reported as "<rule-id>: og:title: ...". Header, footer and the rest of the head are
+not read.
 
 Rules: em-dash, contrast-framing, throat-clearing, buzzword and intangible run over all three.
 stacked-threes (per paragraph) and owner-first-line (for the owner audience) are about the page body.
@@ -17,6 +19,7 @@ import re
 from html.parser import HTMLParser
 
 EM_DASH = chr(0x2014)
+PREVIEW_PROPERTIES = ("og:title", "og:description", "og:image:alt")
 
 # "It's not X, it's Y" and its cousins. Case-insensitive, run on text whose curly apostrophes are
 # straight and whose blocks are joined as sentences, so one spelling covers both and a heading plus
@@ -109,6 +112,7 @@ class _Page(HTMLParser):
         self.h1: list[str] = []
         self.title = ""
         self.description = ""
+        self.preview: dict[str, str] = {}      # og:title, og:description and og:image:alt, as the page writes them
         self._main = 0
         self._skip = 0
         self._svg = 0
@@ -122,10 +126,12 @@ class _Page(HTMLParser):
             self._svg += 1
         elif tag == "title" and not self._main and not self._svg:   # the page's, not an svg's
             self._title = []
-        elif tag == "meta" and not self.description:
+        elif tag == "meta" and not self._main:
             fields = dict(attrs)
-            if (fields.get("name") or "").lower() == "description":
+            if (fields.get("name") or "").lower() == "description" and not self.description:
                 self.description = _clean(fields.get("content") or "")
+            if (fields.get("property") or "") in PREVIEW_PROPERTIES:
+                self.preview.setdefault(fields["property"], _clean(fields.get("content") or ""))
         if tag == "main":
             self._flush()
             self._main += 1
@@ -217,11 +223,20 @@ def check(html: str, audience: str | None) -> list[str]:
         _copy_rules(_sentences(page.blocks), "")
         + _copy_rules(page.title, "title")
         + _copy_rules(page.description, "description")
+        + _preview_rules(page)
         + _stacked_threes(page.paragraphs)
     )
     if audience == "owner":
         found += _owner_first_line(page.blocks, page.h1)
     return list(dict.fromkeys(found))
+
+
+def _preview_rules(page: _Page) -> list[str]:
+    """The copy rules over each preview string that says something of its own: a preview that only repeats the
+    title or the description is that copy, already read, and is not reported twice."""
+    own = {"og:title": page.title, "og:description": page.description}
+    return [finding for name, text in page.preview.items() if text != own.get(name)
+            for finding in _copy_rules(text, name)]
 
 
 def _copy_rules(text: str, where: str) -> list[str]:

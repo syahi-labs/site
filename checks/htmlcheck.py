@@ -1,7 +1,15 @@
 """The HTML checks (spec section 7): the markup rules a rendered page must keep.
 
-`check(html)` returns one finding per problem as "<rule-id>: <detail>". No findings means the page
-passes. Rules: one-h1, one-main, heading-order, lang-hi, numbers-from-claims and balanced.
+`check(html, claims=None)` returns one finding per problem as "<rule-id>: <detail>". No findings means
+the page passes. Rules: one-h1, one-main, heading-order, lang-hi, numbers-from-claims and balanced.
+
+`numbers-from-claims` covers the attributes a person reads or hears (aria-label, alt, title, placeholder) as
+well as the text. A digit in one of those, inside `<main>`, is a finding unless the element names the claims it
+took its digits from, `data-claims="id,id"` (the template helper `claim_text()` writes the claim's text into
+an attribute, and the element carries that marker). The marker alone only says "a claim supplied this"; with
+`claims` (a map of claim id to the texts it renders as, see ClaimRegister.renderings) the check proves it: the
+listed ids must exist, and once each listed claim's text is taken out of the attribute no digit may be left. A
+typed figure that agreed with its claim yesterday therefore fails the day the claim changes.
 
 `one-main` matters beyond markup: the copy check and numbers-from-claims read `<main>` only, so a
 page without one would pass both unread.
@@ -15,6 +23,7 @@ Standard library only.
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from html.parser import HTMLParser
 
@@ -54,6 +63,7 @@ class _Scan(HTMLParser):
         self.levels: list[int] = []
         self.hindi: list[str] = []
         self.numbers: list[str] = []
+        self.claimed: list[tuple[str, str, list[str]]] = []   # (attribute, value, ids) a data-claims element holds digits in
         self.balance: list[str] = []
 
     @property
@@ -88,6 +98,18 @@ class _Scan(HTMLParser):
             text = " ".join(data.split())
             self.numbers += [f'"{n.group(0)}" is outside a claim (in "{_shorten(text)}")' for n in NUMBER.finditer(text)]
 
+    def _attribute_numbers(self, attrs: dict) -> None:
+        """Digits in the attributes people read or hear: bare ones are findings, claimed ones are kept for check()."""
+        ids = [name.strip() for name in attrs.get("data-claims", "").split(",") if name.strip()]
+        for name in VISIBLE_ATTRS:
+            value = attrs.get(name, "")
+            if not NUMBER.search(value):
+                continue
+            if ids:
+                self.claimed.append((name, value, ids))
+            else:
+                self.numbers += [f'"{n.group(0)}" is outside a claim (in {name}="{_shorten(value)}")' for n in NUMBER.finditer(value)]
+
     def close(self):
         super().close()
         for left_open in self.stack:
@@ -114,6 +136,8 @@ class _Scan(HTMLParser):
         if not node.hindi and tag not in HEAD_ONLY:
             for name in VISIBLE_ATTRS:
                 self.hindi += [run.group(0) for run in DEVANAGARI.finditer(attrs.get(name, ""))]
+        if node.in_main and not node.exempt:
+            self._attribute_numbers(attrs)
         # HTML ignores a slash on a non-void element outside svg and math, so `<div/>` opens a div.
         if tag in VOID or (self_closed and node.foreign):
             return
@@ -128,8 +152,12 @@ def _shorten(text: str, limit: int = 60) -> str:
     return text if len(text) <= limit else text[: limit - 3] + "..."
 
 
-def check(html: str) -> list[str]:
-    """Findings for one rendered page, each "<rule-id>: <detail>", each reported once."""
+def check(html: str, claims: Mapping[str, Sequence[str]] | None = None) -> list[str]:
+    """Findings for one rendered page, each "<rule-id>: <detail>", each reported once.
+
+    `claims` maps each live claim id to the texts it renders as. Without it, a `data-claims` marker is taken on
+    trust; with it, the marker is proved (see the module docstring).
+    """
     scan = _Scan()
     scan.feed(html)
     scan.close()
@@ -143,5 +171,19 @@ def check(html: str) -> list[str]:
             found.append(f"heading-order: h{after} follows h{before}, skipping h{before + 1}")
     found += [f'lang-hi: "{run}" is not inside an element with lang="hi"' for run in scan.hindi]
     found += [f"numbers-from-claims: {number}" for number in scan.numbers]
+    if claims is not None:
+        found += [f"numbers-from-claims: {problem}" for problem in _unproven(scan.claimed, claims)]
     found += scan.balance
     return list(dict.fromkeys(found))
+
+
+def _unproven(claimed: list[tuple[str, str, list[str]]], claims: Mapping[str, Sequence[str]]) -> list[str]:
+    """What the `data-claims` markers fail to prove: an id the register lacks, and a digit no listed claim supplies."""
+    found = []
+    for name, value, ids in claimed:
+        found += [f'data-claims names "{id}", which is not a live claim (in {name}="{_shorten(value)}")' for id in ids if id not in claims]
+        remaining = value
+        for text in sorted((text for id in ids for text in claims.get(id, ())), key=len, reverse=True):
+            remaining = remaining.replace(text, " ")
+        found += [f'"{n.group(0)}" is not in the text of {", ".join(ids)} (in {name}="{_shorten(value)}")' for n in NUMBER.finditer(remaining)]
+    return found

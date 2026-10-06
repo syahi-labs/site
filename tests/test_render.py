@@ -140,8 +140,8 @@ def test_open_graph_and_description(env):
 
 
 def test_og_image_override_relative_and_absolute(env):
-    rel = dataclasses.replace(page(), og_image="/assets/img/signet-card.png")
-    assert head_meta(render_page(env, rel, []))["og:image"] == "https://syahi.sh/assets/img/signet-card.png"
+    rel = dataclasses.replace(page(), og_image="/assets/brand/mark-512.png")
+    assert head_meta(render_page(env, rel, []))["og:image"] == "https://syahi.sh/assets/brand/mark-512.png"
     absolute = dataclasses.replace(page(), og_image="https://cdn.example/card.png")
     assert head_meta(render_page(env, absolute, []))["og:image"] == "https://cdn.example/card.png"
 
@@ -331,3 +331,96 @@ def test_a_draft_that_carries_a_date_still_says_not_yet_approved(env):
 def test_a_page_that_is_not_a_draft_keeps_the_approved_line(env):
     html = render_page(env, page(), [])
     assert "Checked and approved by Surabhi Pradhan on 6 Oct 2026." in html and "Not yet approved" not in html
+
+
+# ---- link-preview copy: the base emits the preview's own words, and falls back to the page's ----
+
+def preview_page(**fields):
+    return dataclasses.replace(page("/signet"), **fields)
+
+
+def test_without_preview_copy_the_preview_says_the_title_and_the_description(env):
+    meta = head_meta(render_page(env, page("/signet"), []))
+    assert meta["og:title"] == meta["twitter:title"] == "T"
+    assert meta["og:description"] == meta["twitter:description"] == "D"
+    assert "og:image:alt" not in meta and "twitter:image:alt" not in meta
+
+
+def test_the_preview_copy_replaces_the_title_and_the_description_in_both_tag_sets(env):
+    meta = head_meta(render_page(env, preview_page(og_title="Short", og_description="A line.", og_image_alt="A seal."), []))
+    assert meta["og:title"] == meta["twitter:title"] == "Short"
+    assert meta["og:description"] == meta["twitter:description"] == "A line."
+    assert meta["og:image:alt"] == meta["twitter:image:alt"] == "A seal."
+    assert meta["description"] == "D"                               # the search snippet and the tab keep the page's own
+
+
+def test_each_preview_field_falls_back_on_its_own(env):
+    meta = head_meta(render_page(env, preview_page(og_title="Short"), []))
+    assert meta["og:title"] == "Short" and meta["og:description"] == "D" and "og:image:alt" not in meta
+    meta = head_meta(render_page(env, preview_page(og_description="A line."), []))
+    assert meta["og:title"] == "T" and meta["twitter:description"] == "A line."
+
+
+def test_the_title_element_and_the_json_ld_name_stay_the_pages_title(env):
+    html = render_page(env, preview_page(og_title="Short"), [{"@type": "WebPage", "name": "T"}])
+    assert "<title>T</title>" in html
+
+
+def test_preview_copy_is_escaped(env):
+    html = render_page(env, preview_page(og_title='A & "B"', og_image_alt='x" onload="y'), [])
+    assert 'property="og:title" content="A &amp; &#34;B&#34;"' in html
+    assert 'property="og:image:alt" content="x&#34; onload=&#34;y"' in html
+
+
+def test_the_preview_tags_sit_in_one_group_in_the_head(env):
+    html = render_page(env, preview_page(og_image_alt="A seal."), [])
+    head = html.split("</head>")[0]
+    names = ("og:title", "og:description", "og:url", "og:type", "og:image", "og:image:width", "og:image:height", "og:image:alt",
+             "twitter:card", "twitter:title", "twitter:description", "twitter:image", "twitter:image:alt")
+    order = [head.index(f'"{name}"') for name in names]
+    assert order == sorted(order)
+
+
+# ---- claim_text(): a claim's text as a plain string, for an attribute ----
+# claim() writes a span, which cannot sit inside an attribute. claim_text() gives the text itself, escaped like
+# any value, and records the claim as used, so the front matter list and the build's "rendered" check see it.
+
+def attr_page(body, **fields):
+    return dataclasses.replace(page(body=body), **fields)
+
+
+def test_claim_text_puts_the_plain_text_into_an_attribute(env):
+    html = render_page(env, attr_page("<a href=\"/x\" aria-label=\"Say {{ claim_text('demo-line') }} now\">x</a>"), [])
+    assert 'aria-label="Say Five &lt;b&gt;bold&lt;/b&gt; owners now"' in html     # escaped once, and no span in an attribute
+    assert "<span" not in html[html.index("<main"):html.index("</main>")]
+
+
+def test_claim_text_takes_the_short_form_too(tmp_path):
+    cp = tmp_path / "claims.yaml"
+    cp.write_text(CLAIMS + '- {id: length, text: "30 minutes", short: "30-minute", source: s, updated: 2026-10-06, status: live}\n', encoding="utf-8")
+    env = make_env(REPO, load_site(REPO / "site.yaml"), ClaimRegister.load(cp))
+    html = render_page(env, attr_page("<a href=\"/x\" aria-label=\"A {{ claim_text('length', 'short') }} call\">x</a>"), [])
+    assert 'aria-label="A 30-minute call"' in html
+
+
+def test_claim_text_escapes_a_quote_so_it_cannot_close_the_attribute(tmp_path):
+    cp = tmp_path / "claims.yaml"
+    cp.write_text(CLAIMS + '- {id: odd, text: "say \\"hi\\" now", source: s, updated: 2026-10-06, status: live}\n', encoding="utf-8")
+    env = make_env(REPO, load_site(REPO / "site.yaml"), ClaimRegister.load(cp))
+    html = render_page(env, attr_page("<a href=\"/x\" aria-label=\"{{ claim_text('odd') }}\">x</a>"), [])
+    assert 'aria-label="say &#34;hi&#34; now"' in html
+
+
+def test_claim_text_records_the_claim_as_used(tmp_path):
+    cp = tmp_path / "claims.yaml"; cp.write_text(CLAIMS, encoding="utf-8")
+    register = ClaimRegister.load(cp)
+    env = make_env(REPO, load_site(REPO / "site.yaml"), register)
+    render_page(env, attr_page("<a href=\"/x\" title=\"{{ claim_text('demo-line') }}\">x</a>"), [])
+    assert "demo-line" in register.used
+
+
+def test_claim_text_fails_on_an_unknown_id_and_on_a_missing_short_form(env):
+    with pytest.raises(ClaimError):
+        render_page(env, attr_page("<a href=\"/x\" title=\"{{ claim_text('missing') }}\">x</a>"), [])
+    with pytest.raises(ClaimError):
+        render_page(env, attr_page("<a href=\"/x\" title=\"{{ claim_text('demo-line', 'short') }}\">x</a>"), [])

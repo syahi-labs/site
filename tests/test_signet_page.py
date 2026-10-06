@@ -173,6 +173,15 @@ def test_the_page_passes_every_check_on_its_own(html):
     assert jsonld_mismatches(html) == []
 
 
+def test_the_buttons_label_gets_its_digits_from_the_claim_and_the_check_proves_it(html, register):
+    source = (REPO / "content" / "signet.html").read_text(encoding="utf-8")
+    assert "claim_text('booking-call-length', 'short')" in source and 'aria-label="Book a 30-minute' not in source
+    assert htmlcheck.check(html, register.renderings()) == []
+    # and the proof has teeth: against a register where the claim has moved, the label this page rendered is a finding
+    moved = {**register.renderings(), "booking-call-length": ("45 minutes", "45-minute")}
+    assert [f for f in htmlcheck.check(html, moved) if "aria-label" in f and '"30"' in f]
+
+
 def test_the_made_by_line_is_the_approval(html):
     assert f"Checked and approved by Surabhi Pradhan on {format_date(APPROVED)}." in html
     assert "Not yet approved" not in html
@@ -323,6 +332,7 @@ def test_the_demo_button_keeps_its_new_tab_and_its_label(main):
     (button,) = [attrs for tag, attrs in tags_of(main) if tag == "a"]
     assert button["class"] == "button" and button["target"] == "_blank" and button["rel"] == "noopener"
     assert button["aria-label"] == "Book a 30-minute demo (opens in a new tab)"
+    assert button["data-claims"] == "booking-call-length"       # its digits come from the claim, through claim_text()
     assert re.search(r'>Book a <span data-claim="booking-call-length">30-minute</span> demo</a>', main)
 
 
@@ -567,6 +577,34 @@ def test_the_ledger_animation_is_css_only_and_off_under_reduced_motion():
     assert re.search(r"(?m)^\s*\.ledger li,\s*\.stamp\s*\{[^}]*opacity:0", sheet)
     head = sheet.split("@media (prefers-reduced-motion: no-preference)", 1)[0]
     assert "opacity:0" not in head                      # content is visible unless the animation that reveals it will run
+
+
+def media_block(sheet, query):
+    """The body of the first @media block with this exact query, braces balanced."""
+    start = sheet.index("@media (" + query + ")")
+    body_start = sheet.index("{", start) + 1
+    depth, i = 1, body_start
+    while depth:
+        depth += {"{": 1, "}": -1}.get(sheet[i], 0)
+        i += 1
+    return sheet[body_start:i - 1]
+
+
+def test_the_stamp_sits_inside_the_content_box_wherever_the_column_fills_it():
+    # Measured in a browser at 320, 360, 390, 481, 768 and 816 px (fix round 1): the resting stamp, tilted corner
+    # included, is inside the content box, and the page is never wider than the viewport, resting or revealing.
+    sheet = css()
+    wide = re.search(r"(?m)^\.stamp\{([^}]*)\}", sheet).group(1)
+    assert "right:-1rem" in wide                         # where there is room, it overhangs the ledger as today's did
+    narrow = media_block(sheet, "max-width:51em")
+    assert ".stamp{right:.4rem}" in narrow               # .4rem is more than the tilted corner reaches past the ledger
+    assert ".hero{overflow-x:clip}" in narrow            # the reveal's scale-up cannot widen the page
+    # the 4.6rem stamp of the narrowest block keeps the inset, so no rule below it puts the stamp back outside
+    assert "right:" not in media_block(sheet, "max-width:30em")
+    # the tilt: a square w wide, turned 8 degrees, reaches w * (cos8 + sin8 - 1) / 2 past its box on each side
+    import math
+    reach = lambda rem: rem * (math.cos(math.radians(8)) + math.sin(math.radians(8)) - 1) / 2
+    assert reach(5.2) < 0.4 and reach(4.6) < 0.4
 
 
 def test_the_page_has_no_script_hook_in_its_sheet():

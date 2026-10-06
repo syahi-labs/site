@@ -8,11 +8,14 @@ css: signet
 schema: [SoftwareApplication]
 og_image: /assets/brand/og-signet.png
 claims: [signet-live-since, signet-battery-date, signet-battery-sent, signet-battery-refused, signet-battery-refused-why, signet-d10, booking-call-length, signet-price-line, signet-founding-lock, signet-pay-after-demo]
+og_title: "Signet by Syahi: the decision ledger for AI that talks to your customers"
+og_description: "The decision ledger for AI that talks to your customers. Your agent drafts, you see the exact words, one tap approves. Veto always wins. Every decision leaves a receipt."
+og_image_alt: "The Signet seal above the words: Agents do the work. You keep the say-so. Signet by Syahi, a decision ledger."
 ---
 {# Ported word for word from signet-landing a0bb211 (tests/parity/signet.html). Markup-only changes, none of
    them copy: the page's own wrappers (.wrap) are the shared layout's; the header and footer are the shared ones;
    the CSS is tokens/pages/signet.css; the three step numbers are a CSS counter; the scenes carry data-sample;
-   the seal is the shared partial, named; the figures and the D10 sentence are claims; the call to action's
+   the seal is the shared partial, named; the figures and the D10 sentence are claims (the button's aria-label too, through claim_text); the call to action's
    class is .request, because the base owns .cta. #}
 <div class="hero">
   <svg class="hero-watermark" viewBox="0 0 64 64" aria-hidden="true">
@@ -274,6 +277,6 @@ claims: [signet-live-since, signet-battery-date, signet-battery-sent, signet-bat
   <p class="section-eyebrow">Request a demo</p>
   <h2 id="cta-heading">See it happen on your own draft</h2>
   <p class="lead">{{ claim("signet-d10") }} Book {{ claim("booking-call-length") }}, bring a real email or quote you'd hand an agent, and we'll show you the actual ledger, not a slide.</p>
-  <a class="button" href="https://cal.com/surabhipradhan/30-mins-discussion-about-syahi?overlayCalendar=true" target="_blank" rel="noopener" aria-label="Book a 30-minute demo (opens in a new tab)">Book a {{ claim("booking-call-length", "short") }} demo</a>
+  <a class="button" href="https://cal.com/surabhipradhan/30-mins-discussion-about-syahi?overlayCalendar=true" target="_blank" rel="noopener" aria-label="Book a {{ claim_text('booking-call-length', 'short') }} demo (opens in a new tab)" data-claims="booking-call-length">Book a {{ claim("booking-call-length", "short") }} demo</a>
   <p class="fine">{{ claim("signet-price-line") }} {{ claim("signet-founding-lock") }} {{ claim("signet-pay-after-demo") }}</p>
 </section>
