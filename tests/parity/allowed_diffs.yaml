@@ -37,3 +37,39 @@ site-refund.html:
   - text: "ENTRY P-03 LEDGER SYAHI.SH PLACE BENGALURU, IN EST 2026"
     reason: >-
       The page's own header strip. The shared header (wordmark, tabs, Book a call) replaces it.
+
+# The home page (site 446f625).
+site-index.html:
+  - text: "ENTRY 001 LEDGER SYAHI.SH PLACE BENGALURU, IN EST 2026"
+    reason: >-
+      The page's own header strip. The shared header (wordmark, tabs, Book a call) replaces it.
+
+# Elements the old page carried that the port does not, none of them text the reader reads. Keyed by
+# snapshot file name. `match` is the opening of the element as the snapshot writes it; a test fails an
+# entry the snapshot no longer holds, and checks the new page holds none of them. The reason says why.
+removed_elements:
+  site-index.html:
+    - match: '<canvas id="fluidlayer"'
+      reason: >-
+        The fluid ink canvas (ruling D21): the moving ink and the fluid.js that drew it are gone, so the
+        page has no script. It carries no text, so no word of copy changes.
+    - match: '<canvas id="inklayer"'
+      reason: >-
+        The click-splat and cursor-trail canvas, the same moving ink as the fluid layer and dropped with
+        it (D21). It carries no text.
+    - match: '<svg class="grain"'
+      reason: >-
+        A fixed, full-viewport film-grain overlay (an SVG turbulence filter at 5 percent opacity). It carries
+        no text, and a filtered layer over the whole page is a paint cost the performance budget does not need.
+    - match: "<script>"
+      reason: >-
+        The page's two inline scripts: the motion switch in the head and the loader for the moving ink
+        (scroll reveals, splats, the living drop, fluid.js). The build's pages carry no script except
+        structured data. The scroll reveals were decoration; every card and heading is visible at once.
+    - match: "<footer>"
+      reason: >-
+        The page's own footer (the signature line, the legal line, six links and the place line) is
+        replaced by the shared footer. Where each link went: privacy, terms, refunds and contact are the
+        shared footer's policy row; book a call is the header's button; the email and WhatsApp number are
+        on /contact; the x and personal github links are not carried, because the shared footer shows
+        company profiles only (D5).

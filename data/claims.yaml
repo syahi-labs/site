@@ -169,6 +169,35 @@
   updated: 2026-10-06
   status: live
 
+# ---- the home page ----
+
+# How many ventures the home page shows. One fact in two forms: the hero line says it in words, the
+# ventures section head shows the digit (the `short` form).
+- id: venture-count
+  text: "four"
+  short: "4"
+  source: "syahi.sh home page, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+# The Quote in Ten Minutes promises, as the home card says them. The offer page states the same two, so
+# it reuses these ids.
+- id: qtm-quote-time
+  text: "ten minutes"
+  source: "Services page, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+- id: qtm-live-time
+  text: "two weeks"
+  source: "Services page, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+# The founder's experience, as the colophon says it. The About page reuses it.
+- id: founder-years
+  text: "eleven years"
+  source: "syahi.sh home page, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+
 # ---- katha.syahi.sh ----
 
 # The length of the chapter-one sample, as the page says it.

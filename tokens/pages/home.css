@@ -1,0 +1,195 @@
+/* The home page. Layout and type roles only. Every colour and every font family comes from tokens.css: a role
+   is asked for by token (var(--font-serif), var(--font-mono)), and tests/test_tokens.py fails this folder on a
+   raw colour, a literal family or a redefined token. Lengths are not policed, so the wordmark's display size
+   and the card spacing are raw values; the rest use the type scale (--fs-*) and the spacing scale (--space-*).
+   Text pairs used, all in test_tokens TEXT_PAIRS: ink on ground, ink on ground-deep, muted on ground,
+   muted on ground-deep, act on ground, act on ground-deep.
+   No script and no moving ink (D21): the one motion is the drop falling into the wordmark, in CSS, and
+   reduced motion turns it off. The torn-paper plates keep today's two-mask trick; the masks are shapes
+   (a white rectangle torn by a turbulence filter), so the only colour in them is the mask's own alpha.
+   The section head (.section-head, .roman, .label, .lede) is also in policy.css and katha-index.css, with
+   small differences in spacing. Hoist it into base.css in one pass over all three sheets. */
+
+.page > section + section{margin-top:var(--space-9)}
+
+/* Hero */
+.hero{padding-top:var(--space-6)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,18.75rem);gap:var(--space-7);align-items:center}
+.devanagari{
+  font-family:var(--font-serif);
+  margin-bottom:var(--space-4);
+  font-size:var(--fs-ui);
+  letter-spacing:.4em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.hero h1{font-size:clamp(4.5rem,14vw,10.5rem);line-height:.94;letter-spacing:-.02em}
+.hero h1 .drop{
+  display:inline-block;
+  width:.34em;
+  height:.476em;
+  margin-left:.1em;
+  fill:var(--ink);
+  animation:dropfall .7s 1.15s cubic-bezier(.3,1.6,.4,1) backwards;
+}
+@keyframes dropfall{
+  0%{opacity:0;transform:translate(-40px,-90px) scale(.4)}
+  60%{opacity:1;transform:translate(4px,6px) scale(1.15)}
+  100%{opacity:1;transform:translate(0,0) scale(1)}
+}
+.thesis{
+  max-width:37.5rem;
+  margin-top:2.75rem;
+  font-family:var(--font-serif);
+  font-weight:400;
+  font-size:clamp(1.25rem,2.8vw,1.625rem);
+  line-height:1.45;
+  text-wrap:balance;
+}
+.thesis em{font-style:italic}
+.sub{max-width:33.75rem;margin-top:1.25rem;font-size:1rem;color:var(--muted)}
+.hero-ventures{
+  font-family:var(--font-mono);
+  margin-top:2.125rem;
+  font-size:var(--fs-micro);
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.hero-side{max-width:18.75rem}
+.hero-mark{width:100%;height:auto;mix-blend-mode:multiply}
+.hero-mark-cap{
+  font-family:var(--font-mono);
+  margin-top:var(--space-3);
+  text-align:center;
+  font-size:var(--fs-micro);
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+/* Torn-paper plates: the outer mask tears the paper rim, the inner mask tears the print */
+.torn{
+  background:var(--ground);
+  padding:7%;
+  -webkit-mask-size:100% 100%;
+  mask-size:100% 100%;
+  -webkit-mask-repeat:no-repeat;
+  mask-repeat:no-repeat;
+}
+.torn img{width:100%;display:block;-webkit-mask-size:100% 100%;mask-size:100% 100%}
+.torn-a{--rim:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27400%27%20height%3D%27400%27%3E%3Cfilter%20id%3D%27t%27%20x%3D%27-25%25%27%20y%3D%27-25%25%27%20width%3D%27150%25%27%20height%3D%27150%25%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.02%27%20numOctaves%3D%275%27%20seed%3D%2717%27/%3E%3CfeDisplacementMap%20in%3D%27SourceGraphic%27%20scale%3D%2744%27%20xChannelSelector%3D%27R%27%20yChannelSelector%3D%27G%27/%3E%3C/filter%3E%3Crect%20x%3D%2728%27%20y%3D%2728%27%20width%3D%27344%27%20height%3D%27344%27%20fill%3D%27%23fff%27%20filter%3D%27url%28%23t%29%27/%3E%3C/svg%3E");--print:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27400%27%20height%3D%27400%27%3E%3Cfilter%20id%3D%27t%27%20x%3D%27-25%25%27%20y%3D%27-25%25%27%20width%3D%27150%25%27%20height%3D%27150%25%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.03%27%20numOctaves%3D%274%27%20seed%3D%275%27/%3E%3CfeDisplacementMap%20in%3D%27SourceGraphic%27%20scale%3D%2726%27%20xChannelSelector%3D%27R%27%20yChannelSelector%3D%27G%27/%3E%3C/filter%3E%3Crect%20x%3D%2719%27%20y%3D%2719%27%20width%3D%27362%27%20height%3D%27362%27%20fill%3D%27%23fff%27%20filter%3D%27url%28%23t%29%27/%3E%3C/svg%3E");-webkit-mask-image:var(--rim);mask-image:var(--rim)}
+.torn-a img{-webkit-mask-image:var(--print);mask-image:var(--print)}
+.torn-b{--rim:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27400%27%20height%3D%27400%27%3E%3Cfilter%20id%3D%27t%27%20x%3D%27-25%25%27%20y%3D%27-25%25%27%20width%3D%27150%25%27%20height%3D%27150%25%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.02%27%20numOctaves%3D%275%27%20seed%3D%2723%27/%3E%3CfeDisplacementMap%20in%3D%27SourceGraphic%27%20scale%3D%2744%27%20xChannelSelector%3D%27R%27%20yChannelSelector%3D%27G%27/%3E%3C/filter%3E%3Crect%20x%3D%2728%27%20y%3D%2728%27%20width%3D%27344%27%20height%3D%27344%27%20fill%3D%27%23fff%27%20filter%3D%27url%28%23t%29%27/%3E%3C/svg%3E");--print:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27400%27%20height%3D%27400%27%3E%3Cfilter%20id%3D%27t%27%20x%3D%27-25%25%27%20y%3D%27-25%25%27%20width%3D%27150%25%27%20height%3D%27150%25%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.03%27%20numOctaves%3D%274%27%20seed%3D%2711%27/%3E%3CfeDisplacementMap%20in%3D%27SourceGraphic%27%20scale%3D%2726%27%20xChannelSelector%3D%27R%27%20yChannelSelector%3D%27G%27/%3E%3C/filter%3E%3Crect%20x%3D%2719%27%20y%3D%2719%27%20width%3D%27362%27%20height%3D%27362%27%20fill%3D%27%23fff%27%20filter%3D%27url%28%23t%29%27/%3E%3C/svg%3E");-webkit-mask-image:var(--rim);mask-image:var(--rim)}
+.torn-b img{-webkit-mask-image:var(--print);mask-image:var(--print)}
+.torn-c{--rim:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27400%27%20height%3D%27400%27%3E%3Cfilter%20id%3D%27t%27%20x%3D%27-25%25%27%20y%3D%27-25%25%27%20width%3D%27150%25%27%20height%3D%27150%25%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.02%27%20numOctaves%3D%275%27%20seed%3D%2741%27/%3E%3CfeDisplacementMap%20in%3D%27SourceGraphic%27%20scale%3D%2744%27%20xChannelSelector%3D%27R%27%20yChannelSelector%3D%27G%27/%3E%3C/filter%3E%3Crect%20x%3D%2728%27%20y%3D%2728%27%20width%3D%27344%27%20height%3D%27344%27%20fill%3D%27%23fff%27%20filter%3D%27url%28%23t%29%27/%3E%3C/svg%3E");--print:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27400%27%20height%3D%27400%27%3E%3Cfilter%20id%3D%27t%27%20x%3D%27-25%25%27%20y%3D%27-25%25%27%20width%3D%27150%25%27%20height%3D%27150%25%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.03%27%20numOctaves%3D%274%27%20seed%3D%2729%27/%3E%3CfeDisplacementMap%20in%3D%27SourceGraphic%27%20scale%3D%2726%27%20xChannelSelector%3D%27R%27%20yChannelSelector%3D%27G%27/%3E%3C/filter%3E%3Crect%20x%3D%2719%27%20y%3D%2719%27%20width%3D%27362%27%20height%3D%27362%27%20fill%3D%27%23fff%27%20filter%3D%27url%28%23t%29%27/%3E%3C/svg%3E");-webkit-mask-image:var(--rim);mask-image:var(--rim)}
+.torn-c img{-webkit-mask-image:var(--print);mask-image:var(--print)}
+.torn-d{--rim:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27400%27%20height%3D%27400%27%3E%3Cfilter%20id%3D%27t%27%20x%3D%27-25%25%27%20y%3D%27-25%25%27%20width%3D%27150%25%27%20height%3D%27150%25%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.02%27%20numOctaves%3D%275%27%20seed%3D%2757%27/%3E%3CfeDisplacementMap%20in%3D%27SourceGraphic%27%20scale%3D%2744%27%20xChannelSelector%3D%27R%27%20yChannelSelector%3D%27G%27/%3E%3C/filter%3E%3Crect%20x%3D%2728%27%20y%3D%2728%27%20width%3D%27344%27%20height%3D%27344%27%20fill%3D%27%23fff%27%20filter%3D%27url%28%23t%29%27/%3E%3C/svg%3E");--print:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27400%27%20height%3D%27400%27%3E%3Cfilter%20id%3D%27t%27%20x%3D%27-25%25%27%20y%3D%27-25%25%27%20width%3D%27150%25%27%20height%3D%27150%25%27%3E%3CfeTurbulence%20type%3D%27fractalNoise%27%20baseFrequency%3D%270.03%27%20numOctaves%3D%274%27%20seed%3D%2747%27/%3E%3CfeDisplacementMap%20in%3D%27SourceGraphic%27%20scale%3D%2726%27%20xChannelSelector%3D%27R%27%20yChannelSelector%3D%27G%27/%3E%3C/filter%3E%3Crect%20x%3D%2719%27%20y%3D%2719%27%20width%3D%27362%27%20height%3D%27362%27%20fill%3D%27%23fff%27%20filter%3D%27url%28%23t%29%27/%3E%3C/svg%3E");-webkit-mask-image:var(--rim);mask-image:var(--rim)}
+.torn-d img{-webkit-mask-image:var(--print);mask-image:var(--print)}
+
+/* Section head: a numeral, a label and a line, over a rule */
+.section-head{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:baseline;
+  gap:var(--space-2) var(--space-5);
+  padding-bottom:var(--space-3);
+  border-bottom:1.5px solid var(--ink);
+}
+.roman{
+  font-family:var(--font-serif);
+  font-size:clamp(2.125rem,4.5vw,3.25rem);
+  font-weight:600;
+  letter-spacing:-.01em;
+  line-height:var(--lh-tight);
+}
+.label{font-family:var(--font-mono);text-transform:uppercase;color:var(--muted)}
+.section-head .label{font-size:.78125rem;letter-spacing:.3em}
+.lede{margin-left:auto;font-family:var(--font-serif);font-size:1rem;font-style:italic;color:var(--muted)}
+
+/* The four venture cards. Each is one link. */
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.625rem;margin-top:2.75rem}
+.card{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  padding:1.75rem 1.625rem 1.5rem;
+  border:1.5px solid var(--ink);
+  color:inherit;
+  text-decoration:none;
+  transition:background-color var(--dur-base) var(--ease);
+}
+.card:hover{background:var(--ground-deep);color:var(--ink)}
+.card-top{
+  display:flex;
+  align-items:baseline;
+  gap:.875rem;
+  margin-bottom:1.25rem;
+  padding-bottom:.625rem;
+  border-bottom:1px solid var(--rule);
+}
+.card-top .roman{font-size:var(--fs-h3)}
+.card-top .label{font-size:var(--fs-micro);letter-spacing:.28em}
+.card-main{display:flex;gap:1.375rem;align-items:flex-start}
+.card-fig{width:5.75rem;flex:none}
+.card-fig svg,.card-fig img{width:100%;height:auto;display:block;mix-blend-mode:multiply}
+.card h2{
+  font-family:var(--font-serif);
+  font-size:clamp(1.5rem,3vw,1.875rem);
+  font-weight:600;
+  letter-spacing:-.015em;
+  line-height:1.05;
+}
+.card .prose{margin-top:var(--space-3);font-size:var(--fs-ui);line-height:1.6;color:var(--muted)}
+.card .prose b{font-weight:500;color:var(--ink)}
+.card .for{
+  font-family:var(--font-mono);
+  margin-top:auto;
+  padding-top:1.25rem;
+  font-size:.71875rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.card .for b{font-weight:500;color:var(--ink)}
+.card .act{
+  font-family:var(--font-mono);
+  margin-top:var(--space-3);
+  font-size:var(--fs-small);
+  font-weight:500;
+  color:var(--act);
+}
+.card:hover .act{text-decoration:underline;text-underline-offset:3px}
+
+/* Colophon: a boxed note with its label sitting on the border */
+.colophon{position:relative;padding:3.25rem 3rem;border:1.5px solid var(--ink)}
+.colophon .label{
+  position:absolute;
+  top:-.6875rem;
+  left:2.25rem;
+  padding:0 var(--space-3);
+  background:var(--ground);
+  font-size:var(--fs-small);
+  letter-spacing:.3em;
+}
+.colophon p{
+  font-family:var(--font-serif);
+  max-width:43.75rem;
+  font-size:clamp(1.1875rem,2.6vw,1.5rem);
+  line-height:1.55;
+}
+.colophon p + p{margin-top:1.125rem}
+
+@media (max-width:51.25em){
+  .hero-grid{grid-template-columns:minmax(0,1fr)}
+  .hero-side{display:none}
+}
+@media (max-width:47.5em){
+  .cards{grid-template-columns:minmax(0,1fr);gap:1.25rem}
+  .card-fig{width:4.75rem}
+  .lede{margin-left:0;width:100%}
+  .colophon{padding:2.25rem 1.5rem}
+}
+@media (prefers-reduced-motion: reduce){
+  .hero h1 .drop{animation:none}
+}

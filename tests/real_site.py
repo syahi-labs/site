@@ -1,11 +1,11 @@
 """A build of the real site inputs, for tests that check the pages that ship.
 
-The real inputs are copied to a throwaway root and built into a throwaway out directory. Pages of
-the main host that Task 9 ports in later parts (the home page and /signet, which every page links to)
-get a stand-in until the real page exists, so the whole build can be held to zero problems now and
-keeps being held to it as each real page lands. A stand-in is only ever written where no real page is.
-It shows the organisation's name and its Devanagari name because the main host's home page carries the
-Organization structured data, and every string in structured data must be on the page.
+The real inputs are copied to a throwaway root and built into a throwaway out directory. Pages of the
+main host that Task 9 ports in later parts (/signet, which every page links to, and /services/quote,
+which the home page links to) get a stand-in until the real page exists, so the whole build can be held
+to zero problems now and keeps being held to it as each real page lands. The home page was the first
+stand-in retired (9b); 9c and 9d retire the other two by adding their pages. A stand-in is only ever
+written where no real page is.
 """
 import shutil
 from pathlib import Path
@@ -21,12 +21,10 @@ description: A stand-in for a page that is ported in a later part of Task 9.
 updated: 2026-10-06
 approved: 2026-10-06
 layout: page
-claims: [org-name, org-alternate-name]
 ---
-<h1>{{ claim("org-name") }}</h1>
-<p><span lang="hi">{{ claim("org-alternate-name") }}</span></p>
+<h1>Stand-in</h1>
 """
-STAND_INS = ("index.html", "signet.html")
+STAND_INS = ("signet.html", "services/quote.html")
 
 
 class RealSite(NamedTuple):
@@ -43,7 +41,9 @@ def build_real_site(tmp_path_factory) -> RealSite:
     shutil.copy(REPO / "site.yaml", root / "site.yaml")
     (root / "content").mkdir(exist_ok=True)
     for name in STAND_INS:
-        if not (root / "content" / name).exists():
-            (root / "content" / name).write_text(STAND_IN, encoding="utf-8")
+        target = root / "content" / name
+        if not target.exists():
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(STAND_IN, encoding="utf-8")
     out = tmp_path_factory.mktemp("out") / "dist"
     return RealSite(root, out, build(root, out))
