@@ -297,11 +297,12 @@ def test_the_title_and_description_skip_the_two_rules_that_belong_to_the_page_bo
     html = HEAD.format(title="AI first, agents next", desc="Fast, cheap and simple. Quotes, replies and follow-ups.")
     assert check(html, "owner") == []
 
-def test_the_description_meta_is_found_by_name_and_other_metas_are_not_copy():
+def test_the_description_meta_is_found_by_name_and_only_the_previews_metas_are_copy_besides():
+    # The preview's og:description is copy since the link-preview words became a page's own; a keywords meta is not.
     html = ('<html><head><title>Plain</title><meta name="Description" content="We leverage">'
             '<meta property="og:description" content="We empower"><meta name="keywords" content="robust"></head>'
             '<body><main><p>Plain.</p></main></body></html>')
-    assert check(html, None) == ['buzzword: description: "leverage"']
+    assert check(html, None) == ['buzzword: description: "leverage"', 'buzzword: og:description: "empower"']
 
 def test_a_title_inside_an_svg_is_not_the_page_title():
     html = '<html><head><title>Plain</title></head><body><header><svg><title>We leverage</title></svg></header><main><p>Plain.</p></main></body></html>'
@@ -359,3 +360,40 @@ def test_the_dotted_initialism_is_reported_with_its_dot():
     assert 'owner-first-line: the opening says "A.I.": "A.I. answers enquiries"' in check(main("<h1>A.I. answers enquiries</h1>"), "owner")
     assert 'owner-first-line: the opening says "A.I": "A.I replies"' in check(main("<h1>A.I replies</h1>"), "owner")
     assert 'owner-first-line: the opening says "A.I.": "Built with A.I."' in check(main("<p>Built with A.I. for owners.</p>"), "owner")
+
+
+# ---- the link preview's own words are copy too ----
+
+def with_preview(title="A page", description="A page.", og_title=None, og_description=None, og_alt=None, body="<p>Plain words.</p>"):
+    metas = f'<meta name="description" content="{description}">'
+    for name, value in (("og:title", og_title or title), ("og:description", og_description or description)):
+        metas += f'<meta property="{name}" content="{value}">'
+    if og_alt:
+        metas += f'<meta property="og:image:alt" content="{og_alt}">'
+    return f"<html><head><title>{title}</title>{metas}</head><body><main>{body}</main></body></html>"
+
+
+def test_a_page_with_no_preview_copy_of_its_own_is_checked_once():
+    assert check(with_preview(title="We leverage data", description="A page."), None) == ["buzzword: title: \"leverage\""]
+
+
+@pytest.mark.parametrize("kind, kwargs", [("og:title", {"og_title": "We leverage data"}),
+                                          ("og:description", {"og_description": "We leverage data."}),
+                                          ("og:image:alt", {"og_alt": "We leverage data"})])
+def test_a_buzzword_in_the_preview_copy_is_found_and_named(kind, kwargs):
+    findings = check(with_preview(**kwargs), None)
+    assert findings == [f'buzzword: {kind}: "leverage"']
+
+
+def test_contrast_framing_in_the_preview_description_is_found():
+    findings = check(with_preview(og_description="It's not a tool, it's a teammate."), None)
+    assert [f for f in findings if f.startswith("contrast-framing: og:description")]
+
+
+def test_the_preview_copy_is_not_reported_twice_when_it_is_the_titles_own():
+    html = with_preview(title="We leverage data", description="Fine.", og_title="We leverage data")
+    assert check(html, None) == ["buzzword: title: \"leverage\""]
+
+
+def test_a_clean_preview_has_no_findings():
+    assert check(with_preview(og_title="Short and plain", og_description="Plain words.", og_alt="A seal above three words."), None) == []

@@ -188,3 +188,42 @@ def test_an_impossible_approved_date_on_a_draft_is_still_an_error(tmp_path):
     with pytest.raises(ContentError) as e:
         load_pages(tmp_path)
     assert "x.html" in str(e.value) and "date" in str(e.value)
+
+
+# ---- link-preview copy: og_title, og_description, og_image_alt ----
+# Optional. A page whose shared-link preview says something other than its title and description (today's
+# Signet page, the home page and the Katha pitch do) carries the preview's own words here.
+
+PREVIEW = "og_title: A shorter title\nog_description: A shorter line for a shared link.\nog_image_alt: A seal above three words."
+
+
+def test_the_preview_copy_defaults_to_none(tmp_path):
+    write(tmp_path / "signet.html", FM)
+    (page,) = load_pages(tmp_path)
+    assert (page.og_title, page.og_description, page.og_image_alt) == (None, None, None)
+
+
+def test_the_preview_copy_loads(tmp_path):
+    write(tmp_path / "signet.html", FM.replace("layout: page", "layout: page\n" + PREVIEW))
+    (page,) = load_pages(tmp_path)
+    assert page.og_title == "A shorter title"
+    assert page.og_description == "A shorter line for a shared link."
+    assert page.og_image_alt == "A seal above three words."
+
+
+@pytest.mark.parametrize("key", ["og_title", "og_description", "og_image_alt"])
+@pytest.mark.parametrize("bad", ["[a, b]", "''", "'   '", "12"])
+def test_the_preview_copy_must_be_a_non_empty_string(tmp_path, key, bad):
+    write(tmp_path / "x.html", FM.replace("layout: page", f"layout: page\n{key}: {bad}"))
+    with pytest.raises(ContentError) as e:
+        load_pages(tmp_path)
+    assert "x.html" in str(e.value) and key in str(e.value)
+
+
+@pytest.mark.parametrize("key", ["og_title", "og_description", "og_image_alt"])
+def test_the_preview_copy_may_not_hold_an_em_dash(tmp_path, key):
+    write(tmp_path / "x.html", FM.replace("layout: page", f"layout: page\n{key}: \"a {chr(0x2014)} b\""))
+    with pytest.raises(ContentError) as e:
+        load_pages(tmp_path)
+    message = str(e.value)
+    assert "x.html" in message and key in message and "em dash" in message and chr(0x2014) not in message

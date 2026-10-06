@@ -25,6 +25,7 @@ SOURCES = {
     "img/loom.webp": "c2c29ae93b14a4b8dbd33929a367039c888a8601ea88f9264041bd66104788bc",
     "brand/og-default.png": "b311976aa3ae4df979e23bb30562ff7c39b6686ba985cd196c9e9d23c8df1999",       # og-image.png
     "brand/mark-512.png": "0c37a0bd6c89199623c52fca6b571363e0ddb79fe12730d62b65eb54b4a41922",         # icon-512.png
+    "brand/og-signet.png": "7a6e6b0c7e64bfd602d858ea6bdf49bd216a77f00294dcb6ba82e8bd3cf785ed",         # og.png, signet-landing a0bb211
     "brand/icon-192.png": "f41447896975e79d723dade17a37bd8c40f74ecf6ffdf1e48beb38fa085d657d",
     "brand/apple-touch-icon.png": "d642d6b9e7fd71a3df98d76fd0c31a45ccb12f8fd7abf9a9d6b547ce8b6d8456",
     "brand/favicon.ico": "6a98776564186393d0fea4ff7ab86bd945ca4a7a7d3de0d00c0c10febe4f8c63",
@@ -57,6 +58,7 @@ def test_the_assets_tree_holds_these_files_and_nothing_else():
 
 def test_the_brand_images_have_the_sizes_the_pages_declare():
     assert png_size(ASSETS / "brand" / "og-default.png") == (1200, 630)
+    assert png_size(ASSETS / "brand" / "og-signet.png") == (1200, 630)
     assert png_size(ASSETS / "brand" / "mark-512.png") == (512, 512)
     assert png_size(ASSETS / "brand" / "icon-192.png") == (192, 192)
     assert png_size(ASSETS / "brand" / "apple-touch-icon.png") == (180, 180)

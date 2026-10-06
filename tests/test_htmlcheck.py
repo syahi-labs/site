@@ -133,8 +133,9 @@ def test_numbers_are_judged_in_main_only():
             "<footer>approved on 6 Oct 2026</footer></body></html>")
     assert "numbers-from-claims" not in ids(check(html))
 
-def test_numbers_in_attributes_scripts_and_styles_are_not_visible_text():
-    html = doc('<h1>a</h1><a href="/page-2" aria-label="page 2">go</a><script>var n = 5;</script><style>p{margin:4px}</style>')
+def test_numbers_in_scripts_styles_and_attributes_nobody_reads_are_not_visible_text():
+    # (an aria-label, alt, title or placeholder IS read or heard: see the attribute rules at the end of this file)
+    html = doc('<h1>a</h1><a href="/page-2" class="p2" data-n="2">go</a><script>var n = 5;</script><style>p{margin:4px}</style>')
     assert "numbers-from-claims" not in ids(check(html))
 
 def test_a_number_beside_a_claim_still_fails_and_is_named():
@@ -200,3 +201,103 @@ def test_the_one_main_finding_counts_them():
 def test_a_page_with_no_main_still_gets_the_other_rules():
     findings = check(BARE.format("<h1>a</h1><h1>b</h1>"))
     assert ids(findings) == {"one-main", "one-h1"}
+
+
+# ---- numbers in the attributes people read or hear: aria-label, alt, title, placeholder ----
+# A reader hears an aria-label and sees an alt when the image fails, so a digit there is as much a figure as
+# a digit in a paragraph and comes from a claim too. The helper `claim_text()` puts a claim's text into an
+# attribute; the element then says which claims it took its digits from, `data-claims="id,id"`. With the
+# register at hand the check goes further and proves the digits are the claims' current text.
+
+REGISTER = {"booking-call-length": ("30 minutes", "30-minute"), "plate-count": ("4 plates",)}
+VISIBLE = ("aria-label", "alt", "title", "placeholder")
+
+
+def one(markup, claims=None):
+    return check(doc(markup), claims)
+
+
+def numbers(found):
+    return [f for f in found if f.startswith("numbers-from-claims")]
+
+
+@pytest.mark.parametrize("attr", VISIBLE)
+def test_a_digit_in_a_visible_attribute_is_a_finding(attr):
+    (finding,) = numbers(one(f'<h1>a</h1><a href="/x" {attr}="Book a 30-minute demo">x</a>'))
+    assert '"30"' in finding and attr in finding and "outside a claim" in finding
+
+
+def test_the_finding_names_each_number_and_shows_the_attribute():
+    found = numbers(one('<h1>a</h1><img src="/i.webp" alt="Plate 4 of 12">'))
+    assert len(found) == 2 and any('"4"' in f for f in found) and any('"12"' in f for f in found)
+    assert all('alt="Plate 4 of 12"' in f for f in found)
+
+
+@pytest.mark.parametrize("attr", VISIBLE)
+def test_an_element_that_names_its_claims_may_carry_digits_in_its_attribute(attr):
+    assert numbers(one(f'<h1>a</h1><a href="/x" {attr}="Book a 30-minute demo" data-claims="booking-call-length">x</a>')) == []
+
+
+def test_attributes_that_are_not_read_or_heard_may_hold_digits():
+    ok = '<h1>a</h1><a href="/signet2" class="c3" id="x1" data-n="5" style="top:4px" width="22">x</a><img src="/a1.webp" width="900" height="900" alt="">'
+    assert numbers(one(ok)) == []
+
+
+def test_a_head_meta_with_digits_is_not_checked_here():
+    html = '<html><head><title>t</title><meta name="description" content="30 minutes"><meta property="og:title" content="4 plates"></head><body><main><h1>a</h1></main></body></html>'
+    assert numbers(check(html)) == []
+
+
+def test_the_header_and_footer_outside_main_are_not_checked():
+    html = '<html><head><title>t</title></head><body><header><a href="/" aria-label="Home 2">x</a></header><main><h1>a</h1></main></body></html>'
+    assert numbers(check(html)) == []
+
+
+@pytest.mark.parametrize("wrapper", ['<div data-sample aria-label="Ledger at 09:14">x</div>', '<svg aria-label="Plate 4"></svg>',
+                                     '<span data-claim="x" title="30 minutes">y</span>', '<time datetime="2026-08-31" title="31 Aug">z</time>',
+                                     '<div data-sample><img src="/s.webp" alt="Meena at 09:15"></div>'])
+def test_a_scene_a_drawing_a_claim_or_a_time_may_carry_digits_in_its_attributes(wrapper):
+    assert numbers(one("<h1>a</h1>" + wrapper)) == []
+
+
+def test_digits_in_the_text_of_an_element_that_names_claims_are_still_checked():
+    found = numbers(one('<h1>a</h1><a href="/x" aria-label="Book a 30-minute demo" data-claims="booking-call-length">Only 5 left</a>'))
+    assert len(found) == 1 and '"5"' in found[0]
+
+
+# ---- with the register: the digits must be the listed claims' current text ----
+
+def test_the_digits_come_from_the_listed_claims_text_full_or_short():
+    for label in ("Book a 30-minute demo", "A call of 30 minutes", "Book 30 minutes or a 30-minute demo"):
+        assert numbers(one(f'<h1>a</h1><a href="/x" aria-label="{label}" data-claims="booking-call-length">x</a>', REGISTER)) == []
+
+
+def test_a_digit_the_listed_claims_do_not_supply_is_a_finding():
+    (finding,) = numbers(one('<h1>a</h1><a href="/x" aria-label="Book a 30-minute demo in 5 days" data-claims="booking-call-length">x</a>', REGISTER))
+    assert '"5"' in finding and "booking-call-length" in finding
+
+
+def test_a_claim_whose_text_has_changed_no_longer_covers_a_typed_digit():
+    # The attribute was written with 30 in it; the claim now says 45, so the build must say so.
+    changed = {"booking-call-length": ("45 minutes", "45-minute")}
+    found = numbers(one('<h1>a</h1><a href="/x" aria-label="Book a 30-minute demo" data-claims="booking-call-length">x</a>', changed))
+    assert len(found) == 1 and '"30"' in found[0]
+
+
+def test_a_listed_id_the_register_does_not_have_is_a_finding():
+    found = numbers(one('<h1>a</h1><a href="/x" aria-label="Book a 30-minute demo" data-claims="no-such-claim">x</a>', REGISTER))
+    assert any("no-such-claim" in f and "not a live claim" in f for f in found)
+
+
+def test_several_ids_may_be_listed_and_each_supplies_its_own_digits():
+    ok = '<h1>a</h1><img src="/i.webp" alt="A 30-minute call and 4 plates" data-claims="booking-call-length, plate-count">'
+    assert numbers(one(ok, REGISTER)) == []
+    assert numbers(one(ok.replace("data-claims=\"booking-call-length, plate-count\"", 'data-claims="plate-count"'), REGISTER))
+
+
+def test_a_claim_may_not_excuse_digits_it_does_not_contain_by_being_listed_on_an_unrelated_element():
+    assert numbers(one('<h1>a</h1><a href="/x" aria-label="Open 24 hours" data-claims="booking-call-length">x</a>', REGISTER))
+
+
+def test_without_a_register_the_listed_ids_are_taken_on_trust():
+    assert numbers(one('<h1>a</h1><a href="/x" aria-label="Book a 30-minute demo" data-claims="anything">x</a>')) == []

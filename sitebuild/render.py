@@ -57,6 +57,8 @@ class SiteEnvironment(jinja2.sandbox.SandboxedEnvironment):
     def __init__(self, site: SiteConfig, **options):
         super().__init__(**options)
         self.site = site
+        # The site root the templates and assets live under: where a page's own share image is read from.
+        self.root: Path | None = None
         # The default share image's pixel size, read from the file when the environment is made.
         # None when the file is absent; `default_og_error` says why when it is there but unreadable.
         self.default_og_size: tuple[int, int] | None = None
@@ -86,9 +88,21 @@ def make_env(root: Path, site: SiteConfig, claims: ClaimRegister) -> SiteEnviron
         """The claim's text, escaped, in a span that names it so the checks can find it."""
         return Markup('<span data-claim="{}">{}</span>').format(id, claims.text(id, form))
 
+    def claim_text(id: str, form: str = "full") -> str:
+        """The claim's text as a plain string, for an attribute (aria-label, alt, title, placeholder).
+
+        A span cannot sit inside an attribute, so `claim()` is no help there. The text comes out as a plain
+        string, which autoescape escapes like any value, and the claim is recorded as used. The element then
+        names the claims its attributes took their digits from, `data-claims="id,id"`, and the HTML check
+        proves the digits are those claims' current text.
+        """
+        return claims.text(id, form)
+
+    env.root = Path(root)
     env.default_og_size, env.default_og_error = _image_size(Path(root) / DEFAULT_OG_IMAGE.lstrip("/"))
     env.globals["site"] = site
     env.globals["claim"] = claim
+    env.globals["claim_text"] = claim_text
     env.filters["date"] = format_date
     return env
 
@@ -146,15 +160,12 @@ def _render(env: SiteEnvironment, page: Page, jsonld: list[dict]) -> str:
     layout = env.get_template(_layout_template(page))
     body = Markup(env.from_string(page.body).render(page=page))
     og_image = _og_image(site, page)
-    # Only the default image's size is known. A page that names its own image gets no size tags.
-    if page.og_image is None and env.default_og_error:
-        raise RenderError(f"{page.source}: the default og:image {DEFAULT_OG_IMAGE} has no readable size ({env.default_og_error})")
     return layout.render(
         page=page,
         body=body,
         canonical=_canonical(site, page),
         og_image=og_image,
-        og_image_size=env.default_og_size if page.og_image is None else None,
+        og_image_size=_og_image_size(env, page),
         tabs=[NavTab(tab.label, tab.href, _current(page.slug, tab.href)) for tab in site.tabs],
         jsonld=[_jsonld_block(node, number, page) for number, node in enumerate(jsonld, start=1)],
     )
@@ -172,6 +183,29 @@ def _og_image(site: SiteConfig, page: Page) -> str:
     if image.startswith("/") and not image.startswith("//"):
         return site.base_url + image
     raise RenderError(f"{page.source}: og_image must be a path starting with / or an https:// URL, got {image!r}")
+
+
+def _og_image_size(env: SiteEnvironment, page: Page) -> tuple[int, int] | None:
+    """The pixel size the page's share image declares, read from the file, or None when there is no file to read.
+
+    The default image's size was read when the environment was made. A page's own image is a path under the site
+    root, read the same way; a missing, unreadable or out-of-root file is a RenderError naming the page, because
+    a share image that is not there is a broken link preview. An image on another host (`https://...`) has no file
+    here, so it declares no size.
+    """
+    if page.og_image is None:
+        if env.default_og_error:
+            raise RenderError(f"{page.source}: the default og:image {DEFAULT_OG_IMAGE} has no readable size ({env.default_og_error})")
+        return env.default_og_size
+    if not page.og_image.startswith("/") or env.root is None:
+        return None
+    relative = PurePath(page.og_image.lstrip("/"))
+    if ".." in relative.parts:
+        raise RenderError(f"{page.source}: og_image {page.og_image!r} must not climb out of the site root with '..'")
+    size, error = _image_size(env.root / relative)
+    if size is None:
+        raise RenderError(f"{page.source}: og_image {page.og_image} " + (f"has no readable size ({error})" if error else "is not a file under the site root"))
+    return size
 
 
 def _current(slug: str, href: str) -> str | None:

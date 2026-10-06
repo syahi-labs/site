@@ -274,7 +274,7 @@ def _page_problems(page: Page, html: str, rendered: set[str], claims: ClaimRegis
     """The checks that need a rendered page: structured data, claims, copy, HTML and, in release, pending links."""
     problems = [f"{page.source}: structured data not shown on the page: {mismatch}" for mismatch in jsonld_mismatches(html)]
     problems += [f"{page.source}: copycheck: {finding}" for finding in copycheck.check(html, page.audience)]
-    problems += [f"{page.source}: htmlcheck: {finding}" for finding in htmlcheck.check(html)]
+    problems += [f"{page.source}: htmlcheck: {finding}" for finding in htmlcheck.check(html, claims.renderings())]
     for id in page.claims:
         if id in rendered:
             continue

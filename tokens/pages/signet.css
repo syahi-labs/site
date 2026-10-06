@@ -1,0 +1,378 @@
+/* The Signet page (/signet). Layout and type roles only. Every colour, every font family and every font size
+   comes from tokens.css, and tests/css_guard.py fails this folder on a raw colour, a literal family, a raw
+   font size or a redefined token. Text pairs used, all in test_tokens TEXT_PAIRS: ink, muted and act on
+   ground, and on ground-deep; ground on ink (the demo button).
+
+   Today's page (signet-landing a0bb211) had a palette of its own. Where each colour went:
+     --paper                 --ground             the page
+     --surface               --ground-deep        the ledger, the outward sample, the proof band, the fit cards, the demo band
+     --territory             --rule               hairlines and dashes (and --ground-deep for the faint watermark)
+     --muted, --ink          --muted, --ink       the shared values (muted a little darker, as the tokens measure it)
+     --copper-text           --act                the page's accents: the eyebrow, the italic in the headline, the sealed
+                                                  state, the step numbers, the receipt tags, the outward footer line
+     --copper-graphic        --act                the step icons and the stamp
+     --walnut                --ink, --muted       the ledger's actor names (ink); the "not what this is" heading and dashes (muted)
+     --good (green)          --ink                the "this is for you if" heading and ticks: there is no green token
+     --dock, --nav-inactive, --copper-glow        the page's own footer, which the shared footer replaces
+   The copper wax dot of the seal is the one place copper survives, as the seal's own brand-mark token.
+   The partial-opacity inks of the phone mock-ups are color-mix() of --ink, so they follow the token.
+
+   Sizes: each of today's rem and px sizes is the nearest step of the scale. The headline tops out at
+   --fs-display (52 px), where today's reached 64 px. The ledger's reveal is CSS only and runs only when
+   motion is welcome. No script. */
+
+@counter-style zero-padded{system:extends decimal;pad:2 "0";suffix:""}
+
+/* The page is a narrow column in the shared wrap, with room at the right for the watermark. */
+.page > * + *{margin-top:var(--space-8)}
+.page > .hero,.page > section{max-width:46rem}
+.page ol,.page ul{margin:0;padding:0;list-style:none}
+.page h2{font-size:clamp(var(--fs-h3),4vw,var(--fs-h2));margin-bottom:var(--space-4)}
+
+/* Hero */
+.hero{padding-top:var(--space-5)}
+.hero-watermark{
+  display:block;
+  position:relative;
+  top:1.5rem;
+  left:4rem;
+  width:22rem;
+  height:22rem;
+  fill:none;
+  stroke:var(--ground-deep);
+  pointer-events:none;
+}
+.eyebrow{
+  margin-bottom:1.5rem;
+  font-family:var(--font-mono);
+  font-size:var(--fs-micro);
+  font-weight:500;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--act);
+}
+.hero h1{
+  font-size:clamp(var(--fs-h1),7.4vw,var(--fs-display));
+  font-weight:500;
+  line-height:1.08;
+}
+.hero h1 em{font-style:italic;color:var(--act)}
+.lede{margin-top:1.5rem;max-width:36rem;font-size:var(--fs-body);color:var(--muted)}
+.lede strong{font-weight:500;color:var(--ink)}
+
+/* The decision ledger: a drawn scene (data-sample), three lines and a stamp */
+.ledger{
+  position:relative;
+  margin-top:var(--space-7);
+  background:var(--ground-deep);
+  border:1px solid var(--rule);
+}
+.ledger-head{
+  display:flex;
+  justify-content:space-between;
+  padding:.6rem 1rem;
+  border-bottom:1px solid var(--rule);
+  font-family:var(--font-mono);
+  font-size:var(--fs-micro);
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.ledger li{
+  display:grid;
+  grid-template-columns:3.4rem 1fr auto;
+  gap:.75rem;
+  align-items:baseline;
+  padding:.85rem 1rem;
+  font-family:var(--font-mono);
+  font-size:var(--fs-small);
+  line-height:1.5;
+}
+.ledger li + li{border-top:1px dashed var(--rule)}
+.ledger li:last-child{padding-right:6rem}
+.ledger .t{color:var(--muted)}
+.ledger .who{color:var(--ink)}
+.ledger .quoted{color:var(--ink);font-style:italic}
+.ledger .status{
+  font-size:var(--fs-micro);
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.ledger .status.sealed{color:var(--act);font-weight:500}
+.stamp{
+  position:absolute;
+  right:-1rem;
+  bottom:-1.6rem;
+  display:grid;
+  place-content:center;
+  width:5.2rem;
+  height:5.2rem;
+  border:2px dashed var(--act);
+  border-radius:50%;
+  background:var(--ground);
+  color:var(--act);
+  text-align:center;
+  font-family:var(--font-mono);
+  font-size:var(--fs-micro);
+  font-weight:500;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  line-height:1.7;
+  transform:rotate(-8deg);
+}
+.stamp::before{
+  content:"";
+  position:absolute;
+  inset:5px;
+  border:1px solid var(--act);
+  border-radius:50%;
+}
+
+/* The ledger writes itself, one line at a time, then the stamp lands. Only when motion is welcome: without
+   it the lines and the stamp are simply there. */
+@media (prefers-reduced-motion: no-preference){
+  .ledger li,.stamp{opacity:0}
+  .ledger li{animation:rise .5s ease-out forwards}
+  .ledger li:nth-child(1){animation-delay:.2s}
+  .ledger li:nth-child(2){animation-delay:.9s}
+  .ledger li:nth-child(3){animation-delay:1.6s}
+  .stamp{animation:stamp .35s cubic-bezier(.2,1.4,.4,1) 2.2s forwards}
+  @keyframes rise{
+    from{opacity:0;transform:translateY(.4rem)}
+    to{opacity:1;transform:none}
+  }
+  @keyframes stamp{
+    from{opacity:0;transform:rotate(-8deg) scale(1.6)}
+    to{opacity:1;transform:rotate(-8deg) scale(1)}
+  }
+}
+
+/* Section parts */
+.section-eyebrow{
+  margin-bottom:var(--space-3);
+  font-family:var(--font-mono);
+  font-size:var(--fs-micro);
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.section-lead{max-width:36rem;margin-bottom:1.75rem;color:var(--muted)}
+
+/* Three beats. The number is drawn by a counter, so it is a list marker and not text in the page. */
+.steps{display:grid;gap:1.4rem;margin-top:1.75rem;counter-reset:step}
+.steps li{
+  display:grid;
+  grid-template-columns:2.6rem 1fr;
+  gap:var(--space-4);
+  align-items:start;
+  counter-increment:step;
+}
+.step-glyph{display:grid;justify-items:center;gap:.35rem;padding-top:.2rem}
+.step-glyph svg{stroke:var(--act)}
+.step-glyph::after{
+  content:counter(step,zero-padded);
+  padding-bottom:.15rem;
+  border-bottom:1px solid var(--rule);
+  font-family:var(--font-mono);
+  font-size:var(--fs-micro);
+  color:var(--act);
+}
+.steps strong{display:block;font-family:var(--font-serif);font-size:var(--fs-lead);font-weight:600}
+.steps p{font-size:var(--fs-ui);color:var(--muted)}
+
+/* A decision and a reflex, side by side. The notification and the detail view are drawn scenes (data-sample). */
+.pair-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.75rem;margin-top:2.25rem}
+.pair-card{position:relative;padding:1.625rem 1.5rem;border:1.5px solid var(--ink)}
+.pair-card.dim{border-color:color-mix(in srgb,var(--ink) 35%,transparent)}
+.pair-tag{
+  display:block;
+  margin-bottom:1.125rem;
+  font-family:var(--font-mono);
+  font-size:var(--fs-micro);
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.notif{
+  max-width:21.25rem;
+  padding:.875rem 1rem;
+  border:1px solid color-mix(in srgb,var(--ink) 25%,transparent);
+  border-radius:14px;
+  font-size:var(--fs-ui);
+  line-height:1.5;
+}
+.n-head{display:flex;gap:.5rem;align-items:center;margin-bottom:.375rem;font-size:var(--fs-small);color:var(--muted)}
+.n-dot{width:.875rem;height:.875rem;border-radius:4px;background:color-mix(in srgb,var(--ink) 45%,transparent)}
+.n-btns{display:flex;gap:.625rem;margin-top:.75rem}
+.n-btns span{
+  padding:.25rem .875rem;
+  border:1px solid color-mix(in srgb,var(--ink) 35%,transparent);
+  border-radius:8px;
+  font-size:var(--fs-small);
+}
+.detail{
+  max-width:25rem;
+  padding:1rem 1.125rem;
+  border:1px solid var(--ink);
+  border-radius:6px;
+  font-size:var(--fs-ui);
+  line-height:1.55;
+}
+.d-row{display:flex;gap:.625rem}
+.d-k{
+  flex:none;
+  width:3.5rem;
+  padding-top:2px;
+  font-family:var(--font-mono);
+  font-size:var(--fs-micro);
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.d-draft{margin:.625rem 0;padding:.625rem .75rem;border-left:2.5px solid var(--ink);font-style:italic}
+.d-hash{margin-top:.5rem;font-family:var(--font-mono);font-size:var(--fs-micro);color:var(--muted)}
+.d-approve{
+  display:inline-block;
+  margin-top:.75rem;
+  padding:.3125rem 1rem;
+  border:1.5px solid var(--ink);
+  border-radius:8px;
+  font-size:var(--fs-small);
+  font-weight:600;
+}
+.pair-caption{margin-top:1.375rem;font-size:var(--fs-body)}
+
+/* The battery: a band of receipts, joined by hairlines */
+.proof{padding:var(--space-7) var(--space-6);background:var(--ground-deep);border:1px solid var(--rule)}
+.receipts{
+  display:grid;
+  gap:1px;
+  margin-top:1.75rem;
+  background:var(--rule);
+  background-clip:padding-box;
+  border:1px solid var(--rule);
+}
+.receipts li{display:grid;gap:.4rem;padding:1.1rem 1.15rem;background:var(--ground)}
+.receipt-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:var(--space-4)}
+.receipt-title{font-family:var(--font-serif);font-size:var(--fs-body);font-weight:600}
+.receipt-tag{
+  font-family:var(--font-mono);
+  font-size:var(--fs-micro);
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  white-space:nowrap;
+  color:var(--act);
+}
+.receipt-body{font-size:var(--fs-ui);color:var(--muted)}
+.proof-note{
+  margin-top:1.5rem;
+  padding:1rem 1.15rem;
+  background:var(--ground);
+  border:1px dashed var(--rule);
+  font-size:var(--fs-ui);
+  color:var(--muted);
+}
+.proof-note strong{font-weight:500;color:var(--ink)}
+
+/* The seal that travels with a message: a received email's tail (a drawn scene, data-sample) */
+.outward-sample{
+  max-width:34rem;
+  margin-top:1.75rem;
+  padding:1.375rem 1.5rem;
+  background:var(--ground-deep);
+  border:1px solid var(--rule);
+}
+.outward-msg{font-size:var(--fs-ui);line-height:1.6;color:var(--muted)}
+.outward-footer{
+  margin-top:.875rem;
+  padding-top:.875rem;
+  border-top:1px dashed var(--rule);
+  font-family:var(--font-mono);
+  font-size:var(--fs-small);
+  line-height:1.6;
+  color:var(--act);
+  overflow-wrap:anywhere;
+}
+.outward-note{max-width:36rem;margin-top:1.125rem;font-size:var(--fs-ui);color:var(--muted)}
+
+/* Two slots held open until they can be filled with something real */
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:1.75rem;margin-top:2.25rem}
+.slot{
+  padding:1.625rem 1.5rem;
+  border:1.5px dashed color-mix(in srgb,var(--ink) 40%,transparent);
+  font-size:var(--fs-ui);
+  line-height:1.6;
+}
+.slot-tag{
+  display:block;
+  margin-bottom:.75rem;
+  font-family:var(--font-mono);
+  font-size:var(--fs-micro);
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+/* Who it is for, and who it is not for */
+.fit{display:grid;gap:1.75rem;margin-top:1.75rem}
+.fit-card{padding:1.4rem 1.5rem;background:var(--ground-deep);border:1px solid var(--rule)}
+.fit-card h3{
+  margin-bottom:.85rem;
+  font-family:var(--font-mono);
+  font-size:var(--fs-micro);
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--ink);
+}
+.fit-card.no h3{color:var(--muted)}
+.fit-card ul{display:grid;gap:.6rem}
+.fit-card li{position:relative;padding-left:1.1rem;font-size:var(--fs-ui);color:var(--muted)}
+.fit-card li::before{position:absolute;left:0}
+.fit-card.yes li::before{content:"\2713";color:var(--ink)}
+.fit-card.no li::before{content:"\2013";color:var(--muted)}
+
+/* The call to action: a band of its own. .cta is the base's call button, so this one is .request. */
+.request{padding:var(--space-7) var(--space-6);background:var(--ground-deep);border:1px solid var(--rule);text-align:center}
+.request .signet-mark{width:2.5rem;height:2.5rem;margin:0 auto 1.25rem}
+.request .lead{max-width:32rem;margin:0 auto 2rem;color:var(--muted)}
+.button{
+  display:inline-block;
+  min-height:var(--tap);
+  padding:1rem 1.75rem;
+  background:var(--ink);
+  border:1px solid var(--ink);
+  color:var(--ground);
+  font-family:var(--font-mono);
+  font-size:var(--fs-small);
+  font-weight:500;
+  letter-spacing:.06em;
+  text-decoration:none;
+  transition:background-color var(--dur-fast) var(--ease),color var(--dur-fast) var(--ease);
+}
+.button:hover{background:transparent;color:var(--ink)}
+.fine{margin-top:var(--space-4);font-family:var(--font-mono);font-size:var(--fs-micro);letter-spacing:.06em;color:var(--muted)}
+
+@media (min-width:40em){
+  .fit{grid-template-columns:1fr 1fr}
+}
+@media (max-width:56.25em){
+  .hero-watermark{display:none}
+}
+/* The stamp overhangs the ledger's right edge only where the page has room to the right of its 46rem column.
+   Below 51em the content box is the viewport less the gutter, so the stamp sits inside it (its tilted corner
+   included), and the reveal's scale-up is clipped at the column's edge instead of widening the page. */
+@media (max-width:51em){
+  .hero{overflow-x:clip}
+  .stamp{right:.4rem}
+}
+@media (max-width:45em){
+  .pair-grid,.slots{grid-template-columns:1fr}
+}
+@media (max-width:30em){
+  .ledger li{grid-template-columns:2.9rem 1fr}
+  .ledger .status{grid-column:2}
+  .stamp{bottom:-1.1rem;width:4.6rem;height:4.6rem}
+  .receipt-head{flex-direction:column;gap:.25rem}
+  .proof,.request{padding:var(--space-5) var(--space-4)}
+}

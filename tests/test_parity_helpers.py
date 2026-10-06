@@ -157,7 +157,11 @@ def test_the_real_moves_are_the_controllers_ruling_and_the_art_that_moved_to_ass
     for name in ("inkpot", "loom", "gramophone", "cube"):
         assert by_old[f"art/{name}.webp"].new == f"/assets/img/{name}.webp"
     assert by_old["https://syahi.sh/art/gramophone.webp"].new == "/assets/img/gramophone.webp"
-    assert len(by_old) == 8
+    # Task 9c: Signet's own footer linked the main site by its full address; the site's pages are linked by path
+    for path in ("contact", "privacy", "terms", "refund"):
+        assert (by_old[f"https://syahi.sh/{path}"].new, by_old[f"https://syahi.sh/{path}"].host) == (f"/{path}", False)
+    assert (by_old["https://syahi.sh/"].new, by_old["https://syahi.sh/"].host) == ("/", False)
+    assert len(by_old) == 13
 
 
 def test_no_real_move_is_stale_each_one_is_used_by_a_snapshot():
