@@ -76,6 +76,11 @@ def test_config_is_frozen(tmp_path):
     ("  - {label: One, href: /one}\n", "  - {label: " + EM_DASH + ", href: /one}\n", "em dash"),
     ("cta: {label: Go, href: \"https://go.example/x\"}\n", "cta: Go\n", "cta"),
     ("pending_pages: [/one]\n", "pending_pages: []\nprofiles: []\n", "defined more than once"),
+    ("pending_pages: [/one]\n", "pending_pages: [/one]\nfounder_profiles: nope\n", "'founder_profiles' must be a list"),
+    ("pending_pages: [/one]\n", "pending_pages: [/one]\nfounder_profiles:\n", "'founder_profiles' must be a list"),
+    ("pending_pages: [/one]\n", "pending_pages: [/one]\nfounder_profiles: [{label: Me}]\n", "founder_profiles[1]"),
+    ("pending_pages: [/one]\n", "pending_pages: [/one]\nfounder_profiles: [{label: Me, href: 'http://plain.example/'}]\n", "href"),
+    ("pending_pages: [/one]\n", "pending_pages: [/one]\nfounder_profiles: []\nfounder_profiles: []\n", "defined more than once"),
 ])
 def test_bad_values_fail_and_name_the_file(tmp_path, old, new, expect):
     path = site_file(tmp_path, GOOD.replace(old, new))
@@ -99,3 +104,20 @@ def test_invalid_yaml_and_wrong_shape_fail(tmp_path):
         load_site(site_file(tmp_path, "- just\n- a list\n"))
     with pytest.raises(SiteError, match="cannot read file"):
         load_site(tmp_path / "missing.yaml")
+
+
+def test_founder_profiles_default_to_none(tmp_path):
+    assert load_site(site_file(tmp_path, GOOD)).founder_profiles == ()
+
+
+def test_founder_profiles_load_as_links_in_order(tmp_path):
+    text = GOOD + 'founder_profiles:\n  - {label: Personal X, href: "https://social.example/me"}\n  - {label: Code, href: "https://code.example/me"}\n'
+    site = load_site(site_file(tmp_path, text))
+    assert site.founder_profiles == (Link("Personal X", "https://social.example/me"), Link("Code", "https://code.example/me"))
+    assert isinstance(site.founder_profiles, tuple)
+    assert site.profiles == (Link("Elsewhere", "https://elsewhere.example/me"),)  # the footer list is untouched
+
+
+def test_founder_profiles_is_the_last_field_with_a_default():
+    fields = dataclasses.fields(SiteConfig)
+    assert fields[-1].name == "founder_profiles" and fields[-1].default == ()
