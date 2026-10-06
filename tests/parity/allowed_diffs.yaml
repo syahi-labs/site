@@ -1,0 +1,19 @@
+# Text the old page showed that the new page's <main> does not, one entry per difference with its reason.
+# Keyed by snapshot file name. Each `text` is a whole word-run of the old page's text and is removed
+# once; a stale entry (text no longer in the old page) fails the parity test.
+# What a snapshot's own footer, scripts, styles and svg carried is stripped before this list applies.
+# Do not add an entry to excuse a change of copy. Copy is ported word for word.
+katha-index.html:
+  - text: "SYAHI · KATHA AUDIO ENTRY 003 BENGALURU, IN"
+    reason: >-
+      The page's own header strip. The shared header (wordmark, Listen and Syahi tabs, store button)
+      replaces it, as it replaces every ported page's own chrome.
+  - text: "01"
+    reason: >-
+      Step number of the first beat. The beats are now an ordered list and the browser draws the
+      number as the list marker, so the reader still sees 01 but it is no longer text in the page.
+      A bare "01" would otherwise be a number outside a claim (htmlcheck numbers-from-claims).
+  - text: "02"
+    reason: Step number of the second beat, drawn as the list marker. Same reason as 01.
+  - text: "03"
+    reason: Step number of the third beat, drawn as the list marker. Same reason as 01.

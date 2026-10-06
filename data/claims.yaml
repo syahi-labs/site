@@ -1,1 +1,22 @@
-[]
+# The public claims register: every public fact, once, by id. Both hosts read this one file.
+# Each `source` is a short public label. Private evidence lives in the corpus, never here.
+# Task 9 adds the rest of the org-* facts and the main host's.
+
+# The footer's legal line on both hosts: "<name>, <llpin>, Bengaluru". The LLPIN claim carries its own label.
+- id: org-legal-name
+  text: "SYAHI TECHNOLOGIES LLP"
+  source: "MCA record"
+  updated: 2026-10-06
+  status: live
+- id: org-llpin
+  text: "LLPIN ADB-1993"
+  source: "MCA record"
+  updated: 2026-10-06
+  status: live
+
+# katha.syahi.sh: the length of the chapter-one sample, as the page says it.
+- id: katha-sample-length
+  text: "Forty-five seconds"
+  source: "katha.syahi.sh sample page, 2026-10-06"
+  updated: 2026-10-06
+  status: live

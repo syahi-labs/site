@@ -9,6 +9,8 @@ from pathlib import Path
 
 import pytest
 
+from css_guard import FONT_TOKENS, NAMED_COLOURS, page_css_violations
+
 REPO = Path(__file__).resolve().parents[1]
 TOKENS = (REPO / "tokens" / "tokens.css").read_text(encoding="utf-8")
 BASE = (REPO / "tokens" / "base.css").read_text(encoding="utf-8")
@@ -215,3 +217,107 @@ def test_no_scripts_in_templates_except_jsonld():
     for path in TEMPLATES:
         for tag in re.findall(r"<script[^>]*>", path.read_text(encoding="utf-8")):
             assert 'type="application/ld+json"' in tag, (path, tag)
+
+
+# ---- page-scoped CSS: colours and type families come from tokens.css; sizes and spacing are not policed ----
+# The guard is tests/css_guard.py. This is where it runs over every sheet, and where it is tested itself.
+
+PAGE_CSS = sorted((REPO / "tokens" / "pages").glob("*.css"))
+
+
+@pytest.mark.parametrize("css", PAGE_CSS, ids=lambda path: path.name)
+def test_page_css_uses_tokens_only(css):
+    assert page_css_violations(css.read_text(encoding="utf-8")) == [], css.name
+
+
+@pytest.mark.parametrize("css", PAGE_CSS, ids=lambda path: path.name)
+def test_page_css_has_no_em_dash_import_or_remote_url(css):
+    text = css.read_text(encoding="utf-8")
+    assert EM_DASH not in text and "@import" not in text and "url(http" not in text, css.name
+
+
+def test_there_is_a_page_stylesheet_to_guard():
+    assert (REPO / "tokens" / "pages" / "katha-index.css") in PAGE_CSS
+
+
+# ---- the guard's own tests ----
+
+def test_the_font_tokens_are_read_from_tokens_css():
+    assert {"--font-serif", "--font-sans", "--font-mono", "--font-deva"} <= FONT_TOKENS
+    assert all(declared(name[2:]) for name in FONT_TOKENS)                 # each one is really declared
+    assert not any(name.startswith(("--fs-", "--space-", "--lh-")) for name in FONT_TOKENS)
+
+
+def test_the_guard_reads_the_token_set_it_is_given_not_a_fixed_list():
+    assert page_css_violations("a{font-family:var(--font-new)}", families={"--font-new"}) == []
+    assert page_css_violations("a{font-family:var(--font-serif)}", families={"--font-new"})
+
+
+def test_the_named_colour_list_is_css_color_4s():
+    assert len(NAMED_COLOURS) == 148
+    assert {"red", "rebeccapurple", "grey", "gray", "tan", "whitesmoke"} <= NAMED_COLOURS
+    assert not NAMED_COLOURS & {"transparent", "currentcolor", "inherit", "initial", "unset", "none"}
+
+
+@pytest.mark.parametrize("fine", [
+    # type roles by token: the property and the shorthand
+    "a{font-family:var(--font-serif)}",
+    "a{font-family:var(--font-mono),var(--font-sans)}",
+    "a{font-family:var( --font-deva )}",
+    "a{font-family:var(--font-serif)!important}",
+    "a{font-family:inherit}", "a{font:inherit}",
+    "a{font:500 var(--fs-small)/var(--lh-body) var(--font-mono)}",
+    "a{font:italic 600 1.25rem var(--font-serif)}",
+    "a{font:600 clamp(1rem,2vw,2rem)/1.2 var(--font-serif)}",
+    "a{font:12px/1.5 var(--font-mono),var(--font-sans)}",
+    "a::marker{font-family:var(--font-mono)}",
+    # colour: tokens, the allowed keywords, comments and names that are not values
+    "a{color:var(--ink)}", "a{background:var(--ground-deep)}", "a{border:1px solid var(--rule)}",
+    "a{color:transparent}", "a{color:currentColor}", "a{color:currentcolor}", "a{color:inherit}",
+    "a{color:initial}", "a{color:unset}", "a{background:none}",
+    "/* #fff, rgb( and Georgia in a comment */a{color:var(--muted)}",
+    ".red{color:var(--ink)}", ".gold-rule{border-color:var(--rule)}", "#tan{color:var(--ink)}",
+    "a{content:'red'}", 'a{content:"Georgia #fff"}', "a{background:url(#red)}",
+    "a:hover{color:var(--act)}", "a{transition:background-color var(--dur-fast) var(--ease)}",
+    "a{--x:var(--ink)}",
+    "a{color:var(--ink) /* red */}", "a{/* #fff */color:var(--ink);/* rgb(1,2,3) Georgia */}",
+    "a{counter-reset:red-count}", "a{animation-name:fade-gold-in}", "a{list-style:zero-padded inside}",
+    # sizes and spacing are not policed
+    "a{font-size:12px}", "a{margin:13px 7px}", "a{line-height:1.37}", "a{padding:.3em}",
+    "a{letter-spacing:.24em}", "a{border-width:1.5px}",
+])
+def test_the_page_css_guard_lets_these_through(fine):
+    assert page_css_violations(fine) == [], fine
+
+
+@pytest.mark.parametrize("bad", [
+    # raw colours, every form
+    "a{color:#abc}", "a{color:#AABBCC}", "a{color:#aabbccdd}", "a{border:1px solid #fff}",
+    "a{color:rgb(1,2,3)}", "a{color:RGB(1,2,3)}", "a{color:rgba(1,2,3,.5)}",
+    "a{color:hsl(1,2%,3%)}", "a{color:hsla(1,2%,3%,.5)}", "a{color:hwb(1 2% 3%)}",
+    "a{color:oklch(60% .1 30)}", "a{color:oklab(60% .1 .1)}", "a{color:lab(50% 40 59)}",
+    "a{color:lch(50% 40 59)}", "a{color:color(display-p3 1 0 0)}",
+    "a{color:var(--ink,#fff)}",
+    "a{--accent:#abc}", "a{--accent:red}",
+    "a{box-shadow:0 0 4px red}",
+    # literal families, every form
+    "a{font-family:serif}", "a{font-family:Georgia}", "a{font-family:'Fraunces',serif}",
+    'a{font-family:"Inter"}', "a{font-family:system-ui}", "a{font-family:monospace}",
+    "a{font-family:var(--font-serif),serif}", "a{font-family:var(--font-serif,serif)}",
+    "a{font-family:var(--font-missing)}", "a{font-family:var(--ink)}", "a{font-family:var(--fs-body)}",
+    "a{font-family:var(--font-serif) Georgia}",
+    "a{font:12px Georgia}", "a{font:12px serif}", 'a{font:12px/1.5 "Inter",sans-serif}',
+    "a{font:12px var(--font-serif),serif}", "a{font:12px var(--font-missing)}", "a{font:12px/1.4 var(--ink)}",
+    "a{font:caption}", "a{font:italic 600 1rem monospace}", "a{font:12px}", "a{font:12px/1.4}",
+    "a{font:var(--fs-nope) var(--font-serif)}", "a{font:12px/var(--lh-nope) var(--font-serif)}",
+    "@font-face{font-family:'Fraunces';src:url(f.woff2)}",
+])
+def test_the_page_css_guard_catches_these(bad):
+    assert page_css_violations(bad), bad
+
+
+@pytest.mark.parametrize("name", sorted(NAMED_COLOURS))
+def test_every_named_colour_is_caught_in_any_case(name):
+    assert page_css_violations("a{color:%s}" % name)
+    assert page_css_violations("a{border:1px solid %s}" % name.upper())
+    assert page_css_violations("a{background:%s}" % name.capitalize())

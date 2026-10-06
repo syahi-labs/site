@@ -6,14 +6,17 @@ followed by a Jinja body. The slug comes from the path.
 from __future__ import annotations
 
 import datetime
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
 
 REQUIRED_KEYS = ("title", "description", "updated", "approved", "layout")
-OPTIONAL_KEYS = ("claims", "schema", "audience", "og_image")
+OPTIONAL_KEYS = ("claims", "schema", "audience", "og_image", "css")
 FENCE = "---"
+# A page stylesheet is named, never pathed: tokens/pages/<name>.css, published as assets/pages/<name>.css.
+CSS_NAME = re.compile(r"[a-z0-9][a-z0-9-]*")
 
 
 class ContentError(Exception):
@@ -34,6 +37,7 @@ class Page:
     body: str
     source: Path
     og_image: str | None = None
+    css: str | None = None     # the name of this page's own stylesheet in tokens/pages/, or None
 
 
 def load_pages(content_dir: Path) -> list[Page]:
@@ -71,6 +75,7 @@ def _load_page(path: Path, content_dir: Path) -> Page:
         body=body,
         source=path,
         og_image=_optional_text(meta, "og_image", path),
+        css=_css_name(meta, path),
     )
 
 
@@ -116,6 +121,16 @@ def _optional_text(meta: dict, key: str, path: Path) -> str | None:
     if meta.get(key) is None:
         return None
     return _text(meta, key, path)
+
+
+def _css_name(meta: dict, path: Path) -> str | None:
+    name = _optional_text(meta, "css", path)
+    if name is not None and not CSS_NAME.fullmatch(name):
+        raise ContentError(
+            f"{path}: 'css' must be the plain name of a stylesheet in tokens/pages/ "
+            f"(lowercase letters, digits and hyphens, no path or extension), got {name!r}"
+        )
+    return name
 
 
 def _date(meta: dict, key: str, path: Path) -> datetime.date:
