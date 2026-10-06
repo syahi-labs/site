@@ -265,6 +265,15 @@ def test_updated_must_be_a_real_date(tmp_path):
         assert "price-example" in message and "updated" in message, bad
 
 
+@pytest.mark.parametrize("bad", ["2026-02-30", "2026-13-01", "2026-00-10", "2026-10-32", "2026-10-06 25:00:00"])
+def test_impossible_dates_fail_as_claim_error_with_the_path(tmp_path, bad):
+    # PyYAML builds the date inside safe_load, so this fails before any claim is parsed.
+    message = load_error(tmp_path, GOOD.replace("updated: 2026-10-06", f"updated: {bad}", 1))
+    assert message.startswith(str(tmp_path / "claims.yaml"))
+    assert "date" in message
+    assert "out of range" in message or "must be in" in message
+
+
 @pytest.mark.parametrize("key", ["text", "short", "source"])
 @pytest.mark.parametrize("bad", ["2026-08-13", "1499", "true", "[a, b]", "{a: b}"])
 def test_string_fields_reject_other_types(tmp_path, key, bad):

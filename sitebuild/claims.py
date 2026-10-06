@@ -55,8 +55,10 @@ class ClaimRegister:
             raise ClaimError(f"{path}: cannot read file ({err})") from err
         try:
             data = yaml.safe_load(raw)
-        except yaml.YAMLError as err:
-            raise ClaimError(f"{path}: not valid YAML ({err})") from err
+        except (yaml.YAMLError, ValueError) as err:
+            # PyYAML builds dates inside safe_load, so an impossible one such as
+            # 2026-02-30 raises ValueError here, before any claim is parsed.
+            raise ClaimError(f"{path}: not valid YAML, or a date in it is impossible ({err})") from err
         if data is None:
             data = []
         if not isinstance(data, list):
