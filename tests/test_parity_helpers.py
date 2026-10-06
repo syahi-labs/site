@@ -4,7 +4,7 @@
 # so a page test passing means the page matches, not that the helper is lenient.
 import pytest
 
-from parity_helpers import apply_allowed, link_values, words
+from parity_helpers import PARITY, LinkMove, LINK_MOVES, apply_allowed, apply_link_moves, link_values, moves_used, words
 
 
 def page(body: str) -> str:
@@ -104,3 +104,66 @@ def test_a_snapshot_with_no_entries_is_only_whitespace_normalised(tmp_path):
 def test_link_values_are_in_document_order_and_include_src():
     markup = '<a href="/a">x</a><img src="/i.webp"><link href="/s.css"><a href="mailto:hello@syahi.example">m</a>'
     assert link_values(markup) == ["/a", "/i.webp", "/s.css", "mailto:hello@syahi.example"]
+
+
+# ---- link moves: a page that moved into the one site is linked at its new home, and nothing else changes ----
+
+MOVES = (
+    LinkMove("https://shop.example", "/shop", "the shop moved into the one site", host=True),
+    LinkMove("https://blog.example/", "/blog", "only the blog's front page moved"),
+    LinkMove("art/a.webp", "/assets/img/a.webp", "the same file, in the shared assets"),
+)
+
+
+def test_a_link_move_replaces_an_exact_value_and_leaves_every_other_value_alone():
+    values = ["https://blog.example/", "https://blog.example/post", "art/a.webp", "art/b.webp", "mailto:hi@syahi.example"]
+    assert apply_link_moves(values, MOVES) == ["/blog", "https://blog.example/post", "/assets/img/a.webp", "art/b.webp",
+                                               "mailto:hi@syahi.example"]
+
+
+def test_a_host_move_takes_any_path_on_that_host_and_only_that_host():
+    values = ["https://shop.example", "https://shop.example/", "https://shop.example/cart?x=1#top", "https://shop.example.other.example/",
+              "https://notshop.example/", "http://shop.example/", "/shop"]
+    assert apply_link_moves(values, MOVES) == ["/shop", "/shop", "/shop", "https://shop.example.other.example/",
+                                               "https://notshop.example/", "http://shop.example/", "/shop"]
+
+
+def test_the_order_and_the_length_of_the_links_never_change():
+    values = ["a", "art/a.webp", "b", "https://shop.example/x", "a"]
+    assert len(apply_link_moves(values, MOVES)) == len(values)
+    assert apply_link_moves([], MOVES) == []
+
+
+def test_moves_used_names_each_move_that_matched_at_least_once():
+    values = ["https://shop.example/a", "https://shop.example/b", "x"]
+    assert moves_used(values, MOVES) == [MOVES[0]]
+    assert moves_used(["x"], MOVES) == []
+
+
+def test_every_real_move_has_a_reason_and_goes_to_a_path_on_this_site():
+    assert LINK_MOVES
+    for move in LINK_MOVES:
+        assert move.reason.strip() and len(move.reason.split()) >= 4, move
+        assert move.new.startswith("/") and not move.new.startswith("//"), move
+        assert chr(0x2014) not in move.old + move.new + move.reason
+    assert len({move.old for move in LINK_MOVES}) == len(LINK_MOVES)       # one entry per old value
+
+
+def test_the_real_moves_are_the_controllers_ruling_and_the_art_that_moved_to_assets():
+    by_old = {move.old: move for move in LINK_MOVES}
+    assert (by_old["https://signet.syahi.sh"].new, by_old["https://signet.syahi.sh"].host) == ("/signet", True)
+    assert (by_old["https://services.syahi.sh"].new, by_old["https://services.syahi.sh"].host) == ("/services/quote", True)
+    assert (by_old["https://katha.syahi.sh/"].new, by_old["https://katha.syahi.sh/"].host) == ("/katha", False)
+    for name in ("inkpot", "loom", "gramophone", "cube"):
+        assert by_old[f"art/{name}.webp"].new == f"/assets/img/{name}.webp"
+    assert by_old["https://syahi.sh/art/gramophone.webp"].new == "/assets/img/gramophone.webp"
+    assert len(by_old) == 8
+
+
+def test_no_real_move_is_stale_each_one_is_used_by_a_snapshot():
+    # A move whose old value is in no snapshot is dead weight, and a place a link could change unseen.
+    seen = []
+    for snapshot in sorted(PARITY.glob("*.html")):
+        seen += link_values(snapshot.read_text(encoding="utf-8"))
+    for move in LINK_MOVES:
+        assert move in moves_used(seen, LINK_MOVES), f"{move.old} is in no snapshot: remove the move"

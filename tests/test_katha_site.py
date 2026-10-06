@@ -11,7 +11,7 @@ import yaml
 
 from checks import copycheck, htmlcheck
 from css_guard import page_css_violations
-from parity_helpers import PARITY, apply_allowed, link_values, words
+from parity_helpers import PARITY, apply_allowed, apply_link_moves, link_values, words
 from sitebuild.claims import ClaimRegister
 from sitebuild.content import load_pages
 from sitebuild.schema import jsonld_mismatches
@@ -180,9 +180,12 @@ HERO_NEW = "/assets/img/gramophone.webp"            # the port: the same bytes, 
 
 def test_links_and_media_are_the_old_pages_exactly_but_for_the_hero_now_on_its_own_host(html):
     # The same href and src values, in order, in the page's own content, compared whole, not as substrings.
+    # The one move is the hero's, the same entry /katha on syahi.sh uses (parity_helpers.LINK_MOVES).
     old = SNAPSHOT.read_text(encoding="utf-8").split('<div class="hero-grid">', 1)[1].split("</main>")[0]
     new = html.split("<main", 1)[1].split("</main>")[0]
     assert link_values(old).count(HERO_OLD) == 1
+    assert apply_link_moves([HERO_OLD]) == [HERO_NEW]
+    assert link_values(new) == apply_link_moves(link_values(old))
     assert link_values(new) == [HERO_NEW if value == HERO_OLD else value for value in link_values(old)]
     assert len(link_values(old)) == 6      # the guard cannot pass by both sides being empty
 
