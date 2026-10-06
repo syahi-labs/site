@@ -112,6 +112,31 @@ def test_the_commit_holds_exactly_the_copied_paths_and_a_labelled_message(tmp_pa
     assert (r / "assets" / "a.css").read_text() == "a{}"
 
 
+def test_the_root_icons_are_copied_and_committed_when_the_build_has_them(tmp_path):
+    r = feed_repo(tmp_path); d = dist(tmp_path)
+    (d / "favicon.ico").write_bytes(b"\x00ico"); (d / "apple-touch-icon.png").write_bytes(b"\x89png")
+    res = publish(r, d, "--no-fetch")
+    assert res.returncode == 0, said(res)
+    assert sorted(git(r, "show", "--name-only", "--format=", "HEAD").stdout.split()) == [
+        "apple-touch-icon.png", "assets/a.css", "favicon.ico", "index.html", "robots.txt", "sitemap.xml"]
+    assert (r / "favicon.ico").read_bytes() == b"\x00ico" and (r / "apple-touch-icon.png").read_bytes() == b"\x89png"
+    assert (r / "feed.xml").read_text() == "<rss/>" and (r / "CNAME").read_text() == "katha.syahi.sh\n"
+
+
+def test_other_root_files_are_still_left_out(tmp_path):
+    r = feed_repo(tmp_path); d = dist(tmp_path, extra="stray.txt")
+    (d / "favicon.ico").write_bytes(b"i")
+    res = publish(r, d, "--no-fetch")
+    assert res.returncode == 0 and "skip   stray.txt" in said(res), said(res)
+    assert not (r / "stray.txt").exists()
+
+
+def test_a_root_icon_that_is_a_symbolic_link_in_the_dist_is_refused(tmp_path):
+    r = feed_repo(tmp_path); d = dist(tmp_path)
+    (d / "favicon.ico").symlink_to(d / "index.html")
+    refused(publish(r, d, "--no-fetch"), "symbolic link")
+
+
 def test_feed_and_cname_are_byte_identical_afterwards(tmp_path):
     r = feed_repo(tmp_path); d = dist(tmp_path)
     before = (sha(r / "feed.xml"), sha(r / "CNAME"))

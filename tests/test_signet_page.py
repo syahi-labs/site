@@ -20,6 +20,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from asset_urls import hashed_file, hashed_url
 from checks import copycheck, htmlcheck
 from parity_helpers import PARITY, apply_allowed, apply_link_moves, link_values, moves_used, words
 from real_site import STAND_INS
@@ -521,8 +522,8 @@ def css():
 
 
 def test_the_page_names_its_own_sheet_and_the_build_publishes_it(dist, html):
-    assert '<link rel="stylesheet" href="/assets/pages/signet.css">' in html
-    assert (dist / "assets" / "pages" / "signet.css").read_bytes() == (REPO / "tokens" / "pages" / "signet.css").read_bytes()
+    assert f'<link rel="stylesheet" href="{hashed_url(dist, "pages/signet.css")}">' in html
+    assert hashed_file(dist, "pages/signet.css").read_bytes() == (REPO / "tokens" / "pages" / "signet.css").read_bytes()
 
 
 def test_the_sheet_passes_the_page_css_guard_and_has_no_em_dash():

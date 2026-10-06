@@ -2,8 +2,8 @@
 
 `build` loads and validates every input, renders each page of syahi.sh and
 katha.syahi.sh into `out/<host>/`, writes each host's sitemap and robots.txt
-(and syahi.sh's llms.txt), publishes the stylesheets, the assets/ tree and each page's own stylesheet,
-and runs the checks.
+(and syahi.sh's llms.txt), publishes every stylesheet, image, brand file and subset font under a
+content-hashed name (sitebuild.assets), links them from the pages, and runs the checks.
 
 The checks (the `checks` package) run inside the build, so a page that fails one fails the build:
   - per rendered page: copycheck (the copy in <main>, told the page's audience) and htmlcheck;
@@ -36,10 +36,11 @@ import shutil
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from urllib.parse import urlsplit
 
 from checks import copycheck, htmlcheck, sitecheck
+from sitebuild import assets
 from sitebuild.claims import ClaimError, ClaimRegister
 from sitebuild.content import ContentError, Page, load_pages
 from sitebuild.generated import NOT_FOUND_SLUG, llms_txt, robots_txt, sitemap_xml
@@ -82,6 +83,7 @@ class BuildResult:
     pages: list[Page] = field(default_factory=list)           # every page of every host, main host first
     problems: list[str] = field(default_factory=list)         # empty means the build is good
     warnings: list[str] = field(default_factory=list)         # worth reading, never fails the build
+    font_bytes: dict[str, dict[str, int]] = field(default_factory=dict)   # host name to woff2 bytes per face
 
 
 @dataclass(frozen=True)
@@ -207,12 +209,14 @@ def _build_host(root: Path, out: Path, item: _Loaded, claims: ClaimRegister, rel
     host, site, problems = item.host, item.site, result.problems
     host_out = out / host.name
     env = make_env(root, site, claims)
+    env.assets_out = host_out / "assets"
     rendered_pages = []
+    rendered_html = []
     for page in item.pages:
         html = _render(env, site, claims, page, release, problems)
         if html is not None:
-            _write(host_out / _file_for(page.slug), html)
             rendered_pages.append(page)
+            rendered_html.append(html)
     # What a crawler or a reader is told about: no pending page and no /404.
     listed = [p for p in rendered_pages if p.slug != NOT_FOUND_SLUG and p.slug not in site.pending_pages]
     # A page is its source plus every partial it includes; one git question per file, asked once.
@@ -229,8 +233,14 @@ def _build_host(root: Path, out: Path, item: _Loaded, claims: ClaimRegister, rel
             _write(host_out / "llms.txt", llms_txt(site, listed, claims))
         except ClaimError as err:
             problems.append(f"{host.name}: llms.txt: {err}")
-    problems.extend(_publish_assets(root, host_out))
-    problems.extend(_publish_page_css(root, host_out, rendered_pages))
+    # Fonts are subset against the text just rendered, stylesheets carry the font URLs, and a page links the
+    # stylesheets: so the pages are written last, with their asset links pointing at the hashed files.
+    problems.extend(_missing_page_css(root, rendered_pages))
+    font_bytes = result.font_bytes.setdefault(host.name, {})
+    manifest, asset_problems = _publish_assets(root, host_out, rendered_html, [p.css for p in rendered_pages if p.css], font_bytes)
+    problems.extend(asset_problems)
+    for page, html in zip(rendered_pages, rendered_html):
+        _write(host_out / _file_for(page.slug), assets.rewrite_html(html, manifest))
     if release:
         problems.extend(_release_site_problems(item))
         problems.extend(_release_draft_problems(item))
@@ -461,40 +471,81 @@ def _write(path: Path, text: str) -> None:
 STYLESHEETS = ("tokens.css", "base.css")
 PAGE_CSS_DIR = Path("tokens") / "pages"
 ASSETS_DIR = "assets"
-# Names under assets/ that the build writes itself: the shared stylesheets and the page stylesheets.
-# A source file there would shadow a real stylesheet, so it is refused rather than published.
-RESERVED_ASSETS = (*STYLESHEETS, "pages")
+# Names under assets/ that the build writes itself: the shared stylesheets, the page stylesheets and the
+# subset fonts. A source file there would shadow a real output, so it is refused rather than published.
+RESERVED_ASSETS = (*STYLESHEETS, "pages", *assets.BUILD_OWNED)
 
 
-def _publish_assets(root: Path, host_out: Path) -> list[str]:
-    """Copy the stylesheets and then the assets/ tree to host_out/assets/, byte for byte and unhashed.
+def _publish_assets(root: Path, host_out: Path, pages_html: list[str], css_names: list[str],
+                    sizes: dict[str, int] | None = None) -> tuple[dict[str, str], list[str]]:
+    """Publish every asset of one host under host_out/assets/ with a content-hashed name.
 
-    The stylesheets keep their own names, so the base template's links resolve. The tree (art, brand
-    mark, share image, favicons) keeps its folders. A dotfile is never an asset (.DS_Store, .gitkeep).
-    A symbolic link is refused and not followed, so nothing outside the repo can reach the public
-    output. A file in a name the build writes itself (see RESERVED_ASSETS) is refused too.
-    Task 7 replaces this one function with the hashed asset pipeline. Returns problems, never raises.
+    Returns (the manifest from a source path under assets/ to its hashed URL, problems). The order matters:
+    the images and the brand files come first, then the fonts (subset against this host's own text), then
+    the stylesheets, because a stylesheet's `url()` and the font rules it carries name hashed files and its
+    own hash covers them. A page links the manifest's URLs once `assets.rewrite_html` has run.
+
+    Files an outside consumer asks for by a fixed URL keep a stable copy (assets.STABLE_ONLY and
+    assets.ALSO_STABLE), and /favicon.ico and /apple-touch-icon.png are copied to the host root.
+    A dotfile is never an asset (.DS_Store, .gitkeep). A symbolic link is refused and not followed, so
+    nothing outside the repo can reach the public output. A file in a name the build writes itself (see
+    RESERVED_ASSETS) is refused too. Returns problems, never raises.
     """
-    problems = []
+    problems: list[str] = []
+    assets_src, assets_out = root / ASSETS_DIR, host_out / "assets"
+    manifest = _publish_asset_tree(assets_src, assets_out, problems)
+    for url_name, key in assets.ROOT_COPIES.items():
+        if (assets_src / key).is_file() and not (assets_src / key).is_symlink():
+            shutil.copyfile(assets_src / key, host_out / url_name)
+
+    sheets = _stylesheet_sources(root, css_names, problems)
+    text = "".join(assets.page_text(html)[0] for html in pages_html)
+    hindi = "".join(assets.page_text(html)[1] for html in pages_html)
+    font_manifest, font_css, font_sizes, font_problems = assets.publish_fonts(
+        assets_src, assets_out, [css for _, css in sheets], text, hindi)
+    problems.extend(font_problems)
+    manifest.update(font_manifest)
+    if sizes is not None:
+        sizes.update(font_sizes)
+
+    for key, css in sheets:
+        css, css_problems = assets.rewrite_css(css, manifest, f"{ASSETS_DIR}/{key}")
+        problems.extend(css_problems)
+        if key == "tokens.css":
+            css = font_css + css     # the rules already name hashed files
+        folder = assets_out / PurePosixPath(key).parent
+        base = "/".join([assets.URL_BASE, *PurePosixPath(key).parent.parts])
+        manifest[key] = assets.publish_bytes(PurePosixPath(key).name, css.encode("utf-8"), folder, base)
+    return manifest, problems
+
+
+def _stylesheet_sources(root: Path, css_names: list[str], problems: list[str]) -> list[tuple[str, str]]:
+    """(key under assets/, text) of the shared stylesheets, then each page stylesheet a page names, sorted."""
+    sheets = []
     for name in STYLESHEETS:
         source = root / "tokens" / name
         if not source.is_file():
             problems.append(f"{source}: stylesheet not found")
-            continue
-        target = host_out / "assets" / name
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(source, target)
-    problems.extend(_publish_asset_tree(root / ASSETS_DIR, host_out / "assets"))
-    return problems
+        else:
+            sheets.append((name, source.read_bytes().decode("utf-8")))
+    for name in sorted(set(css_names)):
+        source = root / PAGE_CSS_DIR / f"{name}.css"
+        if source.is_file():
+            sheets.append((f"pages/{name}.css", source.read_bytes().decode("utf-8")))
+    return sheets
 
 
-def _publish_asset_tree(source: Path, target: Path) -> list[str]:
-    """Copy every file under `source` to the same relative path under `target`. No folder is not a problem."""
+def _publish_asset_tree(source: Path, target: Path, problems: list[str]) -> dict[str, str]:
+    """Publish every file under `source` under `target`, in the same folder, as its hashed name.
+
+    Returns the manifest (path under `source` to URL). No folder is not a problem.
+    """
+    manifest: dict[str, str] = {}
     if source.is_symlink():
-        return [f"{source}: the assets folder is a symbolic link; refusing to publish through it"]
+        problems.append(f"{source}: the assets folder is a symbolic link; refusing to publish through it")
+        return manifest
     if not source.is_dir():
-        return []
-    problems = []
+        return manifest
     # os.walk does not follow links, so a linked folder shows up in `dirs` and is never entered.
     for folder, dirs, files in os.walk(source):
         here = Path(folder)
@@ -502,35 +553,34 @@ def _publish_asset_tree(source: Path, target: Path) -> list[str]:
         for name in sorted(files + [name for name in dirs if (here / name).is_symlink()]):
             path = here / name
             relative = path.relative_to(source)
+            key = relative.as_posix()
             if name.startswith("."):
                 continue
-            if path.is_symlink():
+            if name in FORBIDDEN_OUTPUTS:
+                problems.append(f"{path}: {name} must never be part of the build output")
+            elif path.is_symlink():
                 problems.append(f"{path}: a symbolic link in assets/ is never published (it could reach files outside the repo)")
+            elif relative.parts[0] in assets.BUILD_OWNED and (relative.parts[:2] == ("fonts", "src") or relative.as_posix() == "fonts/LICENSES.md"):
+                continue    # the vendored font sources and their licence record: input, not an asset
             elif relative.parts[0] in RESERVED_ASSETS:
-                problems.append(f"{path}: assets/{relative.parts[0]} is reserved for the build's own stylesheets and is not published")
+                problems.append(f"{path}: assets/{relative.parts[0]} is reserved for what the build writes itself (stylesheets and subset fonts) and is not published")
             else:
-                destination = target / relative
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(path, destination)
-    return problems
+                folder_out = target / relative.parent
+                data = path.read_bytes()
+                if key in assets.STABLE_ONLY or key in assets.ALSO_STABLE:
+                    folder_out.mkdir(parents=True, exist_ok=True)
+                    (folder_out / name).write_bytes(data)
+                if key not in assets.STABLE_ONLY:
+                    base = "/".join([assets.URL_BASE, *relative.parent.parts])
+                    manifest[key] = assets.publish_bytes(name, data, folder_out, base)
+    return manifest
 
 
-def _publish_page_css(root: Path, host_out: Path, pages: list[Page]) -> list[str]:
-    """Copy each stylesheet a page names (`css: name` in its front matter) to host_out/assets/pages/<name>.css.
-
-    One mechanism for every page: tokens/pages/<name>.css is published byte for byte, once per host
-    however many of its pages name it, and the base template links it after tokens.css and base.css.
-    A host publishes only the sheets its own pages name. A name with no file is a problem naming the
-    pages that use it. Task 7 folds this into the hashed asset pipeline, URLs and all.
-    """
+def _missing_page_css(root: Path, pages: list[Page]) -> list[str]:
+    """A page naming a stylesheet that has no file is a problem naming the pages that use it."""
     problems = []
     for name in sorted({page.css for page in pages if page.css}):
-        source = root / PAGE_CSS_DIR / f"{name}.css"
-        if not source.is_file():
+        if not (root / PAGE_CSS_DIR / f"{name}.css").is_file():
             users = ", ".join(str(page.source) for page in pages if page.css == name)
             problems.append(f"{users}: css '{name}' has no stylesheet at {PAGE_CSS_DIR.as_posix()}/{name}.css")
-            continue
-        target = host_out / "assets" / "pages" / f"{name}.css"
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(source, target)
     return problems

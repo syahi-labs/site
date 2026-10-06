@@ -9,7 +9,8 @@ directory from a build, `dist/katha.syahi.sh`. SHA is the syahi-labs/site commit
 katha.syahi.sh also serves feed.xml, which Spotify reads, and CNAME, which keeps the domain. This tool
 may never change either one. It copies only what a build owns:
 
-    index.html, robots.txt, sitemap.xml and everything under assets/
+    index.html, robots.txt, sitemap.xml, favicon.ico and apple-touch-icon.png (the last two when the
+    build has them) and everything under assets/
 
 and removes stale files under assets/ and nowhere else. It stages each path by name (never `-A` or
 `.`, and git is told to read every path literally, so a file called `*.css` is a file and not a
@@ -51,6 +52,8 @@ from pathlib import Path
 
 PROTECTED = ("feed.xml", "CNAME")            # katha-feed owns both; no build may change either
 PAGES = ("index.html", "robots.txt", "sitemap.xml")
+# Root files browsers and iOS ask for by a fixed URL, with no page to read them from. Copied when the build has them.
+ROOT_ICONS = ("favicon.ico", "apple-touch-icon.png")
 ASSETS = "assets"
 BRANCH = "main"
 REMOTE = "origin"
@@ -134,7 +137,8 @@ def plan_dist(dist: Path) -> tuple[list[str], list[str]]:
         raise Refusal(f"the dist has no {', '.join(missing)}: this is not the katha host's build output")
     if (dist / ASSETS).exists() and not (dist / ASSETS).is_dir():
         raise Refusal(f"the dist's {ASSETS} is not a directory")
-    copy = sorted(PAGES + tuple(rel for rel in everything if rel.startswith(ASSETS + "/")))
+    icons = tuple(name for name in ROOT_ICONS if name in everything)
+    copy = sorted(PAGES + icons + tuple(rel for rel in everything if rel.startswith(ASSETS + "/")))
     left = sorted(rel for rel in everything if rel not in copy)
     return copy, left
 
