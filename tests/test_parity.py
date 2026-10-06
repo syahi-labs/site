@@ -1,9 +1,11 @@
 # tests/test_parity.py
 #
 # Task 9a: the four policy pages (contact, privacy, terms, refund) ported word for word from the live
-# site at 446f625, parity-tested against byte-for-byte snapshots in tests/parity/. Parts 9b to 9d add
-# their own pairs. The comparison is tests/parity_helpers.py; the only excused differences are in
-# tests/parity/allowed_diffs.yaml, each with a reason.
+# site at 446f625, parity-tested against byte-for-byte snapshots in tests/parity/. Part 9b adds the home
+# page (the same commit) and /katha, the publisher pitch (katha-feed 71e0a6d, the snapshot katha.syahi.sh's
+# index is tested against); 9c and 9d add their own pairs. The comparison is tests/parity_helpers.py; the
+# only excused differences are in tests/parity/allowed_diffs.yaml and the only moved links are
+# parity_helpers.LINK_MOVES, each with a reason.
 import datetime
 import json
 import re
@@ -14,7 +16,7 @@ import pytest
 import yaml
 
 from checks import copycheck, htmlcheck
-from parity_helpers import PARITY, apply_allowed, link_values, words
+from parity_helpers import LINK_MOVES, PARITY, apply_allowed, apply_link_moves, link_values, moves_used, words
 from sitebuild.claims import ClaimRegister
 from sitebuild.content import load_pages
 from sitebuild.render import format_date
@@ -441,9 +443,111 @@ PINNED = {   # git rev-parse 446f625:<file> in the live site repo
 }
 
 
+PINNED["site-index.html"] = "965a18a0a06ed3df2c10aa7054b74964464a0a01"     # git rev-parse 446f625:index.html (site)
+PINNED["katha-index.html"] = "8ebde0c01f978766bac5b5e604ec9356efba089d"     # git rev-parse 71e0a6d:index.html (katha-feed)
+
+
 @pytest.mark.parametrize("snapshot", sorted(PINNED))
 def test_the_snapshot_is_the_pinned_blob_byte_for_byte(snapshot):
     import hashlib
     data = (PARITY / snapshot).read_bytes()
     blob = hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()   # git's own object id
     assert blob == PINNED[snapshot]
+
+
+# ---- /katha, the publisher pitch (Task 9b) ----
+# The page katha.syahi.sh serves at its root (katha-feed 71e0a6d) is also a page of the one site, at /katha:
+# the same words, so they live once, in a partial both pages include. Until Part B splits listener copy from
+# publisher copy, one source is the only way the two cannot drift.
+
+KATHA = "katha-index.html"
+KATHA_PARTIAL = REPO / "templates" / "partials" / "katha-publishers.html"
+KATHA_INCLUDE = '{% include "partials/katha-publishers.html" %}'
+KATHA_SIGNATURE = ("Every sentence verified against the source.", "A human signs off",
+                   "Bring a catalog, or one title you care about.", "No checkout, no commitment.")
+
+
+def ld_nodes(html):
+    return [json.loads(block) for block in re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, re.S)]
+
+
+def old_katha_content():
+    """What the old page said that is not its own strip or footer: from the hero grid to </main>."""
+    return (PARITY / KATHA).read_text(encoding="utf-8").split('<div class="hero-grid">', 1)[1].split("</main>")[0]
+
+
+def test_the_katha_page_is_built_and_the_main_host_lists_it(real_site, dist):
+    assert (dist / "katha.html").is_file()
+    assert "<loc>https://syahi.sh/katha</loc>" in (dist / "sitemap.xml").read_text(encoding="utf-8")
+    assert "https://syahi.sh/katha)" in (dist / "llms.txt").read_text(encoding="utf-8")
+
+
+def test_the_katha_page_front_matter_is_the_ports_contract():
+    page = next(p for p in load_pages(REPO / "content") if p.slug == "/katha")
+    assert page.layout == "page" and page.css == "katha-index"     # the one sheet both pages share
+    assert page.schema == ("Service",) and page.audience is None
+    assert page.draft is False and page.approved == page.updated == APPROVED
+    assert page.claims == ("katha-sample-length",)
+
+
+def test_the_two_pitch_pages_say_nothing_themselves_they_include_one_partial():
+    for source in (REPO / "content" / "katha.html", REPO / "katha" / "content" / "index.html"):
+        body = source.read_text(encoding="utf-8").split("\n---\n", 1)[1]
+        assert body.strip() == KATHA_INCLUDE, source
+    partial = KATHA_PARTIAL.read_text(encoding="utf-8")
+    for phrase in KATHA_SIGNATURE:
+        assert partial.count(phrase) == 1, phrase
+    assert 'claim("katha-sample-length")' in partial and EM_DASH not in partial
+
+
+def test_both_hosts_render_the_same_main_byte_for_byte(real_site, dist):
+    on_katha_host = (real_site.out / "katha.syahi.sh" / "index.html").read_text(encoding="utf-8")
+    assert main_of(built(dist, "katha.html")) == main_of(on_katha_host)
+
+
+def test_the_katha_main_text_is_the_old_pages_text_word_for_word(dist):
+    old = apply_allowed(words((PARITY / KATHA).read_text(encoding="utf-8"), "body"), KATHA)
+    new = words(built(dist, "katha.html"), "main")
+    assert new == old
+    for phrase in KATHA_SIGNATURE:                      # the comparison cannot pass by both sides being empty
+        assert phrase in new
+
+
+def test_the_katha_title_and_description_are_the_old_pages_exactly(dist):
+    old = (PARITY / KATHA).read_text(encoding="utf-8")
+    html = built(dist, "katha.html")
+    for pattern in (r"<title>(.*?)</title>", r'<meta name="description" content="(.*?)">'):
+        assert unescape(re.search(pattern, html).group(1)) == unescape(re.search(pattern, old).group(1))
+
+
+def test_the_katha_links_are_the_old_pages_with_each_move_applied_in_order(dist):
+    old, new = link_values(old_katha_content()), link_values(main_of(built(dist, "katha.html")))
+    assert new == apply_link_moves(old)
+    assert len(old) == 6                                # the comparison cannot pass by both sides being empty
+    assert [move.old for move in moves_used(old)] == ["https://syahi.sh/art/gramophone.webp"]
+    assert "/assets/img/gramophone.webp" in new and not [v for v in new if "syahi.sh/art/" in v]
+
+
+def test_the_katha_page_passes_every_check_and_names_the_shared_sheet(real_site, dist):
+    html = built(dist, "katha.html")
+    page = next(p for p in load_pages(REPO / "content") if p.slug == "/katha")
+    assert htmlcheck.check(html) == [] and copycheck.check(html, page.audience) == [] and jsonld_mismatches(html) == []
+    assert '<link rel="canonical" href="https://syahi.sh/katha">' in html
+    assert '<link rel="stylesheet" href="/assets/pages/katha-index.css">' in html
+    assert (dist / "assets" / "pages" / "katha-index.css").read_bytes() == (REPO / "tokens" / "pages" / "katha-index.css").read_bytes()
+    assert (dist / "assets" / "img" / "gramophone.webp").is_file()
+
+
+def test_the_katha_structured_data_is_a_service_the_organization_provides(dist):
+    html = built(dist, "katha.html")
+    (service,) = [node for node in ld_nodes(html) if node["@type"] == "Service"]
+    title = unescape(re.search(r"<title>(.*?)</title>", html).group(1))
+    assert service["name"] == title and service["provider"] == {"@id": "https://syahi.sh/#org"}
+    assert not [node for node in ld_nodes(html) if node["@type"] in ("Organization", "WebSite")]   # the home page defines those once
+
+
+def test_the_katha_page_has_no_script_no_remote_font_and_no_em_dash(dist):
+    html = built(dist, "katha.html")
+    assert "<script" not in html.replace('<script type="application/ld+json">', "")
+    assert "fonts.googleapis.com" not in html and 'rel="stylesheet" href="http' not in html
+    assert EM_DASH not in html and EM_DASH not in (REPO / "content" / "katha.html").read_text(encoding="utf-8")
