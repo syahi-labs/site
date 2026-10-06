@@ -8,7 +8,7 @@ import pytest
 from sitebuild.claims import ClaimError, ClaimRegister
 from sitebuild.content import Page
 from sitebuild.generated import llms_txt, robots_txt, sitemap_xml
-from sitebuild.gitdates import GitDateError, last_commit_date
+from sitebuild.gitdates import GitDateError, has_uncommitted_changes, last_commit_date
 from sitebuild.site import load_site
 
 EM_DASH = chr(0x2014)
@@ -59,6 +59,43 @@ def test_the_date_is_the_last_commit_not_the_first(tmp_path):
     subprocess.run(["git", "add", "a.html"], cwd=tmp_path, check=True)
     subprocess.run(["git", "commit", "-q", "-m", "c2"], cwd=tmp_path, check=True, env=commit_env("2026-10-02"))
     assert last_commit_date(f) == datetime.date(2026, 10, 2)
+
+def split_env(author_day, committer_day):
+    env = commit_env(author_day)
+    env["GIT_COMMITTER_DATE"] = f"{committer_day}T10:00:00+05:30"
+    return env
+
+def commit_all(tmp_path, name, day, committed=None, message="c"):
+    subprocess.run(["git", "add", name], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-q", "-m", message], cwd=tmp_path, check=True, env=split_env(day, committed or day))
+
+def test_the_date_is_the_author_date_not_the_committer_date(tmp_path):
+    # Written 16 Sep, committed 20 Oct (a rebase or a cherry-pick): the file changed on the 16th.
+    f = tmp_path / "a.html"; f.write_text("x")
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    commit_all(tmp_path, "a.html", "2026-09-16", committed="2026-10-20")
+    assert last_commit_date(f) == datetime.date(2026, 9, 16)
+
+def test_an_amend_that_changes_only_the_committer_date_does_not_move_the_date(tmp_path):
+    f = repo_with(tmp_path, day="2026-09-16")
+    env = dict(commit_env("2026-09-16"), GIT_COMMITTER_DATE="2026-10-30T10:00:00+05:30")
+    subprocess.run(["git", "commit", "-q", "--amend", "--no-edit"], cwd=tmp_path, check=True, env=env)
+    assert last_commit_date(f) == datetime.date(2026, 9, 16)
+
+def test_the_latest_author_date_in_the_history_wins_over_the_tip_commit(tmp_path):
+    # A commit replayed on top of newer work, with an older author date, must not hide the newer change.
+    f = repo_with(tmp_path, day="2026-10-09")
+    f.write_text("tidied")
+    commit_all(tmp_path, "a.html", "2026-09-15", committed="2026-10-31", message="c2")
+    assert last_commit_date(f) == datetime.date(2026, 10, 9)
+
+def test_the_author_date_is_read_in_the_authors_own_timezone(tmp_path):
+    f = tmp_path / "a.html"; f.write_text("x")
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    env = dict(commit_env("2026-09-16"), GIT_AUTHOR_DATE="2026-09-16T01:00:00+05:30", GIT_COMMITTER_DATE="2026-09-16T01:00:00+05:30")
+    subprocess.run(["git", "add", "a.html"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "c"], cwd=tmp_path, check=True, env=env)
+    assert last_commit_date(f) == datetime.date(2026, 9, 16)      # not the 15th in UTC
 
 def test_the_date_follows_the_file_not_the_repo(tmp_path):
     repo_with(tmp_path, day="2026-09-16")
@@ -246,3 +283,67 @@ def test_llms_txt_has_no_em_dash_and_ends_with_one_newline(tmp_path):
 def test_llms_txt_with_no_pages_still_has_the_header(tmp_path):
     site, claims = fixture(tmp_path)
     assert llms_txt(site, [], claims) == f"# Syahi\n\n> {SUMMARY}\n\n## Pages\n"
+
+
+# ---- uncommitted changes ----
+
+def test_a_committed_unchanged_file_has_no_uncommitted_changes(tmp_path):
+    assert has_uncommitted_changes(repo_with(tmp_path)) is False
+
+def test_an_edited_file_has_uncommitted_changes(tmp_path):
+    f = repo_with(tmp_path)
+    f.write_text("edited")
+    assert has_uncommitted_changes(f) is True
+
+def test_a_staged_edit_still_counts(tmp_path):
+    f = repo_with(tmp_path)
+    f.write_text("edited")
+    subprocess.run(["git", "add", "a.html"], cwd=tmp_path, check=True)
+    assert has_uncommitted_changes(f) is True
+
+def test_a_file_that_was_never_added_counts_and_so_does_a_new_staged_one(tmp_path):
+    repo_with(tmp_path)
+    new = tmp_path / "content" / "new.html"
+    new.parent.mkdir(); new.write_text("y")
+    assert has_uncommitted_changes(new) is True
+    subprocess.run(["git", "add", "content/new.html"], cwd=tmp_path, check=True)
+    assert has_uncommitted_changes(new) is True
+
+def test_only_that_file_is_asked_about(tmp_path):
+    f = repo_with(tmp_path)
+    other = tmp_path / "b.html"; other.write_text("y")
+    assert has_uncommitted_changes(f) is False and has_uncommitted_changes(other) is True
+
+def test_outside_a_repo_nothing_is_uncommitted(tmp_path, monkeypatch):
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
+    f = tmp_path / "a.html"; f.write_text("x")
+    assert has_uncommitted_changes(f) is False
+
+def test_a_repo_with_no_commits_yet_has_a_file_never_committed(tmp_path):
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    f = tmp_path / "a.html"; f.write_text("x")
+    assert has_uncommitted_changes(f) is True
+
+def test_a_filesystem_boundary_is_no_repo_for_uncommitted_changes_too(tmp_path, monkeypatch):
+    fake = tmp_path / "bin" / "git"
+    fake.parent.mkdir()
+    fake.write_text("#!/bin/sh\necho 'fatal: not a git repository (or any parent up to mount point /tmp)' >&2\nexit 128\n")
+    fake.chmod(0o755)
+    monkeypatch.setenv("PATH", str(fake.parent) + os.pathsep + os.environ["PATH"])
+    f = tmp_path / "a.html"; f.write_text("x")
+    assert has_uncommitted_changes(f) is False
+
+def test_a_dangling_worktree_is_an_error_for_uncommitted_changes_too(tmp_path, monkeypatch):
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
+    (tmp_path / ".git").write_text(f"gitdir: {tmp_path / 'gone' / 'worktrees' / 'w'}\n", encoding="utf-8")
+    f = tmp_path / "a.html"; f.write_text("x")
+    with pytest.raises(GitDateError) as err:
+        has_uncommitted_changes(f)
+    assert str(f) in str(err.value)
+
+def test_a_missing_git_is_an_error_for_uncommitted_changes_too(tmp_path, monkeypatch):
+    f = repo_with(tmp_path)
+    monkeypatch.setenv("PATH", "")
+    with pytest.raises(GitDateError) as err:
+        has_uncommitted_changes(f)
+    assert str(f) in str(err.value)

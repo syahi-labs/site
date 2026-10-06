@@ -19,10 +19,14 @@ Allowed:
   - `transparent`, `currentColor` and the CSS-wide keywords;
   - a font family only as a `var(--font-...)` token that tokens.css defines, so a page can ask for the
     serif or mono role and tokens.css decides the family;
-  - a font size only as `var(--fs-...)`, a token tokens.css defines, or clamp(), min(), max() and calc() of
-    those. Inside one, the viewport (`2.8vw`) and unitless numbers (`*1.1`) are allowed, because they decide
-    how fast a size moves between steps and never what the steps are: `clamp(var(--fs-lead), 2.8vw,
-    var(--fs-h3))`. At least one step must appear, so a bare `5vw` is refused; so is any rem, px, em or %.
+  - a font size only as a step of the scale, in one of three forms:
+        var(--fs-body)                              one step;
+        clamp(var(--fs-lead), 2.8vw, var(--fs-h3))  two steps with any length between them: the viewport sets
+                                                    the pace, the steps set the floor and the ceiling;
+        min(var(--fs-h1), var(--fs-h2))             min() or max() whose every argument is a step.
+    Every bound is a step, so no size can leave the scale. Refused: calc() as a size, a clamp() whose lower or
+    upper bound is anything but a step (`clamp(var(--fs-small), 2vw, 40vw)`), a min() or max() with a length
+    in it (`max(var(--fs-small), 5vw)`), a bare `5vw`, and any rem, px, em or % size.
 NOT checked: the other lengths. Spacing, widths, line heights and letter-spacing may be raw in a page sheet.
 `--space-*` is preferred, not enforced.
 
@@ -77,11 +81,10 @@ FONT_KEYWORDS = frozenset(
 NUMBER_OR_LENGTH = re.compile(r"[+-]?(?:\d+\.?\d*|\.\d+)[a-z%]*", re.I)
 DECLARATION = re.compile(r"(?<![\w-])(?P<prop>[\w-]+)\s*:\s*(?P<value>[^;{}]*?)\s*(?=[;}])")
 SIMPLE_VAR = re.compile(r"var\(\s*(--[\w-]+)\s*\)")
-# What a size expression may be made of: min, max, clamp and calc, in nesting; commas and operators; var()
-# of a type-scale step; unitless numbers and viewport lengths (the pace between steps). Nothing else.
-SIZE_FUNCTIONS = frozenset({"clamp", "min", "max", "calc"})
-VIEWPORT_UNITS = frozenset(prefix + unit for prefix in ("", "s", "l", "d") for unit in ("vw", "vh", "vi", "vb", "vmin", "vmax"))
-SIZE_PIECE = re.compile(
+# What the middle of a clamp() may be made of: any length. min, max, clamp and calc in nesting, commas and
+# operators, var(), numbers with any unit. Nothing else (no url(), no strings).
+LENGTH_FUNCTIONS = frozenset({"clamp", "min", "max", "calc"})
+LENGTH_PIECE = re.compile(
     r"\s*(?:(?P<var>var\(\s*(?P<name>--[\w-]+)\s*\))|(?P<fn>[a-z-]+)\(|(?P<close>\))|(?P<comma>,)"
     r"|(?P<op>[*/+-])|(?P<num>[+-]?(?:\d+\.?\d*|\.\d+)(?P<unit>[a-z%]*)))", re.I)
 # Words a `font` shorthand may hold before the size: style, variant, weight (a bare number) and stretch.
@@ -152,50 +155,79 @@ def font_shorthand_size(value):
     return ""
 
 
-def size_expression_problems(expression):
-    """What is wrong with a clamp()/min()/max()/calc() size: a piece that is not a step of the scale, a
-    unitless number or a viewport length, or no step at all. [] means it is made only of the scale."""
-    found, steps, depth, position = [], 0, 0, 0
+def function_call(value):
+    """(name, [argument, ...]) when `value` is exactly one function call, else None. Arguments are split on
+    the commas outside nested parentheses, and an empty piece is dropped, so `clamp(a,,c)` has two."""
+    head = re.match(r"([a-z-]+)\(", value, re.I)
+    if not head:
+        return None
+    depth = 0
+    for index in range(head.end() - 1, len(value)):
+        depth += {"(": 1, ")": -1}.get(value[index], 0)
+        if depth == 0:
+            if index != len(value) - 1:
+                return None                                           # something follows the call
+            return head.group(1).lower(), top_level(value[head.end():index], ",")
+    return None                                                       # the parentheses never close
+
+
+def is_step(argument):
+    """Whether `argument` is exactly var() of a type-scale step that tokens.css defines."""
+    match = SIMPLE_VAR.fullmatch(argument.strip())
+    return bool(match) and match.group(1) in SIZE_TOKENS
+
+
+def length_problems(expression):
+    """What is wrong with the middle of a clamp(): anything that is not a length expression."""
+    found, depth, position = [], 0, 0
     while position < len(expression):
-        piece = SIZE_PIECE.match(expression, position)
+        piece = LENGTH_PIECE.match(expression, position)
         if not piece or piece.end() == position:
-            return found + [f"{expression[position:].strip()!r} is not part of a size from the scale"]
+            return found + [f"{expression[position:].strip()!r} is not a length"]
         position = piece.end()
-        if piece["var"]:
-            if f"{piece['name']}" in SIZE_TOKENS:
-                steps += 1
-            else:
-                found.append(f"{piece['name']} is not a type-scale step defined in tokens.css")
-        elif piece["fn"]:
+        if piece["fn"]:
             depth += 1
-            if piece["fn"].lower() not in SIZE_FUNCTIONS:
-                found.append(f"{piece['fn']}() is not clamp, min, max or calc")
+            if piece["fn"].lower() not in LENGTH_FUNCTIONS:
+                found.append(f"{piece['fn']}() is not a length function")
         elif piece["close"]:
             depth -= 1
-        elif piece["num"] and piece["unit"].lower() not in VIEWPORT_UNITS | {""}:
-            found.append(f"{piece['num']} is a raw length")
-    if depth:
-        found.append("the parentheses do not balance")
-    if not steps and not found:
-        found.append("it names no type-scale step")
-    return found
+            if depth < 0:
+                return found + ["the parentheses do not balance"]
+    return found + (["the parentheses do not balance"] if depth else [])
+
+
+def size_problems(value):
+    """Why `value` is not a step of the scale, one string per reason; [] if it is one of the three forms."""
+    var = SIMPLE_VAR.fullmatch(value)
+    if var:
+        return [] if var.group(1) in SIZE_TOKENS else [f"{var.group(1)} is not a type-scale step defined in tokens.css"]
+    call = function_call(value)
+    if call is None:
+        return ["it is a raw size" if value else "there is no size"]
+    name, args = call
+    if name == "clamp":
+        if len(args) != 3:
+            return ["clamp() needs three arguments: a step, a length and a step"]
+        found = [f"the {label} bound {arg} is not a type-scale step" for label, arg in (("lower", args[0]), ("upper", args[2]))
+                 if not is_step(arg)]
+        return found + [f"the middle of clamp() {item}" for item in length_problems(args[1])]
+    if name in ("min", "max"):
+        if not args:
+            return [f"{name}() has no arguments"]
+        return [f"{name}() argument {arg} is not a type-scale step" for arg in args if not is_step(arg)]
+    if name == "calc":
+        return ["calc() is not a font size"]
+    return [f"{name}() is not a size function"]
 
 
 def font_size_problems(value, where):
-    """A font size is a step of the scale: var(--fs-...), alone or in clamp(), min(), max() or calc() with
-    the viewport setting the pace. `where` is the property the size sits in."""
+    """A font size is a step of the scale (see the module docstring for the three forms). `where` is the
+    property the size sits in."""
     value = re.sub(r"\s*!important$", "", value.strip(), flags=re.I)
     if value.lower() in CSS_WIDE:
         return []
-    var = SIMPLE_VAR.fullmatch(value)
-    if var:
-        problems = [] if var.group(1) in SIZE_TOKENS else [f"{var.group(1)} is not a type-scale step defined in tokens.css"]
-    elif re.match(r"(?:clamp|min|max|calc)\(", value, re.I) and value.endswith(")"):
-        problems = size_expression_problems(value)
-    else:
-        problems = ["it is a raw size" if value else "there is no size"]
-    return [f"{where}: {value or '(none)'} {problem}: use var(--fs-...) from tokens.css, or clamp() between two steps"
-            for problem in problems]
+    return [f"{where}: {value or '(none)'} {problem}: use var(--fs-...) from tokens.css, or clamp(var(--fs-...), length, var(--fs-...))"
+            for problem in size_problems(value)]
 
 
 def colour_problems(value, where):

@@ -16,9 +16,11 @@ does not fail the build lands in `BuildResult.warnings`: a link to a pending pag
 sitecheck's own WARN findings. A problem on one page never stops the others from being built, so a
 single run reports everything it can.
 
-A page is its source plus every partial it includes. Its sitemap `lastmod` is the latest commit date over all
-of them, and a non-draft page whose source or partial was committed after its `approved` date was changed
-after she approved it: a release build refuses that, a dev build warns.
+A page is its source plus every partial it includes. Its sitemap `lastmod` is the latest author date of a
+commit over all of them (the author date survives a rebase, an amend and a squash; the committer date does not).
+A non-draft page whose source or partial was written after its `approved` date was changed after she approved
+it, and one with uncommitted changes has a date that does not describe it: a release build refuses both, a dev
+build warns.
 
 Deterministic: the same tree gives byte-identical files. Nothing written
 depends on the clock, the machine, or dict and set order. Files are UTF-8
@@ -41,7 +43,7 @@ from checks import copycheck, htmlcheck, sitecheck
 from sitebuild.claims import ClaimError, ClaimRegister
 from sitebuild.content import ContentError, Page, load_pages
 from sitebuild.generated import NOT_FOUND_SLUG, llms_txt, robots_txt, sitemap_xml
-from sitebuild.gitdates import GitDateError, last_commit_date
+from sitebuild.gitdates import GitDateError, has_uncommitted_changes, last_commit_date
 from sitebuild.includes import included_templates
 from sitebuild.render import RenderError, make_env, render_page
 from sitebuild.schema import SchemaError, build_jsonld, jsonld_mismatches
@@ -215,13 +217,13 @@ def _build_host(root: Path, out: Path, item: _Loaded, claims: ClaimRegister, rel
     listed = [p for p in rendered_pages if p.slug != NOT_FOUND_SLUG and p.slug not in site.pending_pages]
     # A page is its source plus every partial it includes; one git question per file, asked once.
     files = {p.slug: _page_files(env, p, problems) for p in rendered_pages}
-    dates = _CommitDates()
+    git = _GitFacts()
     _write(host_out / "robots.txt", robots_txt(site.base_url))
     try:
-        _write(host_out / "sitemap.xml", sitemap_xml([(p.slug, _lastmod(p, files[p.slug], dates)) for p in listed], site.base_url))
+        _write(host_out / "sitemap.xml", sitemap_xml([(p.slug, _lastmod(p, files[p.slug], git)) for p in listed], site.base_url))
     except (GitDateError, ValueError) as err:
         problems.append(f"{host.name}: sitemap.xml: {err}")
-    _approval_findings(rendered_pages, files, dates, release, result)
+    _approval_findings(rendered_pages, files, git, release, result)
     if host.llms:
         try:
             _write(host_out / "llms.txt", llms_txt(site, listed, claims))
@@ -390,16 +392,22 @@ def _internal_path(href: str, base_url: str) -> str | None:
     return path.rstrip("/") or "/"
 
 
-class _CommitDates:
-    """`last_commit_date` with a memory, so a partial shared by many pages is asked about once per build."""
+class _GitFacts:
+    """What git says about a file, each asked once per host, so a partial shared by many pages costs one question."""
 
     def __init__(self) -> None:
-        self._known: dict[Path, datetime.date | None] = {}
+        self._dates: dict[Path, datetime.date | None] = {}
+        self._uncommitted: dict[Path, bool] = {}
 
-    def __call__(self, path: Path) -> datetime.date | None:
-        if path not in self._known:
-            self._known[path] = last_commit_date(path)
-        return self._known[path]
+    def date(self, path: Path) -> datetime.date | None:
+        if path not in self._dates:
+            self._dates[path] = last_commit_date(path)
+        return self._dates[path]
+
+    def uncommitted(self, path: Path) -> bool:
+        if path not in self._uncommitted:
+            self._uncommitted[path] = has_uncommitted_changes(path)
+        return self._uncommitted[path]
 
 
 def _page_files(env, page: Page, problems: list[str]) -> list[Path]:
@@ -409,30 +417,35 @@ def _page_files(env, page: Page, problems: list[str]) -> list[Path]:
     return [page.source, *included]
 
 
-def _lastmod(page: Page, files: list[Path], dates: _CommitDates) -> datetime.date:
-    """The latest day any of the page's files changed in git; if git tracks none of them, the page's `updated`."""
-    changed = [date for date in map(dates, files) if date is not None]
+def _lastmod(page: Page, files: list[Path], git: _GitFacts) -> datetime.date:
+    """The latest day any of the page's files was written, by author date; if git tracks none, the page's `updated`."""
+    changed = [date for date in map(git.date, files) if date is not None]
     return max(changed) if changed else page.updated
 
 
-def _approval_findings(pages: list[Page], files: dict[str, list[Path]], dates: _CommitDates, release: bool, result: BuildResult) -> None:
-    """A page whose source or partial was committed after its `approved` date was changed after she approved it.
+def _approval_findings(pages: list[Page], files: dict[str, list[Path]], git: _GitFacts, release: bool, result: BuildResult) -> None:
+    """What makes a page's approval untrue, per file, for every non-draft page.
 
-    A release build refuses that, a dev build warns. A draft claims no approval, so it has nothing to break.
-    Naming the file says what to look at before the page is approved again.
+    A file written after the page's `approved` date was changed after she approved it. A file with
+    uncommitted changes (modified, staged or never added) has a date that describes the commit, not the file,
+    so it would pass the first rule by never being committed. A release build refuses both, a dev build warns.
+    A draft claims no approval, and a release build refuses it anyway. Naming the file says what to look at.
     """
     for page in pages:
         if page.draft or page.approved is None:
             continue
+        messages = []
         try:
-            changed = [(path, date) for path in files[page.slug] if (date := dates(path)) is not None and date > page.approved]
+            for path in files[page.slug]:
+                if git.uncommitted(path):
+                    messages.append(f"{page.source}: {path}: uncommitted changes; commit before release")
+                date = git.date(path)
+                if date is not None and date > page.approved:
+                    messages.append(f"{page.source}: {path} last changed {date.isoformat()}, after the page was approved on "
+                                    f"{page.approved.isoformat()}: re-approve the page")
         except GitDateError as err:
-            result.problems.append(f"{page.source}: {err}")
-            continue
-        for path, date in changed:
-            message = (f"{page.source}: {path} last changed {date.isoformat()}, after the page was approved on "
-                       f"{page.approved.isoformat()}: re-approve the page")
-            (result.problems if release else result.warnings).append(message)
+            messages = [f"{page.source}: {err}"]
+        (result.problems if release else result.warnings).extend(messages)
 
 
 def _file_for(slug: str) -> Path:

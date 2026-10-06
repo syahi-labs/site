@@ -300,6 +300,7 @@ def test_the_named_colour_list_is_css_color_4s():
     "a{font:500 var(--fs-small)/var(--lh-body) var(--font-mono)}",
     "a{font:italic 600 var(--fs-lead) var(--font-serif)}",
     "a{font:600 clamp(var(--fs-small),2vw,var(--fs-h3))/1.2 var(--font-serif)}",
+    "a{font:600 max(var(--fs-small),var(--fs-ui))/1.2 var(--font-serif)}",
     "a{font:var(--fs-small)/1.5 var(--font-mono),var(--font-sans)}",
     "a{font:var(--fs-small)/20px var(--font-mono)}", "a{font:700 var(--fs-body) var(--font-serif), var(--font-sans)}",
     "a::marker{font-family:var(--font-mono)}",
@@ -318,15 +319,19 @@ def test_the_named_colour_list_is_css_color_4s():
     "@property --card-gap{syntax:'<length>';inherits:false;initial-value:1rem}",
     "a{color:var(--ink) /* red */}", "a{/* #fff */color:var(--ink);/* rgb(1,2,3) Georgia */}",
     "a{counter-reset:red-count}", "a{animation-name:fade-gold-in}", "a{list-style:zero-padded inside}",
-    # a font size is a step of the scale, alone or between steps with the viewport deciding how fast it grows
+    # a font size is a step of the scale: one step; clamp() with a step at each bound and any length between;
+    # min() or max() of steps only
     "a{font-size:var(--fs-body)}", "a{font-size:var( --fs-body )}", "a{font-size:var(--fs-hero)}",
     "a{font-size:var(--fs-body)!important}", "a{font-size:inherit}", "a{font-size:initial}",
     "a{font-size:clamp(var(--fs-lead),2.8vw,var(--fs-h3))}",
     "a{font-size:clamp(var(--fs-hero-min),14vw,var(--fs-hero))}",
-    "a{font-size:min(var(--fs-h1),8vw)}", "a{font-size:max(var(--fs-small),1.2vw)}",
-    "a{font-size:calc(var(--fs-body)*1.1)}", "a{font-size:calc(var(--fs-body) + .2vw)}",
     "a{font-size:clamp(var(--fs-small),calc(var(--fs-body) + .5vw),var(--fs-h2))}",
     "a{font-size:clamp( var(--fs-small) , 2dvw , var(--fs-h2) )}",
+    "a{font-size:clamp(var(--fs-small),1.5rem,var(--fs-h2))}", "a{font-size:clamp(var(--fs-small),var(--x),var(--fs-h2))}",
+    "a{font-size:clamp(var(--fs-small),max(2vw,1rem) + 1vh,var(--fs-h2))}",
+    "a{font-size:min(var(--fs-h1),var(--fs-h2))}", "a{font-size:max(var(--fs-small),var(--fs-ui))}",
+    "a{font-size:max(var(--fs-small))}", "a{font-size:min( var(--fs-h1) , var(--fs-hero) , var(--fs-h2) )}",
+    "a{font-size:MAX(var(--fs-small),var(--fs-ui))}",
     # spacing, line heights and the rest of the lengths are not policed
     "a{margin:13px 7px}", "a{line-height:1.37}", "a{line-height:24px}", "a{padding:.3em}",
     "a{letter-spacing:.24em}", "a{border-width:1.5px}", "a{width:12rem;height:2em;gap:.75rem}",
@@ -372,7 +377,21 @@ def test_the_page_css_guard_lets_these_through(fine):
     "a{font-size:clamp(1rem,2vw,2rem)}", "a{font-size:clamp(var(--fs-small),2vw,24px)}",
     "a{font-size:clamp(var(--fs-small),2vw,1.5em)}", "a{font-size:clamp(1rem,2vw,var(--fs-h2))}",
     "a{font-size:calc(var(--fs-body) + 2px)}", "a{font-size:calc(1rem*2)}", "a{font-size:min(5vw,6vw)}",
-    "a{font-size:clamp(var(--fs-small),var(--x),var(--fs-h2))}", "a{font-size:clamp(var(--fs-small),2vw)extra}",
+    "a{font-size:clamp(var(--fs-small),2vw)extra}",
+    # the loose forms: a step somewhere is not enough, every bound is a step
+    "a{font-size:clamp(var(--fs-small),2vw,40vw)}", "a{font-size:max(var(--fs-small),5vw)}",
+    "a{font-size:calc(var(--fs-micro)*9)}", "a{font:600 max(var(--fs-small),5vw)/1.2 var(--font-serif)}",
+    "a{font-size:min(var(--fs-h1),8vw)}", "a{font-size:max(var(--fs-small),1.2vw)}", "a{font-size:min(var(--fs-h1),50%)}",
+    "a{font-size:calc(var(--fs-body)*1.1)}", "a{font-size:calc(var(--fs-body) + .2vw)}", "a{font-size:calc(var(--fs-body))}",
+    "a{font-size:clamp(2vw,3vw,var(--fs-h2))}", "a{font-size:clamp(var(--fs-small),2vw,var(--fs-nope))}",
+    "a{font-size:clamp(var(--fs-small),2vw,var(--fs-h2),4vw)}", "a{font-size:clamp(var(--fs-small),,var(--fs-h2))}",
+    "a{font-size:clamp(var(--fs-small),var(--fs-body))}", "a{font-size:clamp(var(--fs-small))}",
+    "a{font-size:clamp(var(--fs-small),2vw,calc(var(--fs-h2)))}", "a{font-size:clamp(var(--fs-small),2vw,clamp(var(--fs-h1),1vw,var(--fs-h2)))}",
+    "a{font-size:clamp(var(--fs-small),url(x),var(--fs-h2))}", "a{font-size:clamp(var(--fs-small),2vw,var(--fs-h2)}",
+    "a{font-size:clamp(var(--fs-small),(2vw,var(--fs-h2))}", "a{font-size:clamp(var(--fs-small),2vw,var(--fs-h2)) clamp(var(--fs-small),2vw,var(--fs-h2))}",
+    "a{font-size:min()}", "a{font-size:max()}", "a{font-size:min(var(--fs-h1),var(--fs-nope))}",
+    "a{font-size:min(var(--fs-h1),var(--fs-h2),2vw)}", "a{font-size:max(var(--fs-small),var(--fs-ui,12px))}",
+    "a{font:calc(var(--fs-micro)*9)/1.2 var(--font-serif)}", "a{font:clamp(var(--fs-small),2vw,40vw) var(--font-serif)}",
     "a{font-size:var(--fs-nope)}", "a{font-size:var(--space-4)}", "a{font-size:var(--font-serif)}",
     "a{font-size:var(--fs-body,12px)}", "a{font-size:var(--size)}", "a{font-size:env(safe-area-inset-top)}",
     "a{font:12px var(--font-serif)}", "a{font:italic 600 1.25rem var(--font-serif)}",
@@ -390,9 +409,25 @@ def test_a_raw_size_is_named_with_what_to_use():
     assert any("var(--fs-" in item for item in page_css_violations("a{font:12px var(--font-serif)}"))
 
 
-def test_the_viewport_term_is_only_how_fast_a_step_grows_never_the_size():
+def test_the_middle_of_a_clamp_is_the_pace_and_the_bounds_are_the_steps():
     assert page_css_violations("a{font-size:clamp(var(--fs-small),2vw,var(--fs-h2))}") == []
     assert page_css_violations("a{font-size:2vw}") and page_css_violations("a{font-size:clamp(2vw,3vw,4vw)}")
+    (found,) = page_css_violations("a{font-size:clamp(var(--fs-small),2vw,40vw)}")
+    assert "upper bound 40vw is not a type-scale step" in found
+    (found,) = page_css_violations("a{font-size:max(var(--fs-small),5vw)}")
+    assert "max() argument 5vw is not a type-scale step" in found
+    (found,) = page_css_violations("a{font-size:calc(var(--fs-micro)*9)}")
+    assert "calc() is not a font size" in found
+    (found,) = page_css_violations("a{font-size:clamp(1rem,2vw,var(--fs-h2))}")
+    assert "lower bound 1rem is not a type-scale step" in found
+
+
+def test_the_sheets_that_ship_pass_the_strict_rule():
+    for name in ("home.css", "katha-index.css", "policy.css"):
+        assert page_css_violations((REPO / "tokens" / "pages" / name).read_text(encoding="utf-8")) == [], name
+    # base.css is not a page sheet, but its h1 is the pattern the rule is built on
+    assert page_css_violations("h1{font-size:clamp(var(--fs-h2),6vw,var(--fs-display))}") == []
+    assert "clamp(var(--fs-h2),6vw,var(--fs-display))" in BASE
 
 
 # ---- data URIs in a page sheet: only the colours a mask needs ----
