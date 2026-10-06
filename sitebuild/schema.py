@@ -1,7 +1,8 @@
 """Structured data for a page, built from claims, and the check that none of it is invisible.
 
 `build_jsonld` returns the JSON-LD nodes for one page. Every string in them comes
-from a claim or from the page's own title, so what search and answer engines read
+from a claim or from the page's own title (the claims are read without marking them
+used: that record belongs to what a page renders), so what search and answer engines read
 is what a person reads. `jsonld_mismatches` proves it on the rendered HTML: any
 string in a JSON-LD block that does not appear in the page's visible text is a
 problem. URLs, ids, dates and enumerations are exempt.
@@ -27,8 +28,9 @@ LOGO_PATH = "/assets/brand/mark-512.png"
 REGION = "Karnataka"
 COUNTRY = "IN"
 CURRENCY = "INR"
-SIGNET_PRICE = "1499"      # the founding monthly price; the claim signet-price-line says it in words
-AUDIOBOOK_PRICE = "116.82"  # Rs 99 plus GST, as the store charges it
+RUPEE = "\u20b9"
+# A plain amount: ASCII digits, no grouping, no sign, an optional decimal part. "1499", "116.82".
+AMOUNT = re.compile(r"(?:0|[1-9][0-9]*)(?:\.[0-9]+)?")
 APPLICATION_CATEGORY = "BusinessApplication"
 CONTACT_TYPE = "sales"
 
@@ -80,13 +82,49 @@ class _Context:
         return {"@id": self.entity(fragment, path)}
 
     def claim(self, id: str) -> str:
-        return self.claims.text(id)
+        """A claim's full text. Reads through `get`, so a retired or unknown id fails as it does in
+        a page, but the id is not marked used: that record is for what a page renders."""
+        return self.claims.get(id).text
 
     def url_claim(self, id: str) -> str:
-        value = self.claims.text(id)
+        value = self.claim(id)
         if not value.startswith("https://"):
             raise SchemaError(f"{self.page.source}: claim '{id}' must be an https:// URL for structured data, got {value!r}")
         return value
+
+    def amount(self, amount_id: str, line_id: str) -> str:
+        """The amount in claim `amount_id`, once claim `line_id` is proven to show it.
+
+        An Offer's price is a number no reader sees, so it must be the number they do see:
+        the line claim has to contain the amount written as rupees, as the page writes it.
+        """
+        value = self.claim(amount_id)
+        try:
+            shown = format_rupees(value)
+        except ValueError:
+            raise SchemaError(
+                f"{self.page.source}: claim '{amount_id}' must be a plain amount such as 1499 or 116.82, got {value!r}"
+            ) from None
+        line = self.claim(line_id)
+        if not re.search(re.escape(shown) + r"(?![0-9]|[.,][0-9])", line):
+            raise SchemaError(
+                f"{self.page.source}: claim '{amount_id}' is {value}, so claim '{line_id}' must show {shown}, "
+                f"but it says {line!r}"
+            )
+        return value
+
+
+def format_rupees(amount: str) -> str:
+    """A plain amount as the page writes rupees, with Indian grouping: 1499 -> ₹1,499, 150000 -> ₹1,50,000.
+
+    Raises ValueError for anything that is not a plain amount (see AMOUNT).
+    """
+    if not AMOUNT.fullmatch(amount):
+        raise ValueError(f"{amount!r} is not a plain amount")
+    whole, dot, fraction = amount.partition(".")
+    head, tail = whole[:-3], whole[-3:]
+    groups = [head[max(0, end - 2):end] for end in range(len(head), 0, -2)][::-1]
+    return RUPEE + ",".join(groups + [tail]) + dot + fraction
 
 
 def build_jsonld(page: Page, site: SiteConfig, claims: ClaimRegister) -> list[dict]:
@@ -194,7 +232,7 @@ def _software_application(ctx: _Context) -> dict:
         "applicationCategory": APPLICATION_CATEGORY,
         "offers": {
             "@type": "Offer",
-            "price": SIGNET_PRICE,
+            "price": ctx.amount("signet-price-amount", "signet-price-line"),
             "priceCurrency": CURRENCY,
             "description": ctx.claim("signet-price-line"),
         },
@@ -229,7 +267,11 @@ def _audiobook(ctx: _Context) -> dict:
         "name": ctx.claim("katha-title-name"),
         "url": ctx.url_claim("katha-title-url"),
         "inLanguage": "hi",
-        "offers": {"@type": "Offer", "price": AUDIOBOOK_PRICE, "priceCurrency": CURRENCY},
+        "offers": {
+            "@type": "Offer",
+            "price": ctx.amount("katha-title-price-amount", "katha-title-price"),
+            "priceCurrency": CURRENCY,
+        },
     }
 
 
@@ -304,7 +346,8 @@ def visible_text(html: str) -> str:
 def jsonld_mismatches(html: str) -> list[str]:
     """Every JSON-LD string, at any depth, that the page does not show, as "<key>: <value>".
 
-    Exempt: the values under EXEMPT_KEYS, ISO dates, and a numeric `price`. A block that is not
+    Exempt: the values under EXEMPT_KEYS, ISO dates, and a numeric `price` (build_jsonld has
+    already tied each one to a price the page shows). A block that is not
     valid JSON is reported as "json-ld: block N is not valid JSON (...)" rather than skipped.
     """
     scan = _scan(html)

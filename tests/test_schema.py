@@ -7,7 +7,7 @@ import pytest
 from sitebuild.claims import ClaimError, ClaimRegister
 from sitebuild.content import Page
 from sitebuild.render import make_env, render_page
-from sitebuild.schema import SchemaError, build_jsonld, jsonld_mismatches, visible_text
+from sitebuild.schema import SchemaError, build_jsonld, format_rupees, jsonld_mismatches, visible_text
 from sitebuild.site import Link, load_site
 
 REPO = Path(__file__).resolve().parents[1]
@@ -29,6 +29,9 @@ EXTRA_CLAIMS = """
 - {id: katha-show-url, text: "https://store.example/shows/show-example", source: s, updated: 2026-10-06, status: live}
 - {id: katha-title-name, text: "शीर्षक उदाहरण", source: s, updated: 2026-10-06, status: live}
 - {id: katha-title-url, text: "https://store.example/t/title-example", source: s, updated: 2026-10-06, status: live}
+- {id: signet-price-amount, text: "1499", source: s, updated: 2026-10-06, status: live}
+- {id: katha-title-price, text: "₹99 + GST = ₹116.82", source: s, updated: 2026-10-06, status: live}
+- {id: katha-title-price-amount, text: "116.82", source: s, updated: 2026-10-06, status: live}
 """
 
 def setup(tmp_path):
@@ -387,3 +390,132 @@ def test_a_signet_page_that_shows_its_name_and_price_has_no_mismatch(tmp_path):
     body = "<h1>{{ claim('signet-name') }}</h1><p>{{ claim('signet-price-line') }}</p>"
     page = dataclasses.replace(pg("/signet", ["SoftwareApplication"]), body=body)
     assert jsonld_mismatches(rendered(tmp_path, page, site, claims)) == []
+
+
+# ---- fix round 1: prices come from claims and must match the page; reads do not mark claims used ----
+def register(tmp_path, *swaps):
+    """The fixture register with some claim text swapped, as a new ClaimRegister."""
+    text = CLAIMS + EXTRA_CLAIMS
+    for old, new in swaps:
+        assert old in text, old
+        text = text.replace(old, new)
+    path = tmp_path / "swapped.yaml"
+    path.write_text(text, encoding="utf-8")
+    return ClaimRegister.load(path)
+
+@pytest.mark.parametrize("amount, shown", [
+    ("1499", "\u20b91,499"), ("14999", "\u20b914,999"), ("116.82", "\u20b9116.82"), ("150000", "\u20b91,50,000"),
+    ("0", "\u20b90"), ("999", "\u20b9999"), ("1000", "\u20b91,000"), ("99999", "\u20b999,999"),
+    ("100000", "\u20b91,00,000"), ("12345678", "\u20b91,23,45,678"), ("1234567.5", "\u20b912,34,567.5"),
+    ("1499.00", "\u20b91,499.00"),
+])
+def test_rupees_use_indian_grouping(amount, shown):
+    assert format_rupees(amount) == shown
+
+@pytest.mark.parametrize("bad", ["", "abc", "1,499", "\u20b91499", "1499.", ".5", "01499", " 1499", "1499 ", "-5", "1e3", "1499.5.5", "\u0661\u0664"])
+def test_format_rupees_refuses_anything_but_plain_digits(bad):
+    with pytest.raises(ValueError):
+        format_rupees(bad)
+
+def test_the_offer_price_is_the_claims_amount(tmp_path):
+    site, _ = setup(tmp_path)
+    claims = register(tmp_path, ('text: "1499"', 'text: "1799"'),
+                      ("\u20b91,499 a month or \u20b914,999 a year", "\u20b91,799 a month or \u20b914,999 a year"))
+    app = node(build_jsonld(pg("/signet", ["SoftwareApplication"]), site, claims), "SoftwareApplication")
+    assert app["offers"]["price"] == "1799"
+
+def test_the_audiobook_price_is_the_claims_amount(tmp_path):
+    site, _ = setup(tmp_path)
+    claims = register(tmp_path, ('text: "116.82"', 'text: "58.41"'), ("\u20b999 + GST = \u20b9116.82", "\u20b950 + GST = \u20b958.41"))
+    book = node(build_jsonld(pg("/", ["Audiobook"]), katha_site(site), claims), "Audiobook")
+    assert book["offers"]["price"] == "58.41"
+
+def test_a_signet_amount_that_the_price_line_does_not_show_fails_the_build(tmp_path):
+    site, _ = setup(tmp_path)
+    claims = register(tmp_path, ('text: "1499"', 'text: "1799"'))   # the line still says 1,499
+    with pytest.raises(SchemaError) as err:
+        build_jsonld(pg("/signet", ["SoftwareApplication"]), site, claims)
+    msg = str(err.value)
+    assert "x.html" in msg and "signet-price-amount" in msg and "signet-price-line" in msg and "\u20b91,799" in msg
+
+def test_an_audiobook_amount_that_the_price_claim_does_not_show_fails_the_build(tmp_path):
+    site, _ = setup(tmp_path)
+    claims = register(tmp_path, ('text: "116.82"', 'text: "120.00"'))   # katha-title-price still says 116.82
+    with pytest.raises(SchemaError) as err:
+        build_jsonld(pg("/", ["Audiobook"]), katha_site(site), claims)
+    msg = str(err.value)
+    assert "x.html" in msg and "katha-title-price-amount" in msg and "katha-title-price" in msg and "\u20b9120.00" in msg
+
+@pytest.mark.parametrize("bad", ["1,499", "\u20b91499", "1499.", "01499", "abc", " 1499"])
+def test_a_malformed_amount_fails_naming_the_claim(tmp_path, bad):
+    site, _ = setup(tmp_path)
+    signet = register(tmp_path, ('text: "1499"', f'text: "{bad}"'))
+    with pytest.raises(SchemaError) as err:
+        build_jsonld(pg("/signet", ["SoftwareApplication"]), site, signet)
+    assert "signet-price-amount" in str(err.value) and "x.html" in str(err.value)
+    katha = register(tmp_path, ('text: "116.82"', f'text: "{bad}"'))
+    with pytest.raises(SchemaError) as err:
+        build_jsonld(pg("/", ["Audiobook"]), katha_site(site), katha)
+    assert "katha-title-price-amount" in str(err.value) and "x.html" in str(err.value)
+
+@pytest.mark.parametrize("line", [
+    "\u20b91,4990 a month",        # the amount followed by more digits
+    "\u20b911,499 a month",        # the amount preceded by more digits
+    "\u20b91,499.50 a month",      # a different amount with decimals
+    "\u20b91,499,000 a month",     # grouped further on
+    "1,499 a month",           # no rupee sign: not as it appears on the page
+    "\u20b91499 a month",          # no grouping: not as it appears on the page
+])
+def test_the_amount_must_appear_whole_and_as_the_page_writes_it(tmp_path, line):
+    site, _ = setup(tmp_path)
+    claims = register(tmp_path, ("\u20b91,499 a month or \u20b914,999 a year, GST included.", line))
+    with pytest.raises(SchemaError):
+        build_jsonld(pg("/signet", ["SoftwareApplication"]), site, claims)
+
+@pytest.mark.parametrize("line", ["Pay \u20b91,499.", "\u20b91,499", "From \u20b91,499, billed monthly", "(\u20b91,499/month)"])
+def test_the_amount_is_found_at_the_end_of_a_sentence_and_in_brackets(tmp_path, line):
+    site, _ = setup(tmp_path)
+    claims = register(tmp_path, ("\u20b91,499 a month or \u20b914,999 a year, GST included.", line))
+    app = node(build_jsonld(pg("/signet", ["SoftwareApplication"]), site, claims), "SoftwareApplication")
+    assert app["offers"]["price"] == "1499" and app["offers"]["description"] == line
+
+def without(tmp_path, claim_id):
+    lines = [l for l in (CLAIMS + EXTRA_CLAIMS).splitlines() if f"id: {claim_id}," not in l]
+    path = tmp_path / f"without-{claim_id}.yaml"
+    path.write_text("\n".join(lines), encoding="utf-8")
+    return ClaimRegister.load(path)
+
+@pytest.mark.parametrize("claim_id, slug, kind, second_host", [
+    ("signet-price-amount", "/signet", "SoftwareApplication", False),
+    ("signet-price-line", "/signet", "SoftwareApplication", False),
+    ("katha-title-price-amount", "/", "Audiobook", True),
+    ("katha-title-price", "/", "Audiobook", True),
+])
+def test_a_missing_price_claim_is_a_claim_error_naming_the_page(tmp_path, claim_id, slug, kind, second_host):
+    site, _ = setup(tmp_path)
+    site = katha_site(site) if second_host else site
+    with pytest.raises(ClaimError) as err:
+        build_jsonld(pg(slug, [kind]), site, without(tmp_path, claim_id))
+    assert claim_id in str(err.value) and "x.html" in str(err.value)
+
+def test_a_retired_claim_fails_the_same_way_it_does_in_a_page(tmp_path):
+    site, _ = setup(tmp_path)
+    claims = register(tmp_path, ('{id: org-name, text: "Syahi", source: s, updated: 2026-10-06, status: live}',
+                                 '{id: org-name, text: "Syahi", source: s, updated: 2026-10-06, status: retired}'))
+    with pytest.raises(ClaimError) as err:
+        build_jsonld(pg("/"), site, claims)
+    assert "org-name" in str(err.value) and "retired" in str(err.value) and "x.html" in str(err.value)
+
+def test_build_jsonld_does_not_mark_claims_used(tmp_path):
+    site, claims = setup(tmp_path)
+    site = dataclasses.replace(site, founder_profiles=FOUNDER_LINKS)
+    assert claims.used == set()
+    build_jsonld(pg("/", ["Service", "SoftwareApplication", "ProfilePage"]), site, claims)
+    build_jsonld(pg("/", ["PodcastSeries", "Audiobook"]), katha_site(site), claims)
+    assert claims.used == set()
+
+def test_rendering_marks_only_what_the_page_shows(tmp_path):
+    site, claims = setup(tmp_path)
+    page = dataclasses.replace(pg("/"), body="<p>{{ claim('org-alternate-name') }}</p>")
+    rendered(tmp_path, page, site, claims)
+    assert claims.used == {"org-legal-name", "org-llpin", "org-alternate-name"}
