@@ -19,6 +19,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from asset_urls import hashed_file, hashed_url
 from checks import copycheck, htmlcheck
 from parity_helpers import PARITY, apply_allowed, apply_link_moves, link_values, moves_used, words
 from real_site import STAND_INS
@@ -483,8 +484,8 @@ def media_block(sheet, query):
 
 
 def test_the_page_names_its_own_sheet_and_the_build_publishes_it(dist, html):
-    assert '<link rel="stylesheet" href="/assets/pages/quote.css">' in html
-    assert (dist / "assets" / "pages" / "quote.css").read_text(encoding="utf-8") == css()
+    assert f'<link rel="stylesheet" href="{hashed_url(dist, "pages/quote.css")}">' in html
+    assert hashed_file(dist, "pages/quote.css").read_text(encoding="utf-8") == css()
 
 
 def test_the_sheet_names_no_hex_colour_even_in_its_comments():

@@ -19,6 +19,7 @@ import jinja2
 import jinja2.sandbox
 from markupsafe import Markup
 
+from sitebuild import assets
 from sitebuild.claims import ClaimError, ClaimRegister
 from sitebuild.content import Page
 from sitebuild.schema import page_url
@@ -63,6 +64,8 @@ class SiteEnvironment(jinja2.sandbox.SandboxedEnvironment):
         # None when the file is absent; `default_og_error` says why when it is there but unreadable.
         self.default_og_size: tuple[int, int] | None = None
         self.default_og_error: str | None = None
+        # Where picture() writes the image variants it makes (the host's assets/ folder). None outside a build.
+        self.assets_out: Path | None = None
 
     def is_safe_attribute(self, obj, attr, value):
         # The sandbox blocks dunders and unsafe callables, but a Path is ordinary: `page.source`
@@ -98,11 +101,29 @@ def make_env(root: Path, site: SiteConfig, claims: ClaimRegister) -> SiteEnviron
         """
         return claims.text(id, form)
 
+    def picture(src: str, alt: str, sizes: str = "100vw", loading: str = "lazy", fetchpriority: str | None = None) -> Markup:
+        """<picture> of an image under assets/: AVIF and WebP variants, an <img> sized from the file.
+
+        The page's first image passes loading="eager" and fetchpriority="high"; every other one stays lazy.
+        """
+        if env.assets_out is None:
+            raise assets.AssetError("picture() needs a build: there is no output folder to write the variants to")
+        relative = PurePath(src)
+        if relative.is_absolute() or ".." in relative.parts or not relative.parts:
+            raise assets.AssetError(f"picture(): {src!r} must be a path under assets/")
+        source = Path(root) / "assets" / relative
+        if source.is_symlink() or not source.is_file():
+            raise assets.AssetError(f"picture(): assets/{relative.as_posix()} is not a file")
+        base = "/".join(["/assets", *relative.parent.parts])
+        variants = assets.image_variants(source, env.assets_out / relative.parent, url_base=base)
+        return Markup(assets.picture_html(variants, alt, sizes, loading, fetchpriority))
+
     env.root = Path(root)
     env.default_og_size, env.default_og_error = _image_size(Path(root) / DEFAULT_OG_IMAGE.lstrip("/"))
     env.globals["site"] = site
     env.globals["claim"] = claim
     env.globals["claim_text"] = claim_text
+    env.globals["picture"] = picture
     env.filters["date"] = format_date
     return env
 

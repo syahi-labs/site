@@ -9,9 +9,13 @@ from pathlib import Path
 import pytest
 
 from sitebuild.content import ContentError, load_pages
+from asset_urls import hashed_file, hashed_url
 from sitebuild.pipeline import build
 
-LINK = '<link rel="stylesheet" href="/assets/pages/demo.css">'
+def link(host: Path) -> str:
+    return f'<link rel="stylesheet" href="{hashed_url(host, "pages/demo.css")}">'
+
+
 PAGE_CSS = ".demo{margin-top:var(--space-4)}\n"
 
 
@@ -77,11 +81,11 @@ def test_a_page_with_css_gets_the_file_published_and_linked(mini_root, tmp_path)
     result = build(mini_root, tmp_path / "dist")
     assert result.problems == []
     host = tmp_path / "dist" / "syahi.sh"
-    assert (host / "assets" / "pages" / "demo.css").read_text(encoding="utf-8") == PAGE_CSS
+    assert hashed_file(host, "pages/demo.css").read_text(encoding="utf-8") == PAGE_CSS
     html = (host / "signet.html").read_text(encoding="utf-8")
-    assert LINK in html
+    assert link(host) in html
     # after the shared sheets, so a page can refine the base, and inside <head>
-    assert html.index("/assets/tokens.css") < html.index("/assets/base.css") < html.index(LINK) < html.index("</head>")
+    assert html.index("/assets/tokens.") < html.index("/assets/base.") < html.index(link(host)) < html.index("</head>")
 
 
 def test_a_page_without_css_links_none(mini_root, tmp_path):
@@ -102,8 +106,8 @@ def test_the_katha_host_uses_it_too(mini_root, tmp_path):
     result = build(mini_root, tmp_path / "dist")
     assert result.problems == []
     host = tmp_path / "dist" / "katha.syahi.sh"
-    assert (host / "assets" / "pages" / "demo.css").is_file()
-    assert LINK in (host / "index.html").read_text(encoding="utf-8")
+    assert hashed_file(host, "pages/demo.css").is_file()
+    assert link(host) in (host / "index.html").read_text(encoding="utf-8")
     assert not (tmp_path / "dist" / "syahi.sh" / "assets" / "pages").exists()
 
 
@@ -113,7 +117,7 @@ def test_two_pages_can_share_one_stylesheet(mini_root, tmp_path):
     result = build(mini_root, tmp_path / "dist")
     assert result.problems == []
     for page in ("index.html", "signet.html"):
-        assert LINK in (tmp_path / "dist" / "syahi.sh" / page).read_text(encoding="utf-8")
+        assert link(tmp_path / "dist" / "syahi.sh") in (tmp_path / "dist" / "syahi.sh" / page).read_text(encoding="utf-8")
 
 
 def test_a_css_name_with_no_stylesheet_is_a_problem_naming_page_and_file(mini_root, tmp_path):
@@ -127,7 +131,7 @@ def test_the_published_css_is_byte_identical_to_the_source(mini_root, tmp_path):
     add_css(mini_root, text=".a{padding:var(--space-2)}\r\n.b{color:var(--ink)}\n")
     use_css(mini_root / "content" / "signet.html")
     assert build(mini_root, tmp_path / "dist").problems == []
-    published = (tmp_path / "dist" / "syahi.sh" / "assets" / "pages" / "demo.css").read_bytes()
+    published = hashed_file(tmp_path / "dist" / "syahi.sh", "pages/demo.css").read_bytes()
     assert published == (mini_root / "tokens" / "pages" / "demo.css").read_bytes()
 
 

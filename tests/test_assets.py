@@ -1,16 +1,22 @@
 # tests/test_assets.py
 #
 # Task 9a: the shared assets (art, brand mark, default share image, favicons) come from the live site at
-# 446f625 as bytes, `_publish_assets` copies the assets/ tree into each host's output (unhashed, until
-# Task 7 replaces the seam with the hashed pipeline), and the base template links the icons for both hosts.
+# 446f625 as bytes. Task 7: the build publishes every one of them under a content-hashed name (the files an
+# outside consumer asks for by a fixed URL keep a stable copy too), subsets the self-hosted fonts against each
+# host's own text, and the base template links the hashed URLs for both hosts.
 import hashlib
 import re
 import struct
 from pathlib import Path
 
 import pytest
+from PIL import Image
+from fontTools.fontBuilder import FontBuilder
+from fontTools.pens.ttGlyphPen import TTGlyphPen
+from fontTools.ttLib import TTFont
 
-from sitebuild import pipeline
+from sitebuild import assets, pipeline
+from sitebuild.assets import hashed_name, image_variants, publish, subset_font
 from sitebuild.pipeline import build
 
 REPO = Path(__file__).resolve().parents[1]
@@ -52,7 +58,8 @@ def test_each_asset_is_the_live_sites_file_byte_for_byte(name):
 
 
 def test_the_assets_tree_holds_these_files_and_nothing_else():
-    held = sorted(p.relative_to(ASSETS).as_posix() for p in ASSETS.rglob("*") if p.is_file() and not p.name.startswith("."))
+    held = sorted(p.relative_to(ASSETS).as_posix() for p in ASSETS.rglob("*")
+                  if p.is_file() and not p.name.startswith(".") and p.relative_to(ASSETS).parts[0] != "fonts")
     assert held == sorted(SOURCES)
 
 
@@ -64,20 +71,73 @@ def test_the_brand_images_have_the_sizes_the_pages_declare():
     assert png_size(ASSETS / "brand" / "apple-touch-icon.png") == (180, 180)
 
 
-# ---- the build publishes them to both hosts ----
+# ---- the build publishes them to both hosts, content-hashed ----
+
+HASHED = re.compile(r"\.[0-9a-f]{10}\.[a-z0-9]+$")
+
+
+def published_files(out: Path, host: str) -> set[str]:
+    return {p.relative_to(out / host).as_posix() for p in (out / host / "assets").rglob("*") if p.is_file()}
+
+
+def stable_only(name: str) -> bool:
+    return name in assets.STABLE_ONLY
+
 
 @pytest.mark.parametrize("host", HOSTS)
-def test_the_build_publishes_every_asset_byte_for_byte(real_site, host):
+def test_every_source_asset_is_published_under_its_hashed_name_byte_for_byte(real_site, host):
     for name in SOURCES:
-        published = real_site.out / host / "assets" / name
-        assert published.is_file(), f"{host}: {name}"
-        assert sha(published) == SOURCES[name], f"{host}: {name}"
+        source = ASSETS / name
+        folder = real_site.out / host / "assets" / Path(name).parent
+        if not stable_only(name):
+            published = folder / hashed_name(source)
+            assert published.is_file(), f"{host}: {name}"
+            assert sha(published) == SOURCES[name], f"{host}: {name}"
+            assert HASHED.search(published.name)
 
 
 @pytest.mark.parametrize("host", HOSTS)
-def test_the_stylesheets_are_still_published_beside_the_tree(real_site, host):
-    for name in ("tokens.css", "base.css"):
-        assert (real_site.out / host / "assets" / name).read_bytes() == (REPO / "tokens" / name).read_bytes()
+def test_files_an_outside_consumer_requests_by_a_fixed_url_keep_a_stable_copy(real_site, host):
+    for name in (*assets.STABLE_ONLY, *assets.ALSO_STABLE):
+        assert sha(real_site.out / host / "assets" / name) == SOURCES[name], f"{host}: {name}"
+    for url_name, name in assets.ROOT_COPIES.items():
+        assert sha(real_site.out / host / url_name) == SOURCES[name], f"{host}: /{url_name}"
+
+
+@pytest.mark.parametrize("host", HOSTS)
+def test_the_published_asset_tree_is_exactly_the_sources_the_fonts_and_the_stylesheets(real_site, host):
+    expected = set()
+    for name in SOURCES:
+        if not stable_only(name):
+            expected.add("assets/" + (Path(name).parent / hashed_name(ASSETS / name)).as_posix())
+        if stable_only(name) or name in assets.ALSO_STABLE:
+            expected.add("assets/" + name)
+    held = published_files(real_site.out, host)
+    fonts = {f for f in held if f.startswith("assets/fonts/")}
+    sheets = {f for f in held if f.endswith(".css")}
+    assert all(HASHED.search(f) for f in fonts | sheets)
+    assert {f.split("/")[-1].split(".")[0] for f in sheets} >= {"tokens", "base"}
+    assert held - fonts - sheets == expected, sorted(held - fonts - sheets ^ expected)
+    assert not any(f.endswith(".ttf") or "/src/" in f for f in held)          # sources are inputs, never outputs
+
+
+@pytest.mark.parametrize("host", HOSTS)
+def test_the_stylesheets_are_published_hashed_and_the_page_links_them(real_site, host):
+    html = (real_site.out / host / "index.html").read_text(encoding="utf-8")
+    links = re.findall(r'<link rel="stylesheet" href="(/assets/[^"]+)">', html)
+    assert [HASHED.search(u) is not None for u in links] == [True] * len(links) and len(links) >= 2
+    for url in links:
+        assert (real_site.out / host / url.lstrip("/")).is_file(), url
+    assert links[0].startswith("/assets/tokens.") and links[1].startswith("/assets/base.")
+
+
+@pytest.mark.parametrize("host", HOSTS)
+def test_no_page_links_an_unhashed_asset_except_none(real_site, host):
+    for page in sorted((real_site.out / host).rglob("*.html")):
+        text = page.read_text(encoding="utf-8")
+        for url in re.findall(r'(?:href|src)="(/assets/[^"#?]+)"', text):
+            assert HASHED.search(url), f"{page.name}: {url}"
+            assert (real_site.out / host / url.lstrip("/")).is_file(), f"{page.name}: {url}"
 
 
 @pytest.mark.parametrize("host", HOSTS)
@@ -99,28 +159,32 @@ def test_the_organisation_logo_in_structured_data_exists():
 # ---- the base template links the icons on both hosts ----
 
 ICON_LINKS = (
-    '<link rel="icon" href="/assets/brand/favicon.ico" sizes="48x48">',
-    '<link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">',
-    '<link rel="apple-touch-icon" href="/assets/brand/apple-touch-icon.png">',
+    ('<link rel="icon" href="{}" sizes="48x48">', "brand/favicon.ico"),
+    ('<link rel="icon" href="{}" type="image/svg+xml">', "brand/favicon.svg"),
+    ('<link rel="apple-touch-icon" href="{}">', "brand/apple-touch-icon.png"),
 )
 
 
+def icon_link(template: str, name: str) -> str:
+    return template.format("/assets/" + (Path(name).parent / hashed_name(ASSETS / name)).as_posix())
+
+
 @pytest.mark.parametrize("host", HOSTS)
-def test_every_page_links_the_favicons_the_apple_icon_and_the_theme_colour(real_site, host):
+def test_every_page_links_the_hashed_favicons_the_apple_icon_and_the_theme_colour(real_site, host):
     pages = sorted((real_site.out / host).rglob("*.html"))
     assert pages
     for page in pages:
         html = page.read_text(encoding="utf-8")
         head = html.split("</head>")[0]
-        for link in ICON_LINKS:
-            assert link in head, f"{host}/{page.name}: {link}"
+        for template, name in ICON_LINKS:
+            assert icon_link(template, name) in head, f"{host}/{page.name}: {name}"
         assert head.count('<meta name="theme-color"') == 1, f"{host}/{page.name}"
 
 
 @pytest.mark.parametrize("host", HOSTS)
 def test_every_linked_icon_resolves_in_that_hosts_output(real_site, host):
-    for link in ICON_LINKS:
-        href = re.search(r'href="(/[^"]+)"', link).group(1)
+    for template, name in ICON_LINKS:
+        href = re.search(r'href="(/[^"]+)"', icon_link(template, name)).group(1)
         assert (real_site.out / host / href.lstrip("/")).is_file(), f"{host}: {href}"
 
 
@@ -140,9 +204,10 @@ def test_the_old_google_fonts_and_cache_busted_icon_links_did_not_come_along():
 
 def test_the_katha_hero_is_the_built_asset_on_its_own_host(real_site):
     html = (real_site.out / "katha.syahi.sh" / "index.html").read_text(encoding="utf-8")
-    assert 'src="/assets/img/gramophone.webp"' in html
+    url = "/assets/img/" + hashed_name(ASSETS / "img" / "gramophone.webp")
+    assert f'src="{url}"' in html
     assert "https://syahi.sh/art/" not in html
-    assert (real_site.out / "katha.syahi.sh" / "assets" / "img" / "gramophone.webp").is_file()
+    assert (real_site.out / "katha.syahi.sh" / url.lstrip("/")).is_file()
 
 
 # ---- _publish_assets, on its own ----
@@ -161,29 +226,47 @@ def stylesheets(root: Path) -> None:
         (root / "tokens" / name).write_text("a{}\n", encoding="utf-8")
 
 
-def test_the_tree_is_copied_as_bytes_with_its_nested_folders(tmp_path):
-    root = tree(tmp_path / "root", {"img/a.webp": b"\x00\xffRIFF", "brand/b.png": b"\x89PNG\r\n", "c/d/e.bin": b"\r\n\x00"})
+def publish_tree(root: Path, out: Path, html: list[str] | None = None, css: list[str] | None = None):
+    return pipeline._publish_assets(root, out, html or ["<body><p>Hello</p></body>"], css or [])
+
+
+def held(out: Path) -> list[str]:
+    return sorted(p.relative_to(out / "assets").as_posix() for p in (out / "assets").rglob("*") if p.is_file())
+
+
+def font_problems(problems: list[str]) -> list[str]:
+    return [p for p in problems if "font" not in p.lower()]
+
+
+def test_the_tree_is_published_hashed_with_its_nested_folders(tmp_path):
+    files = {"img/a.webp": b"\x00\xffRIFF", "brand/b.png": b"\x89PNG\r\n", "c/d/e.bin": b"\r\n\x00"}
+    root = tree(tmp_path / "root", files)
     stylesheets(root)
-    host_out = tmp_path / "out"
-    assert pipeline._publish_assets(root, host_out) == []
-    for name, data in {"img/a.webp": b"\x00\xffRIFF", "brand/b.png": b"\x89PNG\r\n", "c/d/e.bin": b"\r\n\x00"}.items():
-        assert (host_out / "assets" / name).read_bytes() == data
-    assert (host_out / "assets" / "tokens.css").is_file() and (host_out / "assets" / "base.css").is_file()
+    out = tmp_path / "out"
+    manifest, problems = publish_tree(root, out)
+    assert font_problems(problems) == []
+    for name, data in files.items():
+        url = manifest[name]
+        assert HASHED.search(url) and url.startswith("/assets/" + str(Path(name).parent) + "/")
+        assert (out / url.lstrip("/")).read_bytes() == data
+        assert not (out / "assets" / name).exists()                       # no unhashed copy of an ordinary asset
+    assert manifest["tokens.css"].startswith("/assets/tokens.") and manifest["base.css"].startswith("/assets/base.")
 
 
 def test_no_assets_folder_is_not_a_problem(tmp_path):
     root = tmp_path / "root"
     stylesheets(root)
-    assert pipeline._publish_assets(root, tmp_path / "out") == []
-    assert sorted(p.name for p in (tmp_path / "out" / "assets").iterdir()) == ["base.css", "tokens.css"]
+    manifest, problems = publish_tree(root, tmp_path / "out")
+    assert sorted(manifest) == ["base.css", "tokens.css"]
+    assert not any("symbolic" in p or "reserved" in p for p in problems)
 
 
 def test_dotfiles_are_never_published(tmp_path):
     root = tree(tmp_path / "root", {"img/a.webp": b"x", ".DS_Store": b"junk", "img/.DS_Store": b"junk", ".hidden/b.png": b"x"})
     stylesheets(root)
-    assert pipeline._publish_assets(root, tmp_path / "out") == []
-    published = sorted(p.relative_to(tmp_path / "out" / "assets").as_posix() for p in (tmp_path / "out" / "assets").rglob("*") if p.is_file())
-    assert published == ["base.css", "img/a.webp", "tokens.css"]
+    manifest, _ = publish_tree(root, tmp_path / "out")
+    assert sorted(manifest) == ["base.css", "img/a.webp", "tokens.css"]
+    assert not [f for f in held(tmp_path / "out") if "DS_Store" in f or "hidden" in f]
 
 
 def test_a_symbolic_link_in_assets_is_a_problem_and_is_not_followed(tmp_path):
@@ -194,25 +277,24 @@ def test_a_symbolic_link_in_assets_is_a_problem_and_is_not_followed(tmp_path):
     stylesheets(root)
     (root / "assets" / "img" / "link.txt").symlink_to(secret)
     (root / "assets" / "linked-dir").symlink_to(secret.parent, target_is_directory=True)
-    problems = pipeline._publish_assets(root, tmp_path / "out")
+    manifest, problems = publish_tree(root, tmp_path / "out")
     assert any("link.txt" in p and "symbolic link" in p for p in problems), problems
     assert any("linked-dir" in p and "symbolic link" in p for p in problems), problems
     published = [p for p in (tmp_path / "out").rglob("*") if p.is_file()]
     assert not any("private" in p.read_text(encoding="utf-8", errors="ignore") for p in published)
-    assert not (tmp_path / "out" / "assets" / "img" / "link.txt").exists()
-    assert (tmp_path / "out" / "assets" / "img" / "a.webp").is_file()          # the rest still published
+    assert "img/link.txt" not in manifest and "img/a.webp" in manifest        # the rest still published
 
 
-@pytest.mark.parametrize("name", ["tokens.css", "base.css", "pages/demo.css"])
+@pytest.mark.parametrize("name", ["tokens.css", "base.css", "pages/demo.css", "fonts/x.woff2"])
 def test_a_file_in_a_name_the_build_writes_itself_is_a_problem_and_never_replaces_it(tmp_path, name):
-    # tokens.css, base.css and pages/ are the build's own: a stray file there must not shadow a real stylesheet.
+    # tokens.css, base.css, pages/ and fonts/ are the build's own: a stray file there must not shadow an output.
     root = tree(tmp_path / "root", {name: b"body{display:none}", "img/a.webp": b"x"})
     stylesheets(root)
-    problems = pipeline._publish_assets(root, tmp_path / "out")
-    assert any(name in p and "reserved" in p for p in problems), problems
-    assert (tmp_path / "out" / "assets" / "img" / "a.webp").is_file()          # the rest still published
-    shadowed = tmp_path / "out" / "assets" / name
-    assert not shadowed.exists() or shadowed.read_text(encoding="utf-8") == "a{}\n"
+    manifest, problems = publish_tree(root, tmp_path / "out")
+    assert "img/a.webp" in manifest                                          # the rest still published
+    if not name.startswith("fonts/"):                                         # fonts/ is the sources' own folder
+        assert any(name in p and "reserved" in p for p in problems), problems
+    assert not any(b"display:none" in p.read_bytes() for p in (tmp_path / "out").rglob("*") if p.is_file())
 
 
 def test_a_feed_or_cname_hidden_in_assets_still_fails_the_build(mini_root, tmp_path):
@@ -226,7 +308,7 @@ def test_the_tree_is_published_to_both_hosts_and_the_build_is_deterministic(mini
     first, second = tmp_path / "a", tmp_path / "b"
     assert build(mini_root, first).problems == [] and build(mini_root, second).problems == []
     for host in HOSTS:
-        assert (first / host / "assets" / "img" / "a.webp").read_bytes() == b"\x00art"
+        assert (first / host / "assets" / "img" / "a.d3b4c4b4d6.webp".replace("d3b4c4b4d6", hashlib.sha256(b"\x00art").hexdigest()[:10])).read_bytes() == b"\x00art"
     listing = lambda out: sorted((p.relative_to(out).as_posix(), sha(p)) for p in out.rglob("*") if p.is_file())
     assert listing(first) == listing(second)
 
@@ -235,3 +317,365 @@ def test_the_build_never_reads_its_own_published_assets(mini_root, tmp_path):
     # the output may not sit inside a source folder, assets/ included
     result = build(mini_root, mini_root / "assets" / "out")
     assert result.problems and "assets" in result.problems[0]
+
+
+# ---- hashing, publishing, subsetting and images, with made-up inputs ----
+
+def make_font(path: Path):
+    fb = FontBuilder(1000, isTTF=True)
+    names = [".notdef", "A", "B", "C"]
+    fb.setupGlyphOrder(names); fb.setupCharacterMap({0x41: "A", 0x42: "B", 0x43: "C"})
+    pen = TTGlyphPen(None); pen.moveTo((0, 0)); pen.lineTo((0, 500)); pen.lineTo((500, 0)); pen.closePath()
+    g = pen.glyph(); fb.setupGlyf({n: g for n in names}); fb.setupHorizontalMetrics({n: (600, 0) for n in names})
+    fb.setupHorizontalHeader(ascent=800, descent=-200); fb.setupNameTable({"familyName": "T", "styleName": "R"})
+    fb.setupOS2(); fb.setupPost(); fb.save(str(path))
+
+
+def test_hashed_name_stable(tmp_path):
+    f = tmp_path / "mark.svg"; f.write_bytes(b"<svg/>")
+    assert hashed_name(f) == hashed_name(f) and hashed_name(f).startswith("mark.") and hashed_name(f).endswith(".svg")
+
+
+def test_hashed_name_is_ten_hex_characters_of_the_content_hash_and_follows_the_bytes(tmp_path):
+    f = tmp_path / "mark.svg"; f.write_bytes(b"<svg/>")
+    assert hashed_name(f) == f"mark.{hashlib.sha256(b'<svg/>').hexdigest()[:10]}.svg"
+    before = hashed_name(f)
+    f.write_bytes(b"<svg></svg>")
+    assert hashed_name(f) != before
+
+
+def test_publish_returns_url(tmp_path):
+    f = tmp_path / "a.css"; f.write_text("a{}")
+    url = publish(f, tmp_path / "out")
+    assert url.startswith("/assets/a.") and (tmp_path / "out" / url.split("/")[-1]).is_file()
+
+
+def test_publish_copies_the_bytes_untouched(tmp_path):
+    f = tmp_path / "a.bin"; f.write_bytes(b"\r\n\x00\xff")
+    url = publish(f, tmp_path / "out", url_base="/assets/img")
+    assert url.startswith("/assets/img/a.") and (tmp_path / "out" / url.split("/")[-1]).read_bytes() == b"\r\n\x00\xff"
+
+
+def test_image_variants_never_upscale(tmp_path):
+    src = tmp_path / "p.png"; Image.new("RGB", (1000, 500), "white").save(src)
+    v = image_variants(src, tmp_path / "out")
+    assert {x["format"] for x in v} == {"avif", "webp"}
+    assert max(x["width"] for x in v) == 1000 and all(x["height"] * 2 == x["width"] for x in v)
+
+
+def test_image_variants_are_hashed_files_at_each_width_narrower_than_the_source(tmp_path):
+    src = tmp_path / "p.png"; Image.new("RGB", (1000, 500), "white").save(src)
+    v = image_variants(src, tmp_path / "out")
+    assert sorted({x["width"] for x in v}) == [480, 960, 1000]
+    for item in v:
+        assert HASHED.search(item["url"]) and (tmp_path / "out" / item["url"].split("/")[-1]).is_file()
+        with Image.open(tmp_path / "out" / item["url"].split("/")[-1]) as image:
+            assert image.size == (item["width"], item["height"]) and image.format.lower() == item["format"]
+
+
+def test_an_unreadable_image_is_an_error_naming_the_file(tmp_path):
+    src = tmp_path / "broken.png"; src.write_bytes(b"not an image")
+    with pytest.raises(assets.AssetError, match="broken.png"):
+        image_variants(src, tmp_path / "out")
+
+
+def test_subset_font_keeps_only_needed_glyphs(tmp_path):
+    src = tmp_path / "t.ttf"; make_font(src)
+    out = subset_font(src, "AB", tmp_path / "t.woff2")
+    cmap = TTFont(str(out)).getBestCmap()
+    assert 0x41 in cmap and 0x42 in cmap and 0x43 not in cmap
+
+
+def test_subset_font_is_woff2_and_keeps_digits_and_punctuation(tmp_path):
+    src = tmp_path / "t.ttf"; make_font(src)
+    out = subset_font(src, "A", tmp_path / "t.woff2")
+    assert out.read_bytes()[:4] == b"wOF2"
+
+
+def test_subset_of_the_real_devanagari_font_keeps_its_layout_features(tmp_path):
+    src = ASSETS / "fonts" / "src" / "TiroDevanagariHindi-Regular.ttf"
+    out = subset_font(src, "स्याही", tmp_path / "t.woff2")
+    font = TTFont(str(out))
+    features = {record.FeatureTag for record in font["GSUB"].table.FeatureList.FeatureRecord}
+    assert {"akhn", "half"} & features, features             # conjuncts and half forms need them
+    assert 0x0938 in font.getBestCmap() and 0x0915 not in font.getBestCmap()
+
+
+def test_a_missing_font_source_is_an_error_naming_the_file(tmp_path):
+    with pytest.raises(assets.AssetError, match="nowhere.ttf"):
+        subset_font(tmp_path / "nowhere.ttf", "A", tmp_path / "t.woff2")
+
+
+def test_a_source_that_is_not_a_font_is_an_error_naming_the_file(tmp_path):
+    bad = tmp_path / "bad.ttf"; bad.write_bytes(b"not a font")
+    with pytest.raises(assets.AssetError, match="bad.ttf"):
+        subset_font(bad, "A", tmp_path / "t.woff2")
+
+
+# ---- which text a font covers, and which families a host needs ----
+
+def test_page_text_splits_hindi_runs_from_the_rest_and_skips_the_head_and_scripts():
+    html = ('<html><head><title>Hidden</title><style>x{}</style></head><body><p>Plain <b>bold</b></p>'
+            '<p lang="hi">स्याही <em>nested</em></p><img src="a.png" alt="alt"><script>no()</script>'
+            '<p>after</p></body></html>')
+    latin, hindi = assets.page_text(html)
+    assert latin == "Plain boldafter" and hindi == "स्याही nested"
+
+
+def test_a_family_with_no_text_on_the_host_is_not_needed():
+    css = ["body{font-family:var(--font-sans)} :lang(hi){font-family:var(--font-deva)} h1{font-family:var(--font-serif)} em{font-style:italic}"]
+    keys = lambda text, hindi: [f.key for f in assets.faces_needed(css, text, hindi)]
+    assert keys("Hello", "") == ["fraunces", "fraunces-italic", "inter"]
+    assert keys("Hello", "स") == ["fraunces", "fraunces-italic", "inter", "tiro-devanagari-hindi"]
+    assert keys("", "") == []
+
+
+def test_italic_and_mono_are_needed_only_when_a_stylesheet_asks_for_them():
+    keys = lambda css: [f.key for f in assets.faces_needed([css], "Hello", "")]
+    assert keys("h1{font-family:var(--font-serif)}") == ["fraunces"]
+    assert keys("h1{font-family:var(--font-serif);font-style:italic}") == ["fraunces", "fraunces-italic"]
+    assert keys("code{font-family:var(--font-mono)}") == ["ibm-plex-mono-regular", "ibm-plex-mono-medium"]
+    assert keys("p{color:red}") == []
+
+
+# ---- the fonts the build publishes ----
+
+def face_rules(css: str) -> list[str]:
+    return re.findall(r"@font-face\{[^}]*\}", css)
+
+
+@pytest.mark.parametrize("host", HOSTS)
+def test_the_font_rules_name_published_hashed_subset_files_with_swap(real_site, host):
+    css_url = re.search(r'href="(/assets/tokens\.[^"]+)"', (real_site.out / host / "index.html").read_text(encoding="utf-8")).group(1)
+    css = (real_site.out / host / css_url.lstrip("/")).read_text(encoding="utf-8")
+    rules = face_rules(css)
+    assert len(rules) >= 4
+    for rule in rules:
+        assert "font-display:swap" in rule and "format('woff2')" in rule
+        (url,) = re.findall(r"url\((/assets/fonts/[^)]+)\)", rule)
+        assert HASHED.search(url) and (real_site.out / host / url.lstrip("/")).read_bytes()[:4] == b"wOF2"
+    families = sorted({re.search(r"font-family:'([^']+)'", r).group(1) for r in rules})
+    assert families == ["Fraunces", "IBM Plex Mono", "Inter", "Tiro Devanagari Hindi"]
+
+
+@pytest.mark.parametrize("host", HOSTS)
+def test_variable_faces_declare_their_weight_range_and_italic_is_its_own_rule(real_site, host):
+    css_url = re.search(r'href="(/assets/tokens\.[^"]+)"', (real_site.out / host / "index.html").read_text(encoding="utf-8")).group(1)
+    rules = face_rules((real_site.out / host / css_url.lstrip("/")).read_text(encoding="utf-8"))
+    by = {(re.search(r"font-family:'([^']+)'", r).group(1), re.search(r"font-style:(\w+)", r).group(1)): r for r in rules}
+    assert "font-weight:100 900" in by[("Fraunces", "normal")] and "font-weight:100 900" in by[("Fraunces", "italic")]
+    assert "font-weight:100 900" in by[("Inter", "normal")]
+    assert "font-weight:400;" in by[("Tiro Devanagari Hindi", "normal")]
+    mono = [r for r in rules if "IBM Plex Mono" in r]
+    assert sorted(re.search(r"font-weight:(\d+)", r).group(1) for r in mono) == ["400", "500"]
+
+
+@pytest.mark.parametrize("host", HOSTS)
+def test_the_published_subsets_hold_the_pages_glyphs_and_not_the_whole_font(real_site, host):
+    fonts = real_site.out / host / "assets" / "fonts"
+    inter = next(fonts.glob("inter.*.woff2"))
+    cmap = TTFont(str(inter)).getBestCmap()
+    assert all(ord(c) in cmap for c in "Syahi 0123")
+    assert 0x0152 not in cmap and len(cmap) < 200                               # OE ligature: not on any page
+    assert inter.stat().st_size < ASSETS.joinpath("fonts/src/Inter[opsz,wght].ttf").stat().st_size // 4
+    assert any(f.stat().st_size for f in fonts.iterdir())
+    assert real_site.result.font_bytes[host]["inter"] == inter.stat().st_size
+
+
+@pytest.mark.parametrize("host", HOSTS)
+def test_only_the_body_font_is_preloaded_and_it_is_the_published_inter(real_site, host):
+    inter = next((real_site.out / host / "assets" / "fonts").glob("inter.*.woff2"))
+    for page in sorted((real_site.out / host).rglob("*.html")):
+        head = page.read_text(encoding="utf-8").split("</head>")[0]
+        links = re.findall(r'<link rel="preload"[^>]*>', head)
+        assert links == [f'<link rel="preload" href="/assets/fonts/{inter.name}" as="font" type="font/woff2" crossorigin>'], page.name
+
+
+def test_a_host_without_hindi_text_ships_no_devanagari_font(mini_root, tmp_path):
+    result = build(mini_root, tmp_path / "dist")
+    assert result.problems == [], result.problems
+    for host in HOSTS:
+        names = [p.name for p in (tmp_path / "dist" / host / "assets" / "fonts").iterdir()]
+        assert not any(n.startswith("tiro-") for n in names), names
+        css = next((tmp_path / "dist" / host / "assets").glob("tokens.*.css")).read_text(encoding="utf-8")
+        assert "font-family:'Tiro Devanagari Hindi'" not in css
+
+
+def test_a_hindi_run_makes_the_devanagari_font_appear_with_that_runs_glyphs(mini_root, tmp_path):
+    page = mini_root / "content" / "index.html"
+    page.write_text(page.read_text(encoding="utf-8") + '\n<p><span lang="hi">स्याही</span></p>\n', encoding="utf-8")
+    result = build(mini_root, tmp_path / "dist")
+    assert not [p for p in result.problems if "font" in p], result.problems
+    deva = next((tmp_path / "dist" / "syahi.sh" / "assets" / "fonts").glob("tiro-*.woff2"))
+    cmap = TTFont(str(deva)).getBestCmap()
+    assert 0x0938 in cmap and 0x0915 not in cmap
+
+
+def test_a_missing_font_source_is_a_build_problem_naming_the_file(mini_root, tmp_path):
+    (mini_root / "assets" / "fonts" / "src" / "Inter[opsz,wght].ttf").unlink()
+    result = build(mini_root, tmp_path / "dist")
+    assert any("Inter[opsz,wght].ttf" in p for p in result.problems), result.problems
+    css = next((tmp_path / "dist" / "syahi.sh" / "assets").glob("tokens.*.css")).read_text(encoding="utf-8")
+    assert "font-family:'Inter'" not in css                                      # no rule for a font that is not there
+
+
+def test_a_font_source_that_cannot_be_subset_is_a_build_problem_naming_the_file(mini_root, tmp_path):
+    (mini_root / "assets" / "fonts" / "src" / "Fraunces-Italic[SOFT,WONK,opsz,wght].ttf").write_bytes(b"not a font")
+    result = build(mini_root, tmp_path / "dist")
+    assert any("Fraunces-Italic" in p and "font" in p and "cannot be" in p for p in result.problems), result.problems
+
+
+def test_a_symbolic_link_as_a_font_source_is_refused(mini_root, tmp_path):
+    source = mini_root / "assets" / "fonts" / "src" / "Fraunces[SOFT,WONK,opsz,wght].ttf"
+    target = tmp_path / "elsewhere.ttf"
+    target.write_bytes(source.read_bytes())
+    source.unlink()
+    source.symlink_to(target)
+    result = build(mini_root, tmp_path / "dist")
+    assert any("Fraunces[SOFT,WONK,opsz,wght].ttf" in p and "symbolic link" in p for p in result.problems), result.problems
+
+
+def test_the_fonts_on_the_home_page_stay_inside_the_budget(real_site):
+    sizes = real_site.result.font_bytes["syahi.sh"]
+    assert set(sizes) == {"fraunces", "fraunces-italic", "inter", "ibm-plex-mono-regular", "ibm-plex-mono-medium", "tiro-devanagari-hindi"}
+    assert all(size < 100_000 for size in sizes.values()), sizes
+    assert sum(sizes.values()) < 250_000, sizes
+
+
+# ---- url() inside stylesheets, and the vendored fonts' licences ----
+
+def test_a_stylesheet_url_to_an_asset_points_at_the_hashed_file(mini_root, tmp_path):
+    tree(mini_root, {"img/dot.png": b"\x89PNG-dot"})
+    (mini_root / "tokens" / "base.css").write_text('.dot{background:url("/assets/img/dot.png")}\n.x{background:url(/assets/img/dot.png#a)}', encoding="utf-8")
+    result = build(mini_root, tmp_path / "dist")
+    assert result.problems == [], result.problems
+    css = next((tmp_path / "dist" / "syahi.sh" / "assets").glob("base.*.css")).read_text(encoding="utf-8")
+    name = "dot." + hashlib.sha256(b"\x89PNG-dot").hexdigest()[:10] + ".png"
+    assert f'url("/assets/img/{name}")' in css and f"url(/assets/img/{name}#a)" in css
+    assert (tmp_path / "dist" / "syahi.sh" / "assets" / "img" / name).is_file()
+
+
+def test_a_stylesheet_url_naming_no_asset_is_a_problem(mini_root, tmp_path):
+    (mini_root / "tokens" / "base.css").write_text(".dot{background:url(/assets/img/ghost.png)}", encoding="utf-8")
+    result = build(mini_root, tmp_path / "dist")
+    assert any("ghost.png" in p and "base.css" in p for p in result.problems), result.problems
+
+
+def test_rewrite_html_changes_asset_links_only_and_leaves_absolute_urls_alone():
+    manifest = {"img/a.png": "/assets/img/a.1234567890.png"}
+    html = ('<img src="/assets/img/a.png"><a href="/assets/img/a.png?x=1#y">x</a><a href="/other">o</a>'
+            '<meta content="https://syahi.sh/assets/img/a.png"><img src="/assets/img/unknown.png">')
+    out = assets.rewrite_html(html, manifest)
+    assert out == ('<img src="/assets/img/a.1234567890.png"><a href="/assets/img/a.1234567890.png?x=1#y">x</a><a href="/other">o</a>'
+                   '<meta content="https://syahi.sh/assets/img/a.png"><img src="/assets/img/unknown.png">')
+
+
+LICENSE_ROW = re.compile(r"^\| `([^`]+)` \| [^|]+ \| (?:(\d+) \| )?`([0-9a-f]{64})` \|$", re.M)
+PINNED_COMMIT = "7085eb89a950e85db5b166b7a58d414544b4140c"
+
+
+def test_the_licences_file_records_the_pinned_commit_and_every_checksum():
+    doc = (ASSETS / "fonts" / "LICENSES.md").read_text(encoding="utf-8")
+    assert PINNED_COMMIT in doc
+    rows = LICENSE_ROW.findall(doc)
+    held = sorted(p.name for p in (ASSETS / "fonts" / "src").iterdir())
+    assert sorted(name for name, _, _ in rows) == held and len(held) == 10
+    for name, size, digest in rows:
+        data = (ASSETS / "fonts" / "src" / name).read_bytes()
+        assert hashlib.sha256(data).hexdigest() == digest, name
+        if size:
+            assert len(data) == int(size), name
+
+
+def test_every_family_has_its_ofl_text_beside_the_sources():
+    held = {p.name for p in (ASSETS / "fonts" / "src").iterdir()}
+    assert {f"OFL-{family}.txt" for family in ("fraunces", "inter", "ibmplexmono", "tirodevanagarihindi")} <= held
+    assert {face.source for face in assets.FACES} <= held
+    for family in ("fraunces", "inter", "ibmplexmono", "tirodevanagarihindi"):
+        assert "SIL OPEN FONT LICENSE Version 1.1" in (ASSETS / "fonts" / "src" / f"OFL-{family}.txt").read_text(encoding="utf-8")
+
+
+# ---- picture() ----
+
+def picture_page(mini_root: Path, call: str) -> None:
+    page = mini_root / "content" / "index.html"
+    page.write_text(page.read_text(encoding="utf-8") + "\n" + call + "\n", encoding="utf-8")
+
+
+def test_picture_writes_avif_and_webp_sources_then_a_sized_lazy_img(mini_root, tmp_path):
+    Image.new("RGB", (1000, 500), "white").save(mini_root / "assets" / "img" / "photo.png")
+    picture_page(mini_root, '{{ picture("img/photo.png", "A white field", sizes="50vw") }}')
+    result = build(mini_root, tmp_path / "dist")
+    assert result.problems == [], result.problems
+    html = (tmp_path / "dist" / "syahi.sh" / "index.html").read_text(encoding="utf-8")
+    block = re.search(r"<picture>.*?</picture>", html, re.S).group(0)
+    assert block.index('type="image/avif"') < block.index('type="image/webp"') < block.index("<img ")
+    assert 'sizes="50vw"' in block and 'width="1000" height="500" alt="A white field" loading="lazy" decoding="async"' in block
+    assert "fetchpriority" not in block
+    for url in re.findall(r"(/assets/img/photo-[^\s\",]+)", block):
+        assert (tmp_path / "dist" / "syahi.sh" / url.lstrip("/")).is_file(), url
+    assert "480w" in block and "960w" in block and "1000w" in block and "1600w" not in block
+
+
+def test_the_first_image_can_be_eager_with_high_fetch_priority(mini_root, tmp_path):
+    Image.new("RGB", (600, 300), "white").save(mini_root / "assets" / "img" / "hero.png")
+    picture_page(mini_root, '{{ picture("img/hero.png", "Hero", loading="eager", fetchpriority="high") }}')
+    result = build(mini_root, tmp_path / "dist")
+    assert result.problems == [], result.problems
+    html = (tmp_path / "dist" / "syahi.sh" / "index.html").read_text(encoding="utf-8")
+    assert 'loading="eager" decoding="async" fetchpriority="high">' in html
+
+
+def test_picture_escapes_its_alt_text(mini_root, tmp_path):
+    Image.new("RGB", (100, 100), "white").save(mini_root / "assets" / "img" / "q.png")
+    picture_page(mini_root, '{{ picture("img/q.png", \'A "quoted" <b>\') }}')
+    build(mini_root, tmp_path / "dist")
+    html = (tmp_path / "dist" / "syahi.sh" / "index.html").read_text(encoding="utf-8")
+    assert 'alt="A &quot;quoted&quot; &lt;b&gt;"' in html
+
+
+@pytest.mark.parametrize("call, reason", [
+    ('{{ picture("img/nowhere.png", "x") }}', "is not a file"),
+    ('{{ picture("../tokens/base.css", "x") }}', "must be a path under assets"),
+])
+def test_picture_of_a_missing_or_escaping_path_fails_the_page_naming_it(mini_root, tmp_path, call, reason):
+    picture_page(mini_root, call)
+    result = build(mini_root, tmp_path / "dist")
+    assert any("index.html" in p and reason in p for p in result.problems), result.problems
+
+
+# ---- the subset cache, preloads and the whole real build ----
+
+def test_a_remembered_subset_is_the_same_bytes_as_a_fresh_one(tmp_path, monkeypatch):
+    monkeypatch.setenv("SITEBUILD_CACHE", str(tmp_path / "cache"))
+    src = ASSETS / "fonts" / "src" / "IBMPlexMono-Regular.ttf"
+    digest = hashlib.sha256(src.read_bytes()).hexdigest()
+    codepoints = tuple(sorted(assets._unicodes("Hello 123")))
+    fresh = assets._subset_bytes(digest, str(src), codepoints)
+    first = subset_font(src, "Hello 123", tmp_path / "a.woff2").read_bytes()      # fills the cache
+    assert list((tmp_path / "cache").glob("*.woff2"))
+    second = subset_font(src, "Hello 123", tmp_path / "b.woff2").read_bytes()      # reads it
+    assert fresh == first == second
+
+
+def test_an_unusable_cache_folder_is_skipped_not_a_problem(tmp_path, monkeypatch):
+    blocker = tmp_path / "file"; blocker.write_text("x", encoding="utf-8")
+    monkeypatch.setenv("SITEBUILD_CACHE", str(blocker / "cache"))                   # a folder under a file cannot be made
+    out = subset_font(ASSETS / "fonts" / "src" / "IBMPlexMono-Regular.ttf", "Hi", tmp_path / "a.woff2")
+    assert out.read_bytes()[:4] == b"wOF2"
+
+
+def test_a_font_preload_for_a_face_the_host_does_not_ship_is_dropped():
+    html = ('<head><link rel="preload" href="/assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>\n'
+            '<link rel="stylesheet" href="/assets/base.css"></head>')
+    assert assets.rewrite_html(html, {"base.css": "/assets/base.1234567890.css"}) == (
+        '<head><link rel="stylesheet" href="/assets/base.1234567890.css"></head>')
+    kept = assets.rewrite_html(html, {"fonts/inter.woff2": "/assets/fonts/inter.1234567890.woff2"})
+    assert 'href="/assets/fonts/inter.1234567890.woff2"' in kept
+
+
+def test_the_whole_real_build_is_byte_identical_run_to_run(real_site, tmp_path):
+    again = build(real_site.root, tmp_path / "again")
+    assert again.problems == real_site.result.problems
+    listing = lambda out: sorted((p.relative_to(out).as_posix(), sha(p)) for p in out.rglob("*") if p.is_file())
+    assert listing(tmp_path / "again") == listing(real_site.out)

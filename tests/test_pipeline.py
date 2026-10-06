@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+from asset_urls import hashed_file
 from sitebuild import pipeline
 from sitebuild.pipeline import MARKER, MARKER_TEXT, BuildResult, build
 
@@ -88,8 +89,9 @@ def test_a_rebuild_over_an_existing_out_is_identical(mini_root, tmp_path):
 def test_the_katha_host_layout(mini_root, tmp_path):
     out = tmp_path / "dist" / "katha.syahi.sh"
     assert build(mini_root, tmp_path / "dist").problems == []
-    for f in ["index.html", "robots.txt", "sitemap.xml", "assets/tokens.css", "assets/base.css"]:
+    for f in ["index.html", "robots.txt", "sitemap.xml"]:
         assert (out / f).is_file(), f
+    assert hashed_file(out, "tokens.css").is_file() and hashed_file(out, "base.css").is_file()
     assert not (out / "llms.txt").exists() and not (out / "404.html").exists()
     assert sitemap_locs(out / "sitemap.xml") == ["https://katha.example/"]
 
@@ -386,11 +388,11 @@ def test_release_ignores_links_to_pages_that_are_not_pending(mini_root, tmp_path
 # ---- the output never holds feed.xml or CNAME ----
 
 def test_the_output_never_holds_feed_xml_or_cname(mini_root, tmp_path, monkeypatch):
-    def leaky(root, host_out):
+    def leaky(root, host_out, *args):
         (host_out / "assets").mkdir(parents=True, exist_ok=True)
         (host_out / "assets" / "feed.xml").write_text("x", encoding="utf-8")
         (host_out / "CNAME").write_text("x", encoding="utf-8")
-        return []
+        return {}, []
     monkeypatch.setattr(pipeline, "_publish_assets", leaky)
     r = build(mini_root, tmp_path / "dist")
     assert any("feed.xml" in p for p in r.problems) and any("CNAME" in p for p in r.problems)

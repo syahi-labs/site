@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from asset_urls import hashed_file, hashed_url, unhash
 from checks import copycheck, htmlcheck
 from css_guard import page_css_violations
 from parity_helpers import PARITY, apply_allowed, apply_link_moves, link_values, words
@@ -88,7 +89,7 @@ def test_the_output_is_what_the_publish_step_copies_and_never_a_feed(built):
     host = built[1] / "katha.syahi.sh"
     for name in ("index.html", "robots.txt", "sitemap.xml"):
         assert (host / name).is_file(), name
-    assert (host / "assets" / "pages" / "katha-index.css").is_file()
+    assert hashed_file(host, "pages/katha-index.css").is_file()
     assert not list((built[1]).rglob("feed.xml")) and not list(built[1].rglob("CNAME"))
 
 
@@ -105,12 +106,12 @@ def test_the_page_passes_every_check_on_its_own(html):
     assert jsonld_mismatches(html) == []
 
 
-def test_the_page_carries_the_katha_chrome(html):
+def test_the_page_carries_the_katha_chrome(html, built):
     assert 'class="wordmark wordmark-katha"' in html
     assert 'href="https://syahi.sh/"' in html                       # the Syahi tab
     assert '<a class="cta" href="https://listen.katha.syahi.sh/">Visit the store</a>' in html
     assert '<link rel="canonical" href="https://katha.syahi.sh/">' in html
-    assert '<link rel="stylesheet" href="/assets/pages/katha-index.css">' in html
+    assert f'<link rel="stylesheet" href="{hashed_url(built[1] / "katha.syahi.sh", "pages/katha-index.css")}">' in html
     for href in ("https://syahi.sh/privacy", "https://syahi.sh/terms", "https://syahi.sh/refund", "https://syahi.sh/contact"):
         assert f'href="{href}"' in html
     assert '<span data-claim="org-legal-name">' in html and '<span data-claim="org-llpin">' in html
@@ -179,6 +180,7 @@ HERO_NEW = "/assets/img/gramophone.webp"            # the port: the same bytes, 
 
 
 def test_links_and_media_are_the_old_pages_exactly_but_for_the_hero_now_on_its_own_host(html):
+    html = unhash(html)     # the hero's URL carries its content hash; the move is from the file's own path
     # The same href and src values, in order, in the page's own content, compared whole, not as substrings.
     # The one move is the hero's, the same entry /katha on syahi.sh uses (parity_helpers.LINK_MOVES).
     old = SNAPSHOT.read_text(encoding="utf-8").split('<div class="hero-grid">', 1)[1].split("</main>")[0]
@@ -192,8 +194,9 @@ def test_links_and_media_are_the_old_pages_exactly_but_for_the_hero_now_on_its_o
 
 def test_the_hero_image_is_a_file_in_the_katha_hosts_own_output(built):
     host = built[1] / "katha.syahi.sh"
-    assert (host / HERO_NEW.lstrip("/")).is_file()
-    assert (host / HERO_NEW.lstrip("/")).read_bytes() == (REPO / "assets" / "img" / "gramophone.webp").read_bytes()
+    hero = hashed_file(host, "img/gramophone.webp")
+    assert hero.read_bytes() == (REPO / "assets" / "img" / "gramophone.webp").read_bytes()
+    assert f'src="{hashed_url(host, "img/gramophone.webp")}"' in (host / "index.html").read_text(encoding="utf-8")
 
 
 # ---- parity with today's live page ----

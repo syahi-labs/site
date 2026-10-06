@@ -15,6 +15,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from asset_urls import hashed_file, hashed_url, unhash
 from checks import copycheck, htmlcheck
 from parity_helpers import PARITY, apply_allowed, apply_link_moves, link_values, moves_used, words
 from sitebuild.claims import ClaimRegister
@@ -84,8 +85,8 @@ def test_the_whole_build_has_no_problem(real_site):
 def test_the_page_is_built_and_names_the_policy_stylesheet(real_site, dist, snapshot, name, slug, updated, levels):
     assert (dist / name).is_file()
     html = built(dist, name)
-    assert '<link rel="stylesheet" href="/assets/pages/policy.css">' in html
-    assert (dist / "assets" / "pages" / "policy.css").read_bytes() == (REPO / "tokens" / "pages" / "policy.css").read_bytes()
+    assert f'<link rel="stylesheet" href="{hashed_url(dist, "pages/policy.css")}">' in html
+    assert hashed_file(dist, "pages/policy.css").read_bytes() == (REPO / "tokens" / "pages" / "policy.css").read_bytes()
     assert f'<link rel="canonical" href="https://syahi.sh{slug}">' in html
 
 
@@ -531,7 +532,7 @@ def test_the_katha_title_and_description_are_the_old_pages_exactly(dist):
 
 
 def test_the_katha_links_are_the_old_pages_with_each_move_applied_in_order(dist):
-    old, new = link_values(old_katha_content()), link_values(main_of(built(dist, "katha.html")))
+    old, new = link_values(old_katha_content()), link_values(unhash(main_of(built(dist, "katha.html"))))
     assert new == apply_link_moves(old)
     assert len(old) == 6                                # the comparison cannot pass by both sides being empty
     assert [move.old for move in moves_used(old)] == ["https://syahi.sh/art/gramophone.webp"]
@@ -543,9 +544,9 @@ def test_the_katha_page_passes_every_check_and_names_the_shared_sheet(real_site,
     page = next(p for p in load_pages(REPO / "content") if p.slug == "/katha")
     assert htmlcheck.check(html) == [] and copycheck.check(html, page.audience) == [] and jsonld_mismatches(html) == []
     assert '<link rel="canonical" href="https://syahi.sh/katha">' in html
-    assert '<link rel="stylesheet" href="/assets/pages/katha-index.css">' in html
-    assert (dist / "assets" / "pages" / "katha-index.css").read_bytes() == (REPO / "tokens" / "pages" / "katha-index.css").read_bytes()
-    assert (dist / "assets" / "img" / "gramophone.webp").is_file()
+    assert f'<link rel="stylesheet" href="{hashed_url(dist, "pages/katha-index.css")}">' in html
+    assert hashed_file(dist, "pages/katha-index.css").read_bytes() == (REPO / "tokens" / "pages" / "katha-index.css").read_bytes()
+    assert hashed_file(dist, "img/gramophone.webp").is_file()
 
 
 def test_the_katha_structured_data_is_a_service_the_organization_provides(dist):
@@ -672,7 +673,7 @@ def test_what_the_home_drops_is_not_in_the_new_page(dist):
 # ---- links and media ----
 
 def test_the_home_links_are_the_old_pages_with_each_move_applied_in_order(dist):
-    old, new = link_values(old_home_content()), link_values(main_of(built(dist, "index.html")))
+    old, new = link_values(old_home_content()), link_values(unhash(main_of(built(dist, "index.html"))))
     assert new == apply_link_moves(old)
     assert len(old) == 8                                # the comparison cannot pass by both sides being empty
     assert [move.old for move in moves_used(old)] == [
@@ -696,8 +697,8 @@ def test_the_home_alt_text_and_labels_are_the_old_pages_exactly(dist):
 
 def test_each_art_file_the_home_names_is_in_the_output(dist):
     for name in ("inkpot", "loom", "gramophone", "cube"):
-        assert (dist / "assets" / "img" / f"{name}.webp").is_file()
-        assert f'src="/assets/img/{name}.webp"' in built(dist, "index.html")
+        assert hashed_file(dist, f"img/{name}.webp").is_file()
+        assert f'src="{hashed_url(dist, f"img/{name}.webp")}"' in built(dist, "index.html")
 
 
 # ---- the port's markup-only changes, each pinned ----
@@ -773,8 +774,8 @@ def home_css():
 
 
 def test_the_home_names_its_own_sheet_and_the_build_publishes_it(dist):
-    assert '<link rel="stylesheet" href="/assets/pages/home.css">' in built(dist, "index.html")
-    assert (dist / "assets" / "pages" / "home.css").read_bytes() == (REPO / "tokens" / "pages" / "home.css").read_bytes()
+    assert f'<link rel="stylesheet" href="{hashed_url(dist, "pages/home.css")}">' in built(dist, "index.html")
+    assert hashed_file(dist, "pages/home.css").read_bytes() == (REPO / "tokens" / "pages" / "home.css").read_bytes()
 
 
 @pytest.mark.parametrize("selector, token", [(s, "--font-serif") for s in HOME_SERIF] + [(s, "--font-mono") for s in HOME_MONO])
