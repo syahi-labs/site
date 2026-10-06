@@ -453,6 +453,7 @@ PINNED = {   # git rev-parse 446f625:<file> in the live site repo
 
 PINNED["site-index.html"] = "965a18a0a06ed3df2c10aa7054b74964464a0a01"     # git rev-parse 446f625:index.html (site)
 PINNED["katha-index.html"] = "8ebde0c01f978766bac5b5e604ec9356efba089d"     # git rev-parse 71e0a6d:index.html (katha-feed)
+PINNED["signet.html"] = "84257339c5d222b03a18f2b64dabbd6a54541fbc"          # git rev-parse a0bb211:index.html (signet-landing)
 
 
 @pytest.mark.parametrize("snapshot", sorted(PINNED))
