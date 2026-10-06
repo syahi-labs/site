@@ -1,12 +1,14 @@
-/* The home page. Layout and type roles only. Every colour and every font family comes from tokens.css: a role
-   is asked for by token (var(--font-serif), var(--font-mono)), and tests/test_tokens.py fails this folder on a
-   raw colour, a literal family or a redefined token. Lengths are not policed, so the wordmark's display size
-   and the card spacing are raw values; the rest use the type scale (--fs-*) and the spacing scale (--space-*).
+/* The home page. Layout and type roles only. Every colour, every font family and every font size comes from
+   tokens.css: a role or a size is asked for by token (var(--font-serif), var(--fs-lead)), and the guard in
+   tests/css_guard.py fails this folder on a raw colour, a literal family, a raw font size or a redefined
+   token. A size that moves with the viewport is clamp() between two steps. Other lengths (spacing, widths,
+   line heights) are not policed, so the card spacing is raw where no step fits.
    Text pairs used, all in test_tokens TEXT_PAIRS: ink on ground, ink on ground-deep, muted on ground,
    muted on ground-deep, act on ground, act on ground-deep.
    No script and no moving ink (D21): the one motion is the drop falling into the wordmark, in CSS, and
    reduced motion turns it off. The torn-paper plates keep today's two-mask trick; the masks are shapes
-   (a white rectangle torn by a turbulence filter), so the only colour in them is the mask's own alpha.
+   (a white rectangle torn by a turbulence filter), so the only colour in them is the mask's own white,
+   which the guard allows in a data URI and nothing else.
    The section head (.section-head, .roman, .label, .lede) is also in policy.css and katha-index.css, with
    small differences in spacing. Hoist it into base.css in one pass over all three sheets. */
 
@@ -23,7 +25,7 @@
   text-transform:uppercase;
   color:var(--muted);
 }
-.hero h1{font-size:clamp(4.5rem,14vw,10.5rem);line-height:.94;letter-spacing:-.02em}
+.hero h1{font-size:clamp(var(--fs-hero-min),14vw,var(--fs-hero));line-height:.94;letter-spacing:-.02em}
 .hero h1 .drop{
   display:inline-block;
   width:.34em;
@@ -42,12 +44,12 @@
   margin-top:2.75rem;
   font-family:var(--font-serif);
   font-weight:400;
-  font-size:clamp(1.25rem,2.8vw,1.625rem);
+  font-size:clamp(var(--fs-lead),2.8vw,var(--fs-h3));
   line-height:1.45;
   text-wrap:balance;
 }
 .thesis em{font-style:italic}
-.sub{max-width:33.75rem;margin-top:1.25rem;font-size:1rem;color:var(--muted)}
+.sub{max-width:33.75rem;margin-top:1.25rem;font-size:var(--fs-ui);color:var(--muted)}
 .hero-ventures{
   font-family:var(--font-mono);
   margin-top:2.125rem;
@@ -98,14 +100,14 @@
 }
 .roman{
   font-family:var(--font-serif);
-  font-size:clamp(2.125rem,4.5vw,3.25rem);
+  font-size:clamp(var(--fs-h2),4.5vw,var(--fs-display));
   font-weight:600;
   letter-spacing:-.01em;
   line-height:var(--lh-tight);
 }
 .label{font-family:var(--font-mono);text-transform:uppercase;color:var(--muted)}
-.section-head .label{font-size:.78125rem;letter-spacing:.3em}
-.lede{margin-left:auto;font-family:var(--font-serif);font-size:1rem;font-style:italic;color:var(--muted)}
+.section-head .label{font-size:var(--fs-small);letter-spacing:.3em}
+.lede{margin-left:auto;font-family:var(--font-serif);font-size:var(--fs-ui);font-style:italic;color:var(--muted)}
 
 /* The four venture cards. Each is one link. */
 .cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.625rem;margin-top:2.75rem}
@@ -135,7 +137,7 @@
 .card-fig svg,.card-fig img{width:100%;height:auto;display:block;mix-blend-mode:multiply}
 .card h2{
   font-family:var(--font-serif);
-  font-size:clamp(1.5rem,3vw,1.875rem);
+  font-size:clamp(var(--fs-h3),3vw,var(--fs-h2));
   font-weight:600;
   letter-spacing:-.015em;
   line-height:1.05;
@@ -146,7 +148,7 @@
   font-family:var(--font-mono);
   margin-top:auto;
   padding-top:1.25rem;
-  font-size:.71875rem;
+  font-size:var(--fs-micro);
   letter-spacing:.14em;
   text-transform:uppercase;
   color:var(--muted);
@@ -175,7 +177,7 @@
 .colophon p{
   font-family:var(--font-serif);
   max-width:43.75rem;
-  font-size:clamp(1.1875rem,2.6vw,1.5rem);
+  font-size:clamp(var(--fs-lead),2.6vw,var(--fs-h3));
   line-height:1.55;
 }
 .colophon p + p{margin-top:1.125rem}

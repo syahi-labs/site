@@ -21,13 +21,19 @@
   --act:#8E2F1E;           /* the one action colour: the call button */
   --focus:var(--ink);
 
+  /* brand marks (logo colours, not palette): a mark's own colour is part of the mark, so it is a token of its
+     own and colours that mark only. It is never a colour for text, rules or a page's own fills. */
+  --mark-signet-dot:#B06325;   /* the copper wax dot of the Signet seal */
+
   /* type: families. Self-hosted files arrive with the assets task; system fallbacks until then. */
   --font-serif:'Fraunces','Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif;
   --font-sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
   --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   --font-deva:'Tiro Devanagari Hindi','Noto Serif Devanagari','Kohinoor Devanagari','Devanagari Sangam MN',serif;
 
-  /* type: scale, 11 to 52 px, in rem so a reader's own text size still applies */
+  /* type: scale, 11 to 52 px, in rem so a reader's own text size still applies. The two hero steps are the
+     home wordmark's range (72 to 168 px) and sit above the reading scale. A page sheet takes every font
+     size from here: var(--fs-*), alone or between two steps in clamp() with the viewport deciding the pace. */
   --fs-micro:.6875rem;     /* 11px */
   --fs-small:.8125rem;     /* 13px */
   --fs-ui:.9375rem;        /* 15px */
@@ -37,6 +43,8 @@
   --fs-h2:1.875rem;        /* 30px */
   --fs-h1:2.375rem;        /* 38px */
   --fs-display:3.25rem;    /* 52px */
+  --fs-hero-min:4.5rem;    /* 72px: the home wordmark on a phone */
+  --fs-hero:10.5rem;       /* 168px: the home wordmark at its widest */
   --lh-tight:1.15;
   --lh-body:1.65;
 

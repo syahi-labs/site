@@ -714,10 +714,19 @@ def test_the_home_devanagari_wordmark_line_is_marked_hindi(dist):
     assert main.count('lang="hi"') == 1
 
 
-def test_the_drop_stays_in_the_h1_as_a_hidden_decoration_and_the_seal_stays_inline(dist):
+def test_the_drop_stays_in_the_h1_as_a_hidden_decoration(dist):
     main = main_of(built(dist, "index.html"))
     assert re.search(r'<h1>Syahi<svg class="drop" viewBox="20 8 60 84" aria-hidden="true"><path d="[^"]+"/></svg></h1>', main)
-    assert main.count('<svg class="signet-mark"') == 1 and main.count('id="card-seal-carve"') == 1
+
+
+def test_the_seal_comes_from_the_shared_partial_and_is_drawn_by_classes(dist):
+    source = (REPO / "content" / "index.html").read_text(encoding="utf-8")
+    assert source.count('{% include "partials/signet-seal.html" %}') == 1 and "<svg class=\"signet-mark\"" not in source
+    main = main_of(built(dist, "index.html"))
+    assert main.count('<svg class="signet-mark"') == 1 and main.count('id="signet-seal-carve"') == 1
+    assert main.count('class="seal-ring"') == 2 and main.count('class="seal-core"') == 1 and main.count('class="seal-dot"') == 1
+    assert "#221A0E" not in main and "#B06325" not in main            # the ink and the copper are tokens now
+    assert main.count("#") == main.count("#fff") + main.count("#000") + main.count("url(#") + main.count('href="#')   # only the mask's
 
 
 def test_the_hero_art_and_the_ventures_line_keep_their_words(dist):
@@ -769,6 +778,15 @@ def test_the_home_names_its_own_sheet_and_the_build_publishes_it(dist):
 @pytest.mark.parametrize("selector, token", [(s, "--font-serif") for s in HOME_SERIF] + [(s, "--font-mono") for s in HOME_MONO])
 def test_the_home_css_gives_each_role_its_family_by_token(selector, token):
     assert re.search(r"font-family:\s*var\(" + token + r"\)", rule(home_css(), selector)), selector
+
+
+def test_the_wordmark_sits_between_the_hero_steps_and_every_other_size_is_a_step_of_the_scale():
+    css = home_css()
+    assert "font-size:clamp(var(--fs-hero-min),14vw,var(--fs-hero))" in rule(css, ".hero h1")
+    sizes = re.findall(r"font-size:([^;}]+)", css)
+    assert len(sizes) >= 15
+    for size in sizes:
+        assert "var(--fs-" in size and not re.search(r"\d(rem|px|em)\b", size), size
 
 
 def test_the_home_css_has_no_script_hook_and_no_em_dash():

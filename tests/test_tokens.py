@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from css_guard import DECLARED_TOKENS, FONT_TOKENS, NAMED_COLOURS, page_css_violations
+from css_guard import DECLARED_TOKENS, FONT_TOKENS, NAMED_COLOURS, SIZE_TOKENS, page_css_violations
 
 REPO = Path(__file__).resolve().parents[1]
 TOKENS = (REPO / "tokens" / "tokens.css").read_text(encoding="utf-8")
@@ -172,14 +172,45 @@ def test_font_families_are_tokens_with_system_fallbacks():
         assert value.rstrip().endswith(generic), value
 
 
+def px(name):
+    value = declared(name)
+    return float(value[:-3]) * 16 if value.endswith("rem") else float(value[:-2])
+
+
 def test_type_scale_runs_11_to_52_px():
-    sizes = []
-    for name in re.findall(r"--(fs-[a-z0-9-]+)\s*:", TOKENS):
-        value = declared(name)
-        px = float(value[:-3]) * 16 if value.endswith("rem") else float(value[:-2])
-        sizes.append(px)
+    # The reading scale. The hero steps (--fs-hero-*) are the display wordmark's and sit above it.
+    sizes = [px(name) for name in re.findall(r"--(fs-(?!hero)[a-z0-9-]+)\s*:", TOKENS)]
     assert min(sizes) == 11 and max(sizes) == 52
     assert sizes == sorted(sizes)
+
+
+def test_the_hero_steps_are_the_home_wordmarks_range_and_sit_above_the_reading_scale():
+    assert (px("fs-hero-min"), px("fs-hero")) == (72, 168)
+    assert px("fs-display") < px("fs-hero-min") < px("fs-hero")
+    assert {"--fs-hero", "--fs-hero-min"} <= SIZE_TOKENS and "--fs-body" in SIZE_TOKENS and "--space-4" not in SIZE_TOKENS
+
+
+# ---- brand marks: logo colours, not palette ----
+
+def test_the_signet_dot_is_the_one_brand_mark_token_in_its_own_commented_group():
+    marks = re.findall(r"(--mark-[a-z0-9-]+)\s*:", TOKENS)
+    assert marks == ["--mark-signet-dot"]
+    assert declared("mark-signet-dot").upper() == "#B06325"
+    assert "brand marks (logo colours, not palette)" in TOKENS
+    assert TOKENS.index("brand marks (logo colours, not palette)") < TOKENS.index("--mark-signet-dot")
+
+
+def test_the_dot_token_colours_the_seals_dot_and_nothing_else():
+    users = {}
+    for path in [*(REPO / "tokens").rglob("*.css"), *TEMPLATES, *(REPO / "content").rglob("*.html")]:
+        if path.name == "tokens.css":
+            continue
+        text = path.read_text(encoding="utf-8")
+        for match in re.finditer(r"([^{}]*)\{[^{}]*var\(--mark-signet-dot\)[^{}]*\}", text):
+            users.setdefault(path.name, []).append(match.group(1).strip())
+    assert users == {"base.css": [".seal-dot"]}
+    for selector in (".seal-ring", ".seal-core"):
+        assert re.search(re.escape(selector) + r"\s*\{[^}]*var\(--ink\)", BASE), selector
 
 
 def test_motion_durations_and_reduced_motion():
@@ -267,9 +298,10 @@ def test_the_named_colour_list_is_css_color_4s():
     "a{font-family:var(--font-serif)!important}",
     "a{font-family:inherit}", "a{font:inherit}",
     "a{font:500 var(--fs-small)/var(--lh-body) var(--font-mono)}",
-    "a{font:italic 600 1.25rem var(--font-serif)}",
-    "a{font:600 clamp(1rem,2vw,2rem)/1.2 var(--font-serif)}",
-    "a{font:12px/1.5 var(--font-mono),var(--font-sans)}",
+    "a{font:italic 600 var(--fs-lead) var(--font-serif)}",
+    "a{font:600 clamp(var(--fs-small),2vw,var(--fs-h3))/1.2 var(--font-serif)}",
+    "a{font:var(--fs-small)/1.5 var(--font-mono),var(--font-sans)}",
+    "a{font:var(--fs-small)/20px var(--font-mono)}", "a{font:700 var(--fs-body) var(--font-serif), var(--font-sans)}",
     "a::marker{font-family:var(--font-mono)}",
     # colour: tokens, the allowed keywords, comments and names that are not values
     "a{color:var(--ink)}", "a{background:var(--ground-deep)}", "a{border:1px solid var(--rule)}",
@@ -286,9 +318,19 @@ def test_the_named_colour_list_is_css_color_4s():
     "@property --card-gap{syntax:'<length>';inherits:false;initial-value:1rem}",
     "a{color:var(--ink) /* red */}", "a{/* #fff */color:var(--ink);/* rgb(1,2,3) Georgia */}",
     "a{counter-reset:red-count}", "a{animation-name:fade-gold-in}", "a{list-style:zero-padded inside}",
-    # sizes and spacing are not policed
-    "a{font-size:12px}", "a{margin:13px 7px}", "a{line-height:1.37}", "a{padding:.3em}",
-    "a{letter-spacing:.24em}", "a{border-width:1.5px}",
+    # a font size is a step of the scale, alone or between steps with the viewport deciding how fast it grows
+    "a{font-size:var(--fs-body)}", "a{font-size:var( --fs-body )}", "a{font-size:var(--fs-hero)}",
+    "a{font-size:var(--fs-body)!important}", "a{font-size:inherit}", "a{font-size:initial}",
+    "a{font-size:clamp(var(--fs-lead),2.8vw,var(--fs-h3))}",
+    "a{font-size:clamp(var(--fs-hero-min),14vw,var(--fs-hero))}",
+    "a{font-size:min(var(--fs-h1),8vw)}", "a{font-size:max(var(--fs-small),1.2vw)}",
+    "a{font-size:calc(var(--fs-body)*1.1)}", "a{font-size:calc(var(--fs-body) + .2vw)}",
+    "a{font-size:clamp(var(--fs-small),calc(var(--fs-body) + .5vw),var(--fs-h2))}",
+    "a{font-size:clamp( var(--fs-small) , 2dvw , var(--fs-h2) )}",
+    # spacing, line heights and the rest of the lengths are not policed
+    "a{margin:13px 7px}", "a{line-height:1.37}", "a{line-height:24px}", "a{padding:.3em}",
+    "a{letter-spacing:.24em}", "a{border-width:1.5px}", "a{width:12rem;height:2em;gap:.75rem}",
+    "a{font-size-adjust:.5}",
 ])
 def test_the_page_css_guard_lets_these_through(fine):
     assert page_css_violations(fine) == [], fine
@@ -323,9 +365,81 @@ def test_the_page_css_guard_lets_these_through(fine):
     "@media (min-width:40em){:root{--gutter:0}}",
     "@property --font-serif{syntax:'*';inherits:true;initial-value:Georgia}",
     "@property --ink{syntax:'<color>';inherits:true}",
+    # a raw font size, alone or in the shorthand: sizes come from the scale
+    "a{font-size:12px}", "a{font-size:1rem}", "a{font-size:1.25em}", "a{font-size:120%}", "a{font-size:0}",
+    "a{font-size:large}", "a{font-size:smaller}", "a{font-size:medium}", "a{font-size:5vw}",
+    "a{font-size:12px!important}", "a{FONT-SIZE:12PX}",
+    "a{font-size:clamp(1rem,2vw,2rem)}", "a{font-size:clamp(var(--fs-small),2vw,24px)}",
+    "a{font-size:clamp(var(--fs-small),2vw,1.5em)}", "a{font-size:clamp(1rem,2vw,var(--fs-h2))}",
+    "a{font-size:calc(var(--fs-body) + 2px)}", "a{font-size:calc(1rem*2)}", "a{font-size:min(5vw,6vw)}",
+    "a{font-size:clamp(var(--fs-small),var(--x),var(--fs-h2))}", "a{font-size:clamp(var(--fs-small),2vw)extra}",
+    "a{font-size:var(--fs-nope)}", "a{font-size:var(--space-4)}", "a{font-size:var(--font-serif)}",
+    "a{font-size:var(--fs-body,12px)}", "a{font-size:var(--size)}", "a{font-size:env(safe-area-inset-top)}",
+    "a{font:12px var(--font-serif)}", "a{font:italic 600 1.25rem var(--font-serif)}",
+    "a{font:600 clamp(1rem,2vw,2rem)/1.2 var(--font-serif)}", "a{font:large var(--font-serif)}",
+    "a{font:calc(1rem + 2px)/1.2 var(--font-serif)}", "a{font:12px/1.5 var(--font-mono),var(--font-sans)}",
+    "a{font:bold 14px/1 var(--font-mono)}",
 ])
 def test_the_page_css_guard_catches_these(bad):
     assert page_css_violations(bad), bad
+
+
+def test_a_raw_size_is_named_with_what_to_use():
+    (found,) = page_css_violations("a{font-size:12px}")
+    assert found.startswith("font-size: 12px") and "var(--fs-" in found and "tokens.css" in found
+    assert any("var(--fs-" in item for item in page_css_violations("a{font:12px var(--font-serif)}"))
+
+
+def test_the_viewport_term_is_only_how_fast_a_step_grows_never_the_size():
+    assert page_css_violations("a{font-size:clamp(var(--fs-small),2vw,var(--fs-h2))}") == []
+    assert page_css_violations("a{font-size:2vw}") and page_css_violations("a{font-size:clamp(2vw,3vw,4vw)}")
+
+
+# ---- data URIs in a page sheet: only the colours a mask needs ----
+
+def svg_uri(inner, quote='"'):
+    from urllib.parse import quote as q
+    return "a{mask-image:url(" + quote + "data:image/svg+xml," + q(f"<svg xmlns='http://www.w3.org/2000/svg'>{inner}</svg>") + quote + ")}"
+
+
+@pytest.mark.parametrize("inner", [
+    "<rect width='4' height='4' fill='#fff'/>", "<rect fill='#FFFFFF'/>", "<rect fill='#000'/>", "<rect fill='#000000'/>",
+    "<rect fill='white'/>", "<rect fill='black'/>", "<rect fill='none' stroke='#000'/>",
+    "<rect style='fill:#fff;stroke:none'/>",
+    "<filter id='t'><feTurbulence baseFrequency='0.02'/></filter><rect fill='#fff' filter='url(#t)'/>",
+    "<filter id='fad'><feTurbulence/></filter><rect fill='#fff' filter='url(#fad)'/>",   # an id that looks like hex
+])
+def test_a_data_uri_may_hold_a_mask_s_black_and_white(inner):
+    assert page_css_violations(svg_uri(inner)) == [], inner
+    assert page_css_violations(svg_uri(inner, "'")) == [], inner
+
+
+@pytest.mark.parametrize("inner", [
+    "<rect fill='#B06325'/>", "<rect fill='#f00'/>", "<rect fill='red'/>", "<rect fill='rgb(1,2,3)'/>",
+    "<rect style='fill:#abc'/>", "<rect stroke='hsl(1,2%,3%)'/>", "<stop stop-color='#ff0000'/>",
+    "<rect fill='#fff'/><circle fill='#221A0E'/>", "<rect style='fill:#fff;stroke:#123456'/>",
+    "<style>rect{fill:#abc}</style><rect/>", "<rect fill='#ffffff00'/>",
+])
+def test_a_data_uri_may_not_hold_any_other_colour(inner):
+    assert page_css_violations(svg_uri(inner)), inner
+
+
+def test_a_data_uri_that_cannot_be_read_for_colours_is_refused():
+    assert page_css_violations("a{background:url(data:image/png;base64,AAAA)}")
+    assert page_css_violations("a{background:url('data:text/html,<p>hi</p>')}")
+
+
+def test_a_base64_svg_is_decoded_and_checked():
+    import base64
+    clean = base64.b64encode(b"<svg xmlns='http://www.w3.org/2000/svg'><rect fill='#fff'/></svg>").decode()
+    dirty = base64.b64encode(b"<svg xmlns='http://www.w3.org/2000/svg'><rect fill='#B06325'/></svg>").decode()
+    assert page_css_violations("a{mask-image:url(data:image/svg+xml;base64,%s)}" % clean) == []
+    assert page_css_violations("a{mask-image:url(data:image/svg+xml;base64,%s)}" % dirty)
+
+
+def test_a_url_that_is_not_a_data_uri_is_left_alone():
+    assert page_css_violations("a{background:url(/assets/img/a.webp)}") == []
+    assert page_css_violations("a{background:url('/assets/img/a.webp')}") == []
 
 
 @pytest.mark.parametrize("name", sorted(NAMED_COLOURS))

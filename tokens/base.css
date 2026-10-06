@@ -204,3 +204,10 @@ a:hover{color:var(--act)}
   font-size:var(--fs-ui);
   font-style:italic;
 }
+
+/* Brand marks. The Signet seal (templates/partials/signet-seal.html) is drawn by these classes, so its
+   colours come from tokens: the rings and the carved core are ink, and the wax dot is the mark's own
+   colour. The seal's mask keeps its own black and white, which is luminance and not colour. */
+.seal-ring{fill:none;stroke:var(--ink)}
+.seal-core{fill:var(--ink);stroke:none}
+.seal-dot{fill:var(--mark-signet-dot);stroke:none}
