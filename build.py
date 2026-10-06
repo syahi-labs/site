@@ -5,7 +5,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from sitebuild.content import ContentError, load_pages
+from sitebuild.pipeline import build
 
 
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:
@@ -24,12 +24,13 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
-    try:
-        pages = load_pages(args.root / "content")
-    except ContentError as err:
-        print(f"error: {err}", file=sys.stderr)
+    result = build(args.root, args.out, release=args.release)
+    for problem in result.problems:
+        print(f"error: {problem}", file=sys.stderr)
+    if result.problems:
+        print(f"build failed: {len(result.problems)} problem(s)", file=sys.stderr)
         return 1
-    print(f"loaded {len(pages)} page(s)")
+    print(f"built {len(result.pages)} page(s) for {', '.join(result.outputs)} into {args.out}")
     return 0
 
 

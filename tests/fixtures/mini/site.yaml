@@ -1,0 +1,18 @@
+# The mini fixture's main host. Made-up values only.
+base_url: https://syahi.example
+name: Syahi
+header: syahi
+
+tabs:
+  - {label: Services, href: /services}
+  - {label: Signet, href: /signet}
+
+cta: {label: Book a call, href: "https://cal.example/book"}
+
+profiles:
+  - {label: Social, href: "https://social.example/syahi"}
+
+policies: []
+
+# One pending page, so a release build has something to refuse.
+pending_pages: [/services]

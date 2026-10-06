@@ -1,0 +1,11 @@
+# The mini fixture's claims. Made-up values only.
+- {id: org-name, text: "Example Studio", source: "fixture", updated: 2026-10-06, status: live}
+- {id: org-alternate-name, text: "Example", source: "fixture", updated: 2026-10-06, status: live}
+- {id: org-legal-name, text: "EXAMPLE STUDIO LLP", source: "fixture", updated: 2026-10-06, status: live}
+- {id: org-llpin, text: "LLPIN AAA-0000", source: "fixture", updated: 2026-10-06, status: live}
+- {id: org-summary, text: "Example Studio is a made-up studio used to test the build.", source: "fixture", updated: 2026-10-06, status: live}
+- {id: org-founding-date, text: "2026-01-01", source: "fixture", updated: 2026-10-06, status: live}
+- {id: org-locality, text: "Bengaluru", source: "fixture", updated: 2026-10-06, status: live}
+- {id: signet-name, text: "Signet Example", source: "fixture", updated: 2026-10-06, status: live}
+- {id: signet-price-amount, text: "2999", source: "fixture", updated: 2026-10-06, status: live}
+- {id: signet-price-line, text: "From ₹2,999 a month.", source: "fixture", updated: 2026-10-06, status: live}

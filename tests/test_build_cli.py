@@ -14,14 +14,26 @@ def test_bad_content_exits_1_and_names_file(tmp_path):
     assert r.returncode == 1
     assert "broken.html" in (r.stdout + r.stderr)
 
-def test_good_content_exits_0(tmp_path):
-    (tmp_path / "content").mkdir()
-    (tmp_path / "content" / "index.html").write_text(
-        "---\ntitle: Home\ndescription: d\nupdated: 2026-10-06\napproved: 2026-10-06\nlayout: page\n---\n<p>x</p>\n",
-        encoding="utf-8")
-    r = run("--root", str(tmp_path))
+def test_good_content_exits_0(mini_root):
+    # A build now needs the whole root (site.yaml, claims, templates, both hosts), so this uses the
+    # mini fixture instead of a root holding one content file.
+    r = run("--root", str(mini_root))
     assert r.returncode == 0, r.stdout + r.stderr
+    assert (mini_root / "dist" / "syahi.sh" / "index.html").is_file()
+    assert (mini_root / "dist" / "katha.syahi.sh" / "index.html").is_file()
 
 def test_missing_content_dir_exits_1(tmp_path):
     r = run("--root", str(tmp_path))
     assert r.returncode == 1
+
+def test_a_problem_exits_1_and_is_printed(mini_root):
+    sig = mini_root / "content" / "signet.html"
+    sig.write_text(sig.read_text(encoding="utf-8").replace("claims: [", "claims: [org-name, ", 1), encoding="utf-8")
+    r = run("--root", str(mini_root))
+    assert r.returncode == 1
+    assert "org-name" in r.stderr and "signet.html" in r.stderr
+
+def test_release_exits_1_while_pages_are_pending(mini_root):
+    assert run("--root", str(mini_root)).returncode == 0
+    r = run("--root", str(mini_root), "--release")
+    assert r.returncode == 1 and "pending" in r.stderr

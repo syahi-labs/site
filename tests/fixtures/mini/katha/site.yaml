@@ -1,0 +1,13 @@
+# The mini fixture's second host. Made-up values only.
+base_url: https://katha.example
+name: Katha Audio
+header: katha
+
+tabs:
+  - {label: Stories, href: /}
+
+cta: {label: Listen, href: "https://listen.example/katha"}
+
+profiles: []
+policies: []
+pending_pages: []
