@@ -50,6 +50,23 @@ def test_unknown_key_is_an_error(tmp_path):
         load_pages(tmp_path)
     assert "titel" in str(e.value)
 
+@pytest.mark.parametrize("key, bad", [
+    ("updated", "2026-02-30"),
+    ("approved", "2026-13-01"),
+    ("updated", "2026-10-32"),
+    ("approved", "2026-10-06 25:00:00"),
+])
+def test_impossible_date_fails_as_content_error_naming_the_file(tmp_path, key, bad):
+    # PyYAML builds the date inside safe_load, so this must not escape as a raw ValueError.
+    write(tmp_path / "signet.html", FM.replace(f"{key}: 2026-10-06", f"{key}: {bad}"))
+    with pytest.raises(ContentError) as e:
+        load_pages(tmp_path)
+    message = str(e.value)
+    assert message.startswith(str(tmp_path / "signet.html"))
+    assert "front matter" in message and "date" in message
+    assert "out of range" in message or "must be in" in message
+
+
 def test_no_front_matter_fails(tmp_path):
     write(tmp_path / "x.html", "<p>no front matter</p>")
     with pytest.raises(ContentError):
