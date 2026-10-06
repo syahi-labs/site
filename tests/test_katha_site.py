@@ -174,13 +174,23 @@ def test_the_beats_are_an_ordered_list_of_three(html):
         "Agents produce", "Every sentence checked", "A human signs off"]
 
 
-def test_links_and_media_are_the_old_pages_exactly(html):
-    # The same set of href and src values in the page's own content, compared whole, not as substrings.
-    attrs = lambda markup: set(link_values(markup))
+HERO_OLD = "https://syahi.sh/art/gramophone.webp"   # today's page: the art lives on the other host
+HERO_NEW = "/assets/img/gramophone.webp"            # the port: the same bytes, built into this host
+
+
+def test_links_and_media_are_the_old_pages_exactly_but_for_the_hero_now_on_its_own_host(html):
+    # The same href and src values, in order, in the page's own content, compared whole, not as substrings.
     old = SNAPSHOT.read_text(encoding="utf-8").split('<div class="hero-grid">', 1)[1].split("</main>")[0]
     new = html.split("<main", 1)[1].split("</main>")[0]
-    assert attrs(new) == attrs(old)
-    assert len(attrs(old)) == 6      # the guard cannot pass by both sides being empty
+    assert link_values(old).count(HERO_OLD) == 1
+    assert link_values(new) == [HERO_NEW if value == HERO_OLD else value for value in link_values(old)]
+    assert len(link_values(old)) == 6      # the guard cannot pass by both sides being empty
+
+
+def test_the_hero_image_is_a_file_in_the_katha_hosts_own_output(built):
+    host = built[1] / "katha.syahi.sh"
+    assert (host / HERO_NEW.lstrip("/")).is_file()
+    assert (host / HERO_NEW.lstrip("/")).read_bytes() == (REPO / "assets" / "img" / "gramophone.webp").read_bytes()
 
 
 # ---- parity with today's live page ----
