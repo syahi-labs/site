@@ -85,8 +85,12 @@ def _split_front_matter(text: str, path: Path) -> tuple[dict, str]:
         raise ContentError(f"{path}: front matter is not closed by a '---' line")
     try:
         meta = yaml.safe_load("".join(lines[1:end]))
-    except yaml.YAMLError as err:
-        raise ContentError(f"{path}: front matter is not valid YAML ({err})") from err
+    except (yaml.YAMLError, ValueError) as err:
+        # PyYAML builds dates inside safe_load, so an impossible one such as
+        # 2026-02-30 raises ValueError here.
+        raise ContentError(
+            f"{path}: front matter is not valid YAML, or a date in it is impossible ({err})"
+        ) from err
     if not isinstance(meta, dict):
         raise ContentError(f"{path}: front matter must be a YAML mapping")
     return meta, "".join(lines[end + 1:])
