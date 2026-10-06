@@ -3,7 +3,9 @@
 One Jinja environment serves two jobs: the page body is itself a template
 (it calls `claim()` and `date`), and it is then placed inside the layout the
 page names. StrictUndefined and autoescape are on, so a typo fails the build
-and a claim's text can never inject markup.
+and a claim's text can never inject markup. The environment is a sandbox,
+because a page body is written by an agent from a draft, and it is the one
+place where text becomes code.
 """
 from __future__ import annotations
 
@@ -11,9 +13,10 @@ import datetime
 import json
 import re
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePath
 
 import jinja2
+import jinja2.sandbox
 from markupsafe import Markup
 
 from sitebuild.claims import ClaimError, ClaimRegister
@@ -44,9 +47,29 @@ def format_date(d: datetime.date) -> str:
     return f"{d.day} {MONTHS[d.month - 1]} {d.year:04d}"
 
 
-def make_env(root: Path, site: SiteConfig, claims: ClaimRegister) -> jinja2.Environment:
+class SiteEnvironment(jinja2.sandbox.SandboxedEnvironment):
+    """The environment make_env returns: a sandbox that also carries the SiteConfig.
+
+    render_page reads `env.site`, so it can only run on an environment built for one host.
+    """
+
+    def __init__(self, site: SiteConfig, **options):
+        super().__init__(**options)
+        self.site = site
+
+    def is_safe_attribute(self, obj, attr, value):
+        # The sandbox blocks dunders and unsafe callables, but a Path is ordinary: `page.source`
+        # would let a body call read_text() or iterdir() and print any file the build can see.
+        # A body may still print the path itself, which needs no attribute access.
+        if isinstance(obj, PurePath):
+            return False
+        return super().is_safe_attribute(obj, attr, value)
+
+
+def make_env(root: Path, site: SiteConfig, claims: ClaimRegister) -> SiteEnvironment:
     """The environment for one host: templates from root/templates, `site`, `claim()` and `date`."""
-    env = jinja2.Environment(
+    env = SiteEnvironment(
+        site,
         loader=jinja2.FileSystemLoader(Path(root) / "templates"),
         autoescape=True,
         undefined=jinja2.StrictUndefined,
@@ -64,10 +87,18 @@ def make_env(root: Path, site: SiteConfig, claims: ClaimRegister) -> jinja2.Envi
     return env
 
 
-def render_page(env: jinja2.Environment, page: Page, jsonld: list[dict]) -> str:
-    """The full HTML document for one page. Every failure names page.source."""
+def render_page(env: SiteEnvironment, page: Page, jsonld: list[dict]) -> str:
+    """The full HTML document for one page. Every failure of the page names page.source.
+
+    `env` must come from make_env. A plain Jinja environment has no site to render with, and
+    that is a bug in the caller, not in the page, so it raises TypeError and names no page.
+    """
+    if not isinstance(env, SiteEnvironment):
+        raise TypeError(f"render_page needs the environment make_env() returns, got {type(env).__name__}")
     try:
         return _render(env, page, jsonld)
+    except RenderError:
+        raise  # already names the page
     except ClaimError as err:
         raise ClaimError(f"{page.source}: {err}") from err
     except jinja2.TemplateNotFound as err:
@@ -79,16 +110,21 @@ def render_page(env: jinja2.Environment, page: Page, jsonld: list[dict]) -> str:
         raise RenderError(f"{page.source}: template syntax error in {where}, line {err.lineno}: {err.message}") from err
     except jinja2.TemplateError as err:
         raise RenderError(f"{page.source}: {err}") from err
+    except Exception as err:
+        # A body is code: `{{ 5|date }}` raises TypeError, `{{ 1 / 0 }}` ZeroDivisionError, and
+        # none of them is a TemplateError. This is the boundary that attaches the file, so any
+        # failure leaves as a RenderError naming it, with the original kept as __cause__.
+        raise RenderError(f"{page.source}: {type(err).__name__}: {err}") from err
 
 
 def _layout_template(page: Page) -> str:
     return f"layouts/{page.layout}.html"
 
 
-def _render(env: jinja2.Environment, page: Page, jsonld: list[dict]) -> str:
+def _render(env: SiteEnvironment, page: Page, jsonld: list[dict]) -> str:
     if not LAYOUT_NAME.fullmatch(page.layout):
         raise RenderError(f"{page.source}: layout {page.layout!r} is not a valid layout name")
-    site = env.globals["site"]
+    site = env.site
     layout = env.get_template(_layout_template(page))
     body = Markup(env.from_string(page.body).render(page=page))
     return layout.render(

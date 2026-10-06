@@ -55,6 +55,99 @@ def test_text_pairs_meet_wcag_aa(fg, bg):
     assert ratio >= 4.5, f"--{fg} on --{bg} is {ratio:.2f}:1, below 4.5:1"
 
 
+# ---- the cascade: a global a:hover must not beat a component's own colours ----
+# TEXT_PAIRS lists the pairs we intend. This resolves the pairs the stylesheet really
+# produces, hover and focus included, because that is where a global `a:hover` rule
+# once overrode the skip link's colour and left it at 2.11:1.
+SIMPLE_SELECTOR = re.compile(r"([a-z][a-z0-9]*)?((?:\.[\w-]+|:[a-z-]+)*)")
+
+
+def plain_rules(css):
+    """(selector list, declarations) for every plain rule outside an at-rule, in source order."""
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    rules, pos = [], 0
+    while True:
+        opening = css.find("{", pos)
+        if opening < 0:
+            return rules
+        prelude, depth, i = css[pos:opening].strip(), 1, opening + 1
+        while depth:
+            depth += {"{": 1, "}": -1}.get(css[i], 0)
+            i += 1
+        pos = i
+        if prelude.startswith("@"):
+            continue  # @media, @supports, @font-face: conditional or not about elements
+        body = css[opening + 1:i - 1]
+        decls = {}
+        for item in body.split(";"):
+            if ":" in item:
+                prop, value = item.split(":", 1)
+                decls[prop.strip()] = value.strip()
+        rules.append((prelude, decls))
+
+
+def resolved_colours(css, tag, classes, states):
+    """(color, background) as hex for an element in a state, by specificity then source order.
+
+    Only selectors made of one type, classes and pseudo-classes are considered. A selector
+    with a combinator needs ancestors this element does not have, and a pseudo-element
+    styles something else, so neither can touch the element's own colours.
+    """
+    winners = {}
+    for order, (prelude, decls) in enumerate(plain_rules(css)):
+        for selector in (part.strip() for part in prelude.split(",")):
+            match = SIMPLE_SELECTOR.fullmatch(selector)
+            if not match or not selector:
+                continue
+            kind = match.group(1)
+            parts = re.findall(r"[.:][\w-]+", match.group(2))
+            wanted_classes = {p[1:] for p in parts if p[0] == "."}
+            wanted_states = {p[1:] for p in parts if p[0] == ":"}
+            if (kind not in (None, tag) or not wanted_classes <= classes
+                    or not wanted_states <= states):
+                continue
+            specificity = (0, len(parts), 1 if kind else 0)
+            for prop in ("color", "background", "background-color"):
+                if prop in decls:
+                    key = "background" if prop.startswith("background") else "color"
+                    rank = (specificity, order)
+                    if key not in winners or rank >= winners[key][0]:
+                        winners[key] = (rank, decls[prop])
+    out = []
+    for key in ("color", "background"):
+        assert key in winners, f"no {key} reaches <{tag}> {sorted(classes)} in {sorted(states)}"
+        value = winners[key][1]
+        var = re.fullmatch(r"var\(--([a-z-]+)\)", value)
+        out.append(declared(var.group(1)) if var else value)
+    for value in out:
+        assert re.fullmatch(r"#[0-9a-fA-F]{6}", value), f"cannot resolve {value!r} to a hex colour"
+    return out
+
+
+STATES = {
+    "rest": set(),
+    "hover": {"hover"},
+    "focus": {"focus", "focus-visible"},
+    "hover and focus": {"hover", "focus", "focus-visible"},
+}
+
+
+@pytest.mark.parametrize("state", STATES)
+@pytest.mark.parametrize("name, classes", [("skip link", {"skip"}), ("call button", {"cta"})])
+def test_components_keep_aa_colours_in_every_state(name, classes, state):
+    fg, bg = resolved_colours(BASE, "a", classes, STATES[state])
+    ratio = contrast(fg, bg)
+    assert ratio >= 4.5, f"{name} on {state} is {fg} on {bg}, {ratio:.2f}:1, below 4.5:1"
+
+
+def test_the_cascade_check_catches_a_global_hover_beating_a_component():
+    """The stylesheet as it was before the fix: a:hover (0,1,1) beats .skip (0,1,0)."""
+    old = "a:hover{color:var(--act)} .skip{background:var(--ink);color:var(--ground)}"
+    fg, bg = resolved_colours(old, "a", {"skip"}, {"hover"})
+    assert fg.upper() == declared("act").upper()
+    assert contrast(fg, bg) < 4.5
+
+
 def test_role_names_not_colour_names():
     for name in ("ground", "ground-deep", "ink", "muted", "rule", "hair", "act"):
         declared(name)

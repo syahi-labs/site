@@ -5,6 +5,8 @@ import json
 import re
 from html.parser import HTMLParser
 from pathlib import Path
+import jinja2
+import jinja2.sandbox
 import pytest
 from sitebuild.claims import ClaimRegister, ClaimError
 from sitebuild.content import Page
@@ -256,3 +258,51 @@ def test_format_date_rejects_non_dates():
 
 def test_date_filter_is_format_date(env):
     assert env.from_string("{{ d|date }}").render(d=datetime.date(2026, 1, 9)) == "9 Jan 2026"
+
+
+# ---- Task 3 follow-up: errors that name the page, a sandbox, an explicit environment ----
+def test_python_errors_from_a_body_are_render_errors_naming_the_page(env):
+    for body, kind in (("{{ 5|date }}", "TypeError"), ("{{ claim() }}", "TypeError"),
+                       ("{{ range(1, 2, 0) }}", "ValueError"), ("{{ 1 / 0 }}", "ZeroDivisionError")):
+        with pytest.raises(RenderError) as err:
+            render_page(env, page(body=body), [])
+        assert "x.html" in str(err.value), body
+        assert kind in str(err.value), body
+
+
+def test_a_render_error_is_not_wrapped_twice(env):
+    with pytest.raises(RenderError) as err:
+        render_page(env, dataclasses.replace(page(), layout="nope"), [])
+    assert str(err.value).count("x.html") == 1
+
+
+def test_the_environment_is_a_sandbox_and_still_an_environment(env):
+    assert isinstance(env, jinja2.Environment)
+    assert isinstance(env, jinja2.sandbox.SandboxedEnvironment)
+
+
+def test_a_body_cannot_reach_python_internals(env):
+    for body in ("{{ ''.__class__.__mro__ }}", "{{ claim.__globals__ }}", "{{ site.__class__ }}"):
+        with pytest.raises(RenderError) as err:
+            render_page(env, page(body=body), [])
+        assert "x.html" in str(err.value), body
+        assert "unsafe" in str(err.value), body
+
+
+def test_a_body_cannot_read_files_through_the_page_source_path(env):
+    for body in ("{{ page.source.read_text() }}", "{{ page.source.parent.iterdir() }}"):
+        with pytest.raises(RenderError) as err:
+            render_page(env, page(body=body), [])
+        assert "x.html" in str(err.value) and "unsafe" in str(err.value), body
+
+
+def test_the_sandbox_still_allows_what_pages_need(env):
+    body = "{{ site.name }} {{ page.slug }} {{ page.approved|date }} {{ page.source }}"
+    html = render_page(env, page(body=body), [])
+    assert "Syahi /signet 6 Oct 2026 x.html" in html
+
+
+def test_render_page_refuses_an_environment_make_env_did_not_make():
+    with pytest.raises(TypeError) as err:
+        render_page(jinja2.Environment(), page(), [])
+    assert "make_env" in str(err.value)

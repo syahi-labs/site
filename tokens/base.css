@@ -68,6 +68,8 @@ a:hover{color:var(--act)}
   text-decoration:none;
 }
 .skip:focus{top:var(--space-3)}
+/* a:hover is more specific than .skip, so hover and focus restate the colour. */
+.skip:hover,.skip:focus{color:var(--ground)}
 
 /* Header */
 .site-header{border-bottom:1px solid var(--rule)}
