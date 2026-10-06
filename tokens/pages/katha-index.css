@@ -1,0 +1,121 @@
+/* katha.syahi.sh index. Layout only: every colour, size, space and family comes from tokens.css
+   (tests/test_tokens.py greps this folder for raw values), so there is no font-family here and a label
+   that was mono or serif on the old page takes the base type until the UI phase gives pages a shared
+   way to ask for one.
+   Text pairs used, all in test_tokens TEXT_PAIRS: ink on ground, muted on ground, act on ground,
+   ground on ink, ground on act. */
+
+/* The sections are spaced here because the layout's .flow only separates its direct children a little. */
+.page > section + section{margin-top:var(--space-8)}
+
+/* Hero */
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,16rem);gap:var(--space-7);align-items:center}
+.devanagari{
+  margin-bottom:var(--space-3);
+  font-size:var(--fs-ui);
+  letter-spacing:.4em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.sub{margin-top:var(--space-4);max-width:32rem;font-size:var(--fs-lead);color:var(--muted)}
+.hero-side{padding:var(--space-4);background:var(--ground-deep);border:1px solid var(--rule)}
+.hero-fig{width:100%;height:auto;mix-blend-mode:multiply}
+.figcap{
+  margin-top:var(--space-2);
+  text-align:center;
+  font-size:var(--fs-micro);
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.listen-line{margin-top:var(--space-6);max-width:var(--measure)}
+.listen-line a{color:var(--act)}
+.listen-line a:hover{color:var(--ink)}
+
+/* Section heads: a roman numeral and a label over a rule */
+.section-head{
+  display:flex;
+  align-items:baseline;
+  gap:var(--space-5);
+  margin-bottom:var(--space-5);
+  padding-bottom:var(--space-3);
+  border-bottom:1px solid var(--ink);
+}
+.roman{font-size:var(--fs-h2);font-weight:600;line-height:var(--lh-tight)}
+.label{font-size:var(--fs-small);letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+
+/* The three beats: an ordered list, numbered 01 to 03 by the browser's own list marker */
+@counter-style zero-padded{system:extends decimal;pad:2 "0";suffix:""}
+.beats{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:var(--space-5);
+  margin:0;
+  padding:0;
+  list-style:zero-padded inside;
+}
+.beat{padding:var(--space-5);border:1px solid var(--ink)}
+.beat::marker{font-size:var(--fs-small);color:var(--muted)}
+.beat strong{display:block;margin-block:var(--space-2);font-size:var(--fs-lead);font-weight:600}
+.beat p{font-size:var(--fs-ui);line-height:1.6;color:var(--muted)}
+.spine{
+  max-width:var(--measure);
+  margin-top:var(--space-5);
+  padding:var(--space-4) var(--space-5);
+  border-left:3px solid var(--act);
+  font-size:var(--fs-lead);
+  line-height:1.5;
+}
+
+/* Who it's for */
+.fit{max-width:29rem}
+.fit-card{padding:var(--space-5);border:1px solid var(--ink)}
+.fit-card h2{
+  margin-bottom:var(--space-3);
+  font-size:var(--fs-small);
+  font-weight:500;
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.fit-card ul{margin:0;padding:0;list-style:none}
+.fit-card li{padding-block:var(--space-2);border-bottom:1px solid var(--rule);font-size:var(--fs-ui)}
+.fit-card li:last-child{border-bottom:0}
+
+/* The sample */
+.slot{padding:var(--space-6);border:1px solid var(--ink);text-align:center}
+.slot-tag{
+  display:block;
+  margin-bottom:var(--space-3);
+  font-size:var(--fs-micro);
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.slot p{max-width:32rem;margin-inline:auto;font-size:var(--fs-ui);color:var(--muted)}
+.slot audio{display:block;width:100%;max-width:26rem;margin:var(--space-5) auto 0}
+
+/* The ask */
+.ask p{max-width:var(--measure);color:var(--muted)}
+.cta-row{display:flex;flex-wrap:wrap;gap:var(--space-4);margin-top:var(--space-5)}
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:var(--tap);
+  padding:0 var(--space-5);
+  border:1px solid var(--ink);
+  border-radius:var(--radius);
+  color:var(--ink);
+  font-weight:500;
+  text-decoration:none;
+}
+.btn.primary{background:var(--ink);color:var(--ground)}
+.btn:hover,.btn.primary:hover{background:var(--act);border-color:var(--act);color:var(--ground)}
+.ask .fine{margin-top:var(--space-3);font-size:var(--fs-small)}
+
+@media (max-width:47.5em){
+  .hero-grid{grid-template-columns:minmax(0,1fr)}
+  .hero-side{display:none}
+  .beats{grid-template-columns:minmax(0,1fr)}
+}

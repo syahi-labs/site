@@ -1,0 +1,27 @@
+# katha.syahi.sh's chrome, the same shape as the root site.yaml.
+# Policies and the company profiles are syahi.sh's: the policy pages live there, so their links are absolute.
+base_url: https://katha.syahi.sh
+name: Katha Audio
+header: katha
+
+tabs:
+  - {label: Listen, href: /}
+  - {label: Syahi, href: "https://syahi.sh/"}
+
+cta: {label: Visit the store, href: "https://listen.katha.syahi.sh/"}
+
+# Company profiles only (D5), the same four as syahi.sh.
+profiles:
+  - {label: LinkedIn, href: "https://www.linkedin.com/company/syahi-sh"}
+  - {label: Instagram, href: "https://www.instagram.com/syahitech"}
+  - {label: Threads, href: "https://www.threads.com/@syahitech"}
+  - {label: GitHub, href: "https://github.com/syahi-labs"}
+
+policies:
+  - {label: Contact, href: "https://syahi.sh/contact"}
+  - {label: Privacy, href: "https://syahi.sh/privacy"}
+  - {label: Terms, href: "https://syahi.sh/terms"}
+  - {label: Refunds, href: "https://syahi.sh/refund"}
+
+# Nothing here is built ahead of itself.
+pending_pages: []

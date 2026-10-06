@@ -215,3 +215,48 @@ def test_no_scripts_in_templates_except_jsonld():
     for path in TEMPLATES:
         for tag in re.findall(r"<script[^>]*>", path.read_text(encoding="utf-8")):
             assert 'type="application/ld+json"' in tag, (path, tag)
+
+
+# ---- page-scoped CSS: layout only, every colour, family and size from tokens.css ----
+# Lives with the other CSS guards. Task 9's pages add their own sheets under tokens/pages/ and
+# this guard covers them as soon as they exist.
+
+PAGE_CSS = sorted((REPO / "tokens" / "pages").glob("*.css"))
+# Colours written as a raw value, and the font-family property itself (families come from tokens).
+RAW_VALUE = re.compile(r"#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(|font-family")
+
+
+def raw_values(css):
+    """What a page stylesheet may not say, comments left out (a comment may name a token or a colour)."""
+    return RAW_VALUE.findall(re.sub(r"/\*.*?\*/", "", css, flags=re.S))
+
+
+@pytest.mark.parametrize("css", PAGE_CSS, ids=lambda path: path.name)
+def test_page_css_uses_tokens_only(css):
+    assert raw_values(css.read_text(encoding="utf-8")) == [], css.name
+
+
+@pytest.mark.parametrize("css", PAGE_CSS, ids=lambda path: path.name)
+def test_page_css_has_no_em_dash_import_or_remote_url(css):
+    text = css.read_text(encoding="utf-8")
+    assert EM_DASH not in text and "@import" not in text and "url(http" not in text, css.name
+
+
+@pytest.mark.parametrize("bad", [
+    "a{color:#abc}", "a{color:#AABBCC}", "a{color:#aabbccdd}", "a{color:rgb(1,2,3)}", "a{color:rgba(1,2,3,.5)}",
+    "a{color:hsl(1,2%,3%)}", "a{font-family:serif}", "a{font-family:var(--font-serif)}",
+])
+def test_the_page_css_guard_catches_what_it_is_for(bad):
+    assert raw_values(bad), bad
+
+
+@pytest.mark.parametrize("fine", [
+    "a{color:var(--ink)}", "a{margin:var(--space-4)}", "/* #fff and rgb( in a comment */a{color:var(--muted)}",
+    "a{font-size:var(--fs-small)}", "a{background:var(--ground-deep)}",
+])
+def test_the_page_css_guard_lets_tokens_and_comments_through(fine):
+    assert raw_values(fine) == [], fine
+
+
+def test_there_is_a_page_stylesheet_to_guard():
+    assert (REPO / "tokens" / "pages" / "katha-index.css") in PAGE_CSS

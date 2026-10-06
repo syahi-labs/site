@@ -2,7 +2,7 @@
 
 `build` loads and validates every input, renders each page of syahi.sh and
 katha.syahi.sh into `out/<host>/`, writes each host's sitemap and robots.txt
-(and syahi.sh's llms.txt), publishes the stylesheets, and runs the checks.
+(and syahi.sh's llms.txt), publishes the stylesheets and each page's own, and runs the checks.
 
 The checks (the `checks` package) run inside the build, so a page that fails one fails the build:
   - per rendered page: copycheck (the copy in <main>, told the page's audience) and htmlcheck;
@@ -217,6 +217,7 @@ def _build_host(root: Path, out: Path, item: _Loaded, claims: ClaimRegister, rel
         except ClaimError as err:
             problems.append(f"{host.name}: llms.txt: {err}")
     problems.extend(_publish_assets(root, host_out))
+    problems.extend(_publish_page_css(root, host_out, rendered_pages))
     if release:
         problems.extend(_release_site_problems(item))
     _site_checks(host_out, item, release, result)
@@ -386,6 +387,7 @@ def _write(path: Path, text: str) -> None:
 
 
 STYLESHEETS = ("tokens.css", "base.css")
+PAGE_CSS_DIR = Path("tokens") / "pages"
 
 
 def _publish_assets(root: Path, host_out: Path) -> list[str]:
@@ -400,6 +402,27 @@ def _publish_assets(root: Path, host_out: Path) -> list[str]:
             problems.append(f"{source}: stylesheet not found")
             continue
         target = host_out / "assets" / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, target)
+    return problems
+
+
+def _publish_page_css(root: Path, host_out: Path, pages: list[Page]) -> list[str]:
+    """Copy each stylesheet a page names (`css: name` in its front matter) to host_out/assets/pages/<name>.css.
+
+    One mechanism for every page: tokens/pages/<name>.css is published byte for byte, once per host
+    however many of its pages name it, and the base template links it after tokens.css and base.css.
+    A host publishes only the sheets its own pages name. A name with no file is a problem naming the
+    pages that use it. Task 7 folds this into the hashed asset pipeline, URLs and all.
+    """
+    problems = []
+    for name in sorted({page.css for page in pages if page.css}):
+        source = root / PAGE_CSS_DIR / f"{name}.css"
+        if not source.is_file():
+            users = ", ".join(str(page.source) for page in pages if page.css == name)
+            problems.append(f"{users}: css '{name}' has no stylesheet at {PAGE_CSS_DIR.as_posix()}/{name}.css")
+            continue
+        target = host_out / "assets" / "pages" / f"{name}.css"
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source, target)
     return problems

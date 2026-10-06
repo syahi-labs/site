@@ -13,6 +13,9 @@
 <meta property="og:image" content="{{ og_image }}">
 <link rel="stylesheet" href="/assets/tokens.css">
 <link rel="stylesheet" href="/assets/base.css">
+{% if page.css %}
+<link rel="stylesheet" href="/assets/pages/{{ page.css }}.css">
+{% endif %}
 {% for block in jsonld %}
 <script type="application/ld+json">{{ block }}</script>
 {% endfor %}
