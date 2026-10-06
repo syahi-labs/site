@@ -4,10 +4,16 @@
 katha.syahi.sh into `out/<host>/`, writes each host's sitemap and robots.txt
 (and syahi.sh's llms.txt), publishes the stylesheets, and runs the checks.
 
+The checks (the `checks` package) run inside the build, so a page that fails one fails the build:
+  - per rendered page: copycheck (the copy in <main>, told the page's audience) and htmlcheck;
+  - per host directory: sitecheck, offline, told the host the site's base URL names, because an
+    output directory holds no CNAME.
+
 It raises nothing for a content problem. Each one lands in
-`BuildResult.problems`, and the caller (build.py) decides the exit code. A
-problem on one page never stops the others from being built, so a single run
-reports everything it can.
+`BuildResult.problems`, and the caller (build.py) decides the exit code. What is worth saying but
+does not fail the build lands in `BuildResult.warnings`: a link to a pending page in a dev build, and
+sitecheck's own WARN findings. A problem on one page never stops the others from being built, so a
+single run reports everything it can.
 
 Deterministic: the same tree gives byte-identical files. Nothing written
 depends on the clock, the machine, or dict and set order. Files are UTF-8
@@ -15,6 +21,7 @@ with LF endings. Dates come from git history or the page's own front matter.
 """
 from __future__ import annotations
 
+import ast
 import datetime
 import re
 import shutil
@@ -22,7 +29,9 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
 from pathlib import Path
+from urllib.parse import urlsplit
 
+from checks import copycheck, htmlcheck, sitecheck
 from sitebuild.claims import ClaimError, ClaimRegister
 from sitebuild.content import ContentError, Page, load_pages
 from sitebuild.generated import NOT_FOUND_SLUG, llms_txt, robots_txt, sitemap_xml
@@ -63,6 +72,7 @@ class BuildResult:
     outputs: dict[str, Path] = field(default_factory=dict)    # host name to the directory written
     pages: list[Page] = field(default_factory=list)           # every page of every host, main host first
     problems: list[str] = field(default_factory=list)         # empty means the build is good
+    warnings: list[str] = field(default_factory=list)         # worth reading, never fails the build
 
 
 @dataclass(frozen=True)
@@ -209,6 +219,7 @@ def _build_host(root: Path, out: Path, item: _Loaded, claims: ClaimRegister, rel
     problems.extend(_publish_assets(root, host_out))
     if release:
         problems.extend(_release_site_problems(item))
+    _site_checks(host_out, item, release, result)
     result.outputs[host.name] = host_out
     result.pages.extend(item.pages)
 
@@ -245,8 +256,10 @@ def _rendered_ids(claims: ClaimRegister):
 
 
 def _page_problems(page: Page, html: str, rendered: set[str], claims: ClaimRegister, site: SiteConfig, release: bool) -> list[str]:
-    """The checks that need a rendered page. Task 8 adds the rest here."""
+    """The checks that need a rendered page: structured data, claims, copy, HTML and, in release, pending links."""
     problems = [f"{page.source}: structured data not shown on the page: {mismatch}" for mismatch in jsonld_mismatches(html)]
+    problems += [f"{page.source}: copycheck: {finding}" for finding in copycheck.check(html, page.audience)]
+    problems += [f"{page.source}: htmlcheck: {finding}" for finding in htmlcheck.check(html)]
     for id in page.claims:
         if id in rendered:
             continue
@@ -260,6 +273,42 @@ def _page_problems(page: Page, html: str, rendered: set[str], claims: ClaimRegis
         for target in _pending_links(html, site):
             problems.append(f"{page.source}: release build: links to pending page {target}")
     return problems
+
+
+def _site_checks(host_out: Path, item: _Loaded, release: bool, result: BuildResult) -> None:
+    """Run sitecheck over one host's output. FAIL findings are problems and WARN findings are warnings.
+
+    A dead link to a pending page is expected while the page is pending, so a dev build only warns
+    about it. A release build refuses pending pages, so there it is a problem like any other dead link.
+    The directory has no CNAME, so the host comes from the site's base URL. Offline: no network in a build.
+    """
+    host = urlsplit(item.site.base_url).hostname
+    for finding in sitecheck.run([host_out], offline=True, host=host):
+        where = f"{item.host.name}/{finding.path}" + (f":{finding.line}" if finding.line else "")
+        text = f"{where}: sitecheck [{finding.check}]: {finding.message}"
+        if finding.level == "FAIL" and not release and _is_pending_link(finding, item.site, host):
+            result.warnings.append(f"{text} (pending page)")
+        elif finding.level == "FAIL":
+            result.problems.append(text)
+        elif finding.level == "WARN":
+            result.warnings.append(text)
+
+
+# sitecheck words a dead link "<attr> <repr of the value> does not resolve to a file".
+_DEAD_LINK = re.compile(r"(?:href|src) (?P<value>.+) does not resolve to a file")
+
+
+def _is_pending_link(finding, site: SiteConfig, host: str | None) -> bool:
+    """Whether a sitecheck finding is a dead link whose target is one of the site's pending pages."""
+    match = _DEAD_LINK.fullmatch(finding.message) if finding.check == "internal-link" else None
+    if match is None:
+        return False
+    try:
+        value = ast.literal_eval(match["value"])
+        kind, target = sitecheck.classify(finding.path, value, host)
+    except (ValueError, SyntaxError):
+        return False
+    return kind == "internal" and _internal_path(target, site.base_url) in site.pending_pages
 
 
 def _release_site_problems(item: _Loaded) -> list[str]:
