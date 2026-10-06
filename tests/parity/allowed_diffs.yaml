@@ -44,6 +44,22 @@ site-index.html:
     reason: >-
       The page's own header strip. The shared header (wordmark, tabs, Book a call) replaces it.
 
+# The Signet page (signet-landing a0bb211, the page signet.syahi.sh serves today).
+signet.html:
+  - text: "SIGNET by Syahi"
+    reason: >-
+      The page's own header: a seal, the wordmark SIGNET and the byline "by Syahi". The shared header
+      (wordmark, tabs, Book a call) replaces it, as it replaces every ported page's own chrome.
+  - text: "01"
+    reason: >-
+      Step number of the first beat. The number is drawn by a CSS counter (a zero-padded counter style) beside the
+      beat's icon, so the reader still sees 01 but it is no longer text in the page. A bare "01" would otherwise
+      be a number outside a claim (htmlcheck numbers-from-claims).
+  - text: "02"
+    reason: Step number of the second beat, drawn by the same counter. Same reason as 01.
+  - text: "03"
+    reason: Step number of the third beat, drawn by the same counter. Same reason as 01.
+
 # Elements the old page carried that the port does not, none of them text the reader reads. Keyed by
 # snapshot file name. `match` is the opening of the element as the snapshot writes it; a test fails an
 # entry the snapshot no longer holds, and checks the new page holds none of them. The reason says why.
@@ -73,3 +89,20 @@ removed_elements:
         shared footer's policy row; book a call is the header's button; the email and WhatsApp number are
         on /contact; the x and personal github links are not carried, because the shared footer shows
         company profiles only (D5).
+  signet.html:
+    - match: "<header>"
+      reason: >-
+        The page's own header (a seal, the wordmark SIGNET and "by Syahi"; its wordmark linked to the page's own
+        root) is replaced by the shared header: the Syahi wordmark, the four tabs and the Book a call button. Its
+        words are the text entry above.
+    - match: "<footer>"
+      reason: >-
+        The page's own footer (a seal, SIGNET by Syahi, the motto "ink, seal, parchment", a copyright line and five
+        links) is replaced by the shared footer. Where each link went: the link to the main site is the shared
+        wordmark's link to the home page; contact, privacy, terms and refunds are the shared footer's policy row.
+        The motto and the copyright line are not carried: the shared footer shows the legal line and the made-by
+        line instead.
+    - match: "<script>"
+      reason: >-
+        The one inline script, which only set a class on the root element for styles that never used it. The
+        build's pages carry no script except structured data, and the page's sheet has no rule that reads the class.

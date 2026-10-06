@@ -59,8 +59,10 @@
   source: "Contact page, 2026-09-10"
   updated: 2026-10-06
   status: live
+# How long the booked call is. The short form is the adjective a button label needs ("Book a 30-minute demo").
 - id: booking-call-length
   text: "30 minutes"
+  short: "30-minute"
   source: "Booking page, 2026-10-06"
   updated: 2026-10-06
   status: live
@@ -195,6 +197,74 @@
 - id: founder-years
   text: "eleven years"
   source: "syahi.sh home page, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+
+# ---- the Signet page ----
+
+# The product's name, for the SoftwareApplication structured data on /signet.
+- id: signet-name
+  text: "Signet by Syahi"
+  source: "syahi.sh, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+# Ruling D10: the one public sentence about what Signet runs today. Wherever Signet is offered it appears once,
+# in these words. It holds the founding monthly price, so a test keeps it equal to signet-price-monthly.
+- id: signet-d10
+  text: "Live today: every post, outreach email and desk draft our agents make waits for Surabhi's yes in Signet. Next: the same loop for your business's drafts. No outside customers yet. Founding users start at ₹1,499 a month, after a demo."
+  source: "Ruling D10, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+# The founding price. The amount is the plain number structured data carries; the line is what the page shows,
+# and the build refuses a line that does not show the amount. The line holds both terms prices
+# (signet-price-monthly and signet-price-yearly), so a test keeps all three the same.
+- id: signet-price-amount
+  text: "1499"
+  source: "Decision 2026-09-10, Signet INR price"
+  updated: 2026-10-06
+  status: live
+- id: signet-price-line
+  text: "₹1,499 a month or ₹14,999 a year, GST included."
+  source: "Decision 2026-09-10, Signet INR price"
+  updated: 2026-10-06
+  status: live
+- id: signet-founding-lock
+  text: "Founding price, locked for life while you stay subscribed."
+  source: "Decision 2026-09-10, Signet INR price"
+  updated: 2026-10-06
+  status: live
+- id: signet-pay-after-demo
+  text: "Nothing to pay until after the demo."
+  source: "Ruling D10, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+# Two dates that happen to be the same day and are two facts: when the release pipe went live, and when the
+# live battery ran. Each can move on its own, so each is its own claim.
+- id: signet-live-since
+  text: "August 31, 2026"
+  source: "Ruling D10, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+- id: signet-battery-date
+  text: "August 31, 2026"
+  source: "Signet live battery, 2026-08-31"
+  updated: 2026-10-06
+  status: live
+# The battery's counted results. The other results the page tells (a changed draft caught, a veto that beat
+# the clock, a freeze from a phone) carry no figure and stay as copy.
+- id: signet-battery-sent
+  text: "One real email went out"
+  source: "Signet live battery, 2026-08-31"
+  updated: 2026-10-06
+  status: live
+- id: signet-battery-refused
+  text: "Two other drafts never made it to her phone at all."
+  source: "Signet live battery, 2026-08-31"
+  updated: 2026-10-06
+  status: live
+- id: signet-battery-refused-why
+  text: "one recipient wasn't on the approved list, one body had drifted off template"
+  source: "Signet live battery, 2026-08-31"
   updated: 2026-10-06
   status: live
 

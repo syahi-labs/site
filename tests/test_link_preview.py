@@ -52,14 +52,36 @@ def test_every_page_asks_for_the_large_image_card(real_site, host):
         assert tags["twitter:image"].startswith(f"https://{host}/"), page.name   # absolute, on its own host
 
 
+def own_images() -> dict[str, str]:
+    """The built file name and the og_image of each page of the main host that names an image of its own."""
+    from sitebuild.content import load_pages
+    return {("index" if page.slug == "/" else page.slug.strip("/").replace("/", "-")) + ".html": page.og_image
+            for page in load_pages(REPO / "content") if page.og_image}
+
+
 @pytest.mark.parametrize("host", HOSTS)
 def test_the_default_image_carries_its_real_pixel_size(real_site, host):
     width, height = real_png_size(REPO / DEFAULT_IMAGE)
     assert (width, height) == (1200, 630)
+    own = own_images() if host == "syahi.sh" else {}
     for page in sorted((real_site.out / host).glob("*.html")):
+        if page.name in own:
+            continue                                      # a page's own image is the next test's
         tags = metas(page.read_text(encoding="utf-8"))
         assert tags["og:image"].endswith("/assets/brand/og-default.png"), page.name
         assert (tags["og:image:width"], tags["og:image:height"]) == (str(width), str(height)), page.name
+
+
+def test_a_page_with_its_own_image_names_it_and_carries_no_size(real_site):
+    # Only the default image's size is known at build time (render.py), so the Signet page's own share image
+    # (today's og.png, 1200 by 630) goes out without the two size tags that today's page declared.
+    own = own_images()
+    assert own == {"signet.html": "/assets/brand/og-signet.png"}
+    for name, image in own.items():
+        tags = metas((real_site.out / "syahi.sh" / name).read_text(encoding="utf-8"))
+        assert tags["og:image"] == f"https://syahi.sh{image}" and tags["twitter:image"] == tags["og:image"]
+        assert tags["twitter:card"] == "summary_large_image"
+        assert "og:image:width" not in tags and "og:image:height" not in tags
 
 
 def test_the_size_is_not_written_in_the_template():
