@@ -21,6 +21,13 @@ EM_DASH = chr(0x2014)
 # "It's not X, it's Y" and its cousins. Case-insensitive, run on text whose curly apostrophes are
 # straight and whose blocks are joined as sentences, so one spelling covers both and a heading plus
 # the line under it reads as one frame.
+#
+# The same-subject frame ("We don't X, we Y") must start a sentence: the start of the text, after
+# . ! or ? (and any closing quote or bracket) plus space, or at a block boundary (blocks are joined by
+# a newline). That alone rules out a clause a conjunction introduces ("If we don't hear back, we call
+# you.": if, when, unless, once, until, because, since, although, while, whether), which is a
+# condition and not a contrast. Opening quotes and brackets may sit between the start and the subject.
+_SENTENCE_START = r"""(?:^|(?:(?<=[.!?])|(?<=[.!?]["')\]\u201d]))\s+|(?<=\n))["'(\[\u201c]*"""
 _SEP = r"(?:\s*[,;:]\s*|\s+-{1,2}\s+|\s*[\u2013\u2014]\s*)"   # , ; : - -- en dash, em dash
 _JUST = r"(?:(?:just|only|merely) )?"
 _X = r"[^.,;:]{1,40}"
@@ -35,8 +42,9 @@ CONTRAST_FRAMING = tuple(re.compile(pattern, re.IGNORECASE) for pattern in (
     rf"\b(?:isn|aren|wasn|weren)'?t {_JUST}{_X}{_SEP}{_RESTATED}",
     # It's not X. It's Y: the brief's second form; a full stop is a separator only between these pronouns
     rf"\b{_THING}(?:'?s not| is not| isn'?t) [^.]{{1,40}}\.\s+{_THING_IS}",
-    # We don't X, we Y: the same subject says no and then yes
-    rf"\b(?P<subject>we|you|they|i|it|he|she) {_DO_NOT} {_X}{_SEP}(?P=subject)\b",
+    # We don't X, we Y: the same subject says no and then yes. Not "I": "I don't know, I guess so" is a
+    # hedge, not a pitch, and no wording tells the two apart.
+    rf"{_SENTENCE_START}(?P<subject>we|you|they|it|he|she) {_DO_NOT} {_X}{_SEP}(?P=subject)\b",
 ))
 THROAT_CLEARING = (
     "in today's", "it's worth noting", "let's dive", "in a world where", "at the end of the day",
@@ -78,8 +86,8 @@ TRIAD = re.compile(rf"{_ITEM}, {_ITEM},? and {_ITEM}")
 # Her own triad is the house voice and never counts.
 HER_TRIAD = re.compile(r"operate efficiently, analyze deeply,? and grow immensely", re.IGNORECASE)
 
-# agent, agents, agentic; AI and A.I. (the initialism is upper case only, so "Ai" and "said" are not it)
-OWNER_FIRST_LINE_WORDS = re.compile(r"\bagent(?:s|ic)?\b|(?-i:\bA\.I\b|\bAI\b)", re.IGNORECASE)
+# agent, agents, agentic; AI and A.I. with its dot (the initialism is upper case only, so "Ai" and "said" are not it)
+OWNER_FIRST_LINE_WORDS = re.compile(r"\bagent(?:s|ic)?\b|(?-i:\bA\.I\b\.?|\bAI\b)", re.IGNORECASE)
 SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 
 # Elements that end a sentence and a block of text. Inline elements (b, a, span, ...) do not.
@@ -186,8 +194,8 @@ def _clean(text: str) -> str:
 
 
 def _sentences(blocks: list[str]) -> str:
-    """The blocks as running text: a block that does not end its sentence gets a full stop."""
-    return " ".join(block if block[-1] in ".!?:;," else block + "." for block in blocks)
+    """The blocks as running text, one per line: a block that does not end its sentence gets a full stop."""
+    return "\n".join(block if block[-1] in ".!?:;," else block + "." for block in blocks)
 
 
 def _phrase(words: str) -> re.Pattern:
@@ -223,7 +231,7 @@ def _copy_rules(text: str, where: str) -> list[str]:
     found = (
         [("em-dash", f'em dash (U+2014) in "{_around(text, m)}"'.replace(EM_DASH, "[U+2014]"))
          for m in re.finditer(EM_DASH, text)]   # shown as a code point, so a build log never carries the character
-        + [("contrast-framing", f'"{m.group(0)}"') for pattern in CONTRAST_FRAMING for m in pattern.finditer(text)]
+        + [("contrast-framing", f'"{m.group(0).strip()}"') for pattern in CONTRAST_FRAMING for m in pattern.finditer(text)]
         + [("throat-clearing", f'"{phrase}"') for phrase, pattern in _THROAT if pattern.search(text)]
         + [("buzzword", f'"{m.group(0).lower()}"') for m in BUZZWORDS.finditer(text)]
         + [("intangible", f'"{phrase}"') for phrase, pattern in _INTANGIBLE if pattern.search(text)]
@@ -262,4 +270,4 @@ def _owner_first_line(blocks: list[str], h1: list[str]) -> list[str]:
 
 
 def _around(text: str, match: re.Match, reach: int = 24) -> str:
-    return text[max(0, match.start() - reach): match.end() + reach].strip()
+    return " ".join(text[max(0, match.start() - reach): match.end() + reach].split())

@@ -309,3 +309,53 @@ def test_a_title_inside_an_svg_is_not_the_page_title():
 
 def test_a_clean_title_and_description_add_nothing():
     assert check(HEAD.format(title="Plain title", desc="Plain description."), "owner") == []
+
+# ---- fix round 2: the same-subject frame starts a sentence and is never a conditional ----
+
+@pytest.mark.parametrize("text", [
+    "If we don't hear back, we call you.",
+    "If you don't like it, you pay nothing.",
+    "If you can't pay today, you can pay later.",
+    "When it doesn't fit, it goes back.",
+    "I don't know, I guess so.",
+])
+def test_conditional_clauses_and_hedges_are_not_contrast_frames(text):
+    assert "contrast-framing" not in ids(check(main(f"<p>{text}</p>"), None))
+
+@pytest.mark.parametrize("word", ["If", "When", "Unless", "Once", "Until", "Because", "Since", "Although", "While", "Whether"])
+def test_a_clause_introduced_by_a_subordinator_is_never_a_frame(word):
+    assert "contrast-framing" not in ids(check(main(f"<p>{word} we don't hear back, we call you.</p>"), None))
+    assert "contrast-framing" not in ids(check(main(f"<p>Plain words. {word.lower()} you don't like it, you pay nothing.</p>"), None))
+
+@pytest.mark.parametrize("html", [
+    "<p>We don't sell tools, we sell time.</p>",
+    "<p>Plain words. We don't sell tools, we sell time.</p>",
+    "<p>Done! We don't sell tools, we sell time.</p>",
+    "<p>Really? We don't sell tools, we sell time.</p>",
+    "<p>\"We don't sell tools, we sell time.\"</p>",
+    "<p>Plain words. (We don't sell tools, we sell time.)</p>",
+    "<p>\"Plain words.\" We don't sell tools, we sell time.</p>",
+    "<h1>Quotes</h1><p>We don't sell tools, we sell time.</p>",
+    "<p>Our promise:</p><p>We don't sell tools, we sell time.</p>",
+    "<p>Fast,</p><p>we don't sell tools, we sell time.</p>",
+])
+def test_the_same_subject_frame_fires_where_a_sentence_starts(html):
+    assert "contrast-framing" in ids(check(main(html), None))
+
+def test_a_block_boundary_before_a_conditional_does_not_make_it_a_frame():
+    assert "contrast-framing" not in ids(check(main("<p>Our promise:</p><p>If we don't hear back, we call you.</p>"), None))
+
+def test_the_same_subject_frame_in_the_title_and_description_starts_at_the_text():
+    html = '<html><head><title>We don\'t sell tools, we sell time</title><meta name="description" content="If we don\'t hear back, we call you."></head><body><main><p>Plain.</p></main></body></html>'
+    findings = check(html, None)
+    assert any(f.startswith("contrast-framing: title: ") for f in findings)
+    assert not any(f.startswith("contrast-framing: description: ") for f in findings)
+
+def test_the_finding_shows_the_frame_from_its_subject():
+    (finding,) = [f for f in check(main("<p>Plain words. We don't sell tools, we sell time.</p>"), None) if f.startswith("contrast-framing")]
+    assert finding == 'contrast-framing: "We don\'t sell tools, we"'
+
+def test_the_dotted_initialism_is_reported_with_its_dot():
+    assert 'owner-first-line: the opening says "A.I.": "A.I. answers enquiries"' in check(main("<h1>A.I. answers enquiries</h1>"), "owner")
+    assert 'owner-first-line: the opening says "A.I": "A.I replies"' in check(main("<h1>A.I replies</h1>"), "owner")
+    assert 'owner-first-line: the opening says "A.I.": "Built with A.I."' in check(main("<p>Built with A.I. for owners.</p>"), "owner")
