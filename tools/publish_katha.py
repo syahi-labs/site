@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Publish katha.syahi.sh's index from a site build into the katha-feed repo, and commit it. Never push.
 
-    python tools/publish_katha.py --repo PATH --dist PATH [--dry-run] [--no-fetch] [--site-sha SHA]
+    python tools/publish_katha.py --repo PATH --dist PATH --site-sha SHA [--dry-run] [--no-fetch]
 
 PATH for --repo is a clean checkout of katha-feed on main. PATH for --dist is the katha host's
-directory from a build, `dist/katha.syahi.sh`.
+directory from a build, `dist/katha.syahi.sh`. SHA is the syahi-labs/site commit that build came from.
 
 katha.syahi.sh also serves feed.xml, which Spotify reads, and CNAME, which keeps the domain. This tool
 may never change either one. It copies only what a build owns:
@@ -12,26 +12,30 @@ may never change either one. It copies only what a build owns:
     index.html, robots.txt, sitemap.xml and everything under assets/
 
 and removes stale files under assets/ and nowhere else. It stages each path by name (never `-A` or
-`.`), commits `katha.syahi.sh: index from syahi-labs/site <sha> [agent]`, and stops. Pushing is her
-decision, so there is no push in this file.
+`.`, and git is told to read every path literally, so a file called `*.css` is a file and not a
+pattern), commits `katha.syahi.sh: index from syahi-labs/site <sha> [agent]`, and stops. Pushing is
+her decision, so there is no push in this file.
 
-Exit 0: published, nothing to publish, or a dry run. Exit 2: refused, with the reason on stderr and
-nothing changed (two self-checks after the copy also exit 2, and say that the copy is in the working
-tree). Exit 1: the commit itself failed after the copy; the message says how to look.
+Exit 0: published, nothing to publish, or a dry run. Exit 2: refused, with the reason on stderr. A
+refusal changes nothing, except one that comes after the copy has started (a write fails, feed.xml
+or CNAME fails its read-back, git fails): that one says the working tree may be partly written and
+must be checked with `git status` before trying again. Exit 1: the commit itself failed after the
+copy; the message says how to look.
 
 It refuses when:
   - the repo is not a git checkout, or has any uncommitted change (staged, modified or untracked);
   - the repo is not on main;
   - HEAD differs from origin/main after a fetch (skipped by --no-fetch, which tests use);
-  - the dist holds feed.xml or CNAME anywhere, in any letter case, or a symbolic link, or no
-    index.html, robots.txt or sitemap.xml;
+  - the dist holds feed.xml or CNAME anywhere, in any letter case, or anything named .git or starting
+    with .git (.git, .gitignore, .github, ...) at any depth, or a symbolic link, or no index.html,
+    robots.txt or sitemap.xml;
   - the dist sits inside the repo or the repo inside the dist;
   - the copy would change feed.xml or CNAME: a destination that is a symbolic link, sits behind
     one, or is the same file as one of them (a hard link).
 
-The <sha> is the site checkout's HEAD (this file's own repo), with `-dirty` after it when that
-checkout has uncommitted changes, because then the dist cannot be traced to a commit. `--site-sha`
-names it explicitly.
+--site-sha is required and is used verbatim in the commit subject: the commit is the receipt that
+says which site commit the published files came from, so the tool never guesses it from its own
+checkout. Lower-case hex, 4 to 40 characters.
 
 Standard library only.
 """
@@ -50,10 +54,10 @@ PAGES = ("index.html", "robots.txt", "sitemap.xml")
 ASSETS = "assets"
 BRANCH = "main"
 REMOTE = "origin"
-SITE_REPO = Path(__file__).resolve().parents[1]
-SHA = re.compile(r"[0-9a-f]{4,40}(?:-dirty)?")
+SHA = re.compile(r"[0-9a-f]{4,40}")
 FETCH_TIMEOUT = 120
 SHOWN = 8                                     # how many paths a refusal lists before it says "and N more"
+GIT_NAME = ".git"                             # a dist entry named this or starting with it never gets copied
 
 
 class Refusal(Exception):
@@ -65,7 +69,9 @@ class CommitFailed(Exception):
 
 
 def git(repo: Path, *args: str, check: bool = True, timeout: float | None = None) -> subprocess.CompletedProcess:
-    env = dict(os.environ, GIT_TERMINAL_PROMPT="0")    # a fetch must fail, never wait for a password
+    # A fetch must fail, never wait for a password. Every path handed to git is a literal name:
+    # a build file called `*.css` or `[ab].css` is that file, not a pattern that matches others.
+    env = dict(os.environ, GIT_TERMINAL_PROMPT="0", GIT_LITERAL_PATHSPECS="1")
     try:
         done = subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True, env=env, timeout=timeout)
     except subprocess.TimeoutExpired as err:
@@ -97,13 +103,15 @@ def plan_dist(dist: Path) -> tuple[list[str], list[str]]:
     if not dist.is_dir():
         raise Refusal(f"the dist {dist} is not a directory")
     blocked = {name.lower() for name in PROTECTED}
-    everything, protected, links = [], [], []
+    everything, protected, gitnames, links = [], [], [], []
     for root, dirs, files in os.walk(dist, followlinks=False):
         for name in dirs + files:
             path = Path(root, name)
             rel = path.relative_to(dist).as_posix()
             if name.lower() in blocked:
                 protected.append(rel)
+            if name.lower().startswith(GIT_NAME):
+                gitnames.append(rel)
             if path.is_symlink():
                 links.append(rel)
             elif not path.is_dir():
@@ -111,9 +119,13 @@ def plan_dist(dist: Path) -> tuple[list[str], list[str]]:
                     links.append(rel)           # a socket or a device: not a build output either
                 else:
                     everything.append(rel)
+        dirs[:] = [name for name in dirs if not name.lower().startswith(GIT_NAME)]   # named already; do not walk inside
     if protected:
         raise Refusal(f"the dist contains {_some(sorted(protected))}: feed.xml and CNAME belong to katha-feed, "
                       "and a build must never carry either")
+    if gitnames:
+        raise Refusal(f"the dist contains {_some(sorted(gitnames))}: nothing named .git or starting with .git is ever "
+                      "copied, because a copy would plant git metadata, hooks or ignore rules inside katha-feed")
     if links:
         raise Refusal(f"the dist contains a symbolic link or a special file ({_some(sorted(links))}); "
                       "a build output is plain files")
@@ -203,6 +215,11 @@ def check_destinations(repo: Path, paths: list[str]) -> None:
                 raise Refusal(f"{rel} is the same file as {keep.name}; the copy would change {keep.name}")
 
 
+def _partly_written(repo: Path) -> str:
+    return (f"The working tree of {repo} may be partly written and nothing is committed: "
+            f"run `git status` in {repo} and check it before trying again")
+
+
 def snapshot_protected(repo: Path) -> dict[str, bytes]:
     return {name: (repo / name).read_bytes() for name in PROTECTED if (repo / name).is_file()}
 
@@ -221,8 +238,7 @@ def verify_protected(repo: Path, before: dict[str, bytes]) -> None:
             elif path.exists():
                 path.unlink()
     if changed:
-        raise Refusal(f"{' and '.join(changed)} changed during the copy and was put back. The copied files are in the "
-                      f"working tree of {repo} and nothing is committed (look with git status). "
+        raise Refusal(f"{' and '.join(changed)} changed during the copy and was put back. {_partly_written(repo)}. "
                       "This is a bug in the publish step: stop and tell Surabhi")
 
 
@@ -258,26 +274,21 @@ def remove_file(repo: Path, rel: str) -> None:
         parent = parent.parent
 
 
-def site_sha(explicit: str | None) -> str:
-    if explicit is not None:
-        if not SHA.fullmatch(explicit):
-            raise Refusal(f"--site-sha {explicit!r} is not a git sha (hex digits, 4 to 40)")
-        return explicit
-    short = git(SITE_REPO, "rev-parse", "--short", "HEAD", check=False)
-    if short.returncode != 0:
-        raise Refusal(f"cannot read the site checkout's HEAD in {SITE_REPO} ({_first_line(short.stderr)}); "
-                      "pass --site-sha")
-    dirty = git(SITE_REPO, "status", "--porcelain", check=False).stdout.strip()
-    return short.stdout.strip() + ("-dirty" if dirty else "")
+def check_site_sha(site_sha: str) -> str:
+    """The sha the caller names, unchanged, or a Refusal. It goes into a commit subject, so it must be only a sha."""
+    if not isinstance(site_sha, str) or not SHA.fullmatch(site_sha):
+        raise Refusal(f"--site-sha {site_sha!r} is not a git sha: lower-case hex, 4 to 40 characters, "
+                      "the syahi-labs/site commit the dist was built from")
+    return site_sha
 
 
 # ---- the whole run ----
 
-def publish(repo: Path, dist: Path, dry_run: bool, fetch: bool, explicit_sha: str | None, say) -> None:
+def publish(repo: Path, dist: Path, dry_run: bool, fetch: bool, site_sha: str, say) -> None:
+    sha = check_site_sha(site_sha)
     check_apart(repo, dist)
     copy, left = plan_dist(dist)
     check_repo(repo, fetch)
-    sha = site_sha(explicit_sha)
     wanted = [rel for rel in copy if rel.startswith(ASSETS + "/")]
     stale = [rel for rel in tracked_assets(repo) if rel not in wanted]
     check_destinations(repo, copy + stale)
@@ -304,20 +315,24 @@ def publish(repo: Path, dist: Path, dry_run: bool, fetch: bool, explicit_sha: st
         return
 
     before = snapshot_protected(repo)
-    for rel in changed:
-        copy_file(dist / rel, repo / rel)
-    for rel in stale:
-        remove_file(repo, rel)
-    verify_protected(repo, before)
-    say("feed.xml and CNAME: read back byte for byte, untouched")
-    if changed:
-        git(repo, "add", "--", *changed)
-    if stale:
-        git(repo, "rm", "-q", "--", *stale)
-    staged = sorted(p for p in git(repo, "diff", "--cached", "--name-only", "--no-renames", "-z").stdout.split("\0") if p)
-    if staged != sorted(changed + stale):
-        raise Refusal(f"the staged paths ({_some(staged)}) are not the copied paths ({_some(sorted(changed + stale))}); "
-                      f"the copy is in the working tree and nothing is committed. Look with: git -C {repo} status")
+    try:
+        for rel in changed:
+            copy_file(dist / rel, repo / rel)
+        for rel in stale:
+            remove_file(repo, rel)
+        verify_protected(repo, before)
+        say("feed.xml and CNAME: read back byte for byte, untouched")
+        if changed:
+            git(repo, "add", "--", *changed)
+        if stale:
+            git(repo, "rm", "-q", "--", *stale)
+        staged = sorted(p for p in git(repo, "diff", "--cached", "--name-only", "--no-renames", "-z").stdout.split("\0") if p)
+        if staged != sorted(changed + stale):
+            raise Refusal(f"the staged paths ({_some(staged)}) are not the copied paths ({_some(sorted(changed + stale))})")
+    except OSError as err:
+        raise Refusal(f"{err}. {_partly_written(repo)}") from err
+    except Refusal as err:
+        raise Refusal(str(err) if "git status" in str(err) else f"{err}. {_partly_written(repo)}") from err
     done = git(repo, "commit", "-q", "-m", message, check=False)
     if done.returncode != 0:
         raise CommitFailed(f"git commit failed: {_first_line(done.stderr or done.stdout)}. The copy is staged in {repo} "
@@ -331,9 +346,14 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Copy the katha.syahi.sh build into katha-feed and commit it. Never pushes.")
     parser.add_argument("--repo", type=Path, required=True, help="a clean katha-feed checkout on main")
     parser.add_argument("--dist", type=Path, required=True, help="the katha host's build output, dist/katha.syahi.sh")
-    parser.add_argument("--dry-run", action="store_true", help="print what would change and change nothing")
-    parser.add_argument("--no-fetch", action="store_true", help="skip the fetch and the HEAD against origin/main check (tests)")
-    parser.add_argument("--site-sha", default=None, help="the site commit the dist was built from (default: this checkout's HEAD)")
+    parser.add_argument("--site-sha", required=True,
+                        help="REQUIRED. The syahi-labs/site commit the dist was built from. It is used verbatim in the "
+                             "commit subject, so it is the receipt; the tool never guesses it from its own checkout")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="print what would change and change nothing in the working tree, the index or HEAD. "
+                             "It still fetches origin/main, which updates refs/remotes/origin/main; --no-fetch skips that")
+    parser.add_argument("--no-fetch", action="store_true",
+                        help="skip the fetch and the HEAD against origin/main check (tests)")
     return parser.parse_args(argv)
 
 

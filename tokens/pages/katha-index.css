@@ -1,7 +1,9 @@
-/* katha.syahi.sh index. Layout only: every colour, size, space and family comes from tokens.css
-   (tests/test_tokens.py greps this folder for raw values), so there is no font-family here and a label
-   that was mono or serif on the old page takes the base type until the UI phase gives pages a shared
-   way to ask for one.
+/* katha.syahi.sh index. Layout and type roles only. Every colour and every font family comes from
+   tokens.css: a role is asked for by token (var(--font-serif), var(--font-mono)), and tests/test_tokens.py
+   fails this folder on a raw colour or a literal family. The guard does NOT check lengths, so raw
+   sizes and spacing are allowed in a page sheet. This one uses the type scale (--fs-*) for every font
+   size and the spacing scale (--space-*) for most gaps; widths, borders, letter-spacing and line
+   heights are raw values.
    Text pairs used, all in test_tokens TEXT_PAIRS: ink on ground, muted on ground, act on ground,
    ground on ink, ground on act. */
 
@@ -11,16 +13,18 @@
 /* Hero */
 .hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,16rem);gap:var(--space-7);align-items:center}
 .devanagari{
+  font-family:var(--font-serif);
   margin-bottom:var(--space-3);
   font-size:var(--fs-ui);
   letter-spacing:.4em;
   text-transform:uppercase;
   color:var(--muted);
 }
-.sub{margin-top:var(--space-4);max-width:32rem;font-size:var(--fs-lead);color:var(--muted)}
+.sub{margin-top:var(--space-4);max-width:32rem;font-family:var(--font-serif);font-size:var(--fs-lead);color:var(--muted)}
 .hero-side{padding:var(--space-4);background:var(--ground-deep);border:1px solid var(--rule)}
 .hero-fig{width:100%;height:auto;mix-blend-mode:multiply}
 .figcap{
+  font-family:var(--font-mono);
   margin-top:var(--space-2);
   text-align:center;
   font-size:var(--fs-micro);
@@ -41,8 +45,8 @@
   padding-bottom:var(--space-3);
   border-bottom:1px solid var(--ink);
 }
-.roman{font-size:var(--fs-h2);font-weight:600;line-height:var(--lh-tight)}
-.label{font-size:var(--fs-small);letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.roman{font-family:var(--font-serif);font-size:var(--fs-h2);font-weight:600;line-height:var(--lh-tight)}
+.label{font-family:var(--font-mono);font-size:var(--fs-small);letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
 
 /* The three beats: an ordered list, numbered 01 to 03 by the browser's own list marker */
 @counter-style zero-padded{system:extends decimal;pad:2 "0";suffix:""}
@@ -55,10 +59,11 @@
   list-style:zero-padded inside;
 }
 .beat{padding:var(--space-5);border:1px solid var(--ink)}
-.beat::marker{font-size:var(--fs-small);color:var(--muted)}
-.beat strong{display:block;margin-block:var(--space-2);font-size:var(--fs-lead);font-weight:600}
+.beat::marker{font-family:var(--font-mono);font-size:var(--fs-small);color:var(--muted)}
+.beat strong{display:block;margin-block:var(--space-2);font-family:var(--font-serif);font-size:var(--fs-lead);font-weight:600}
 .beat p{font-size:var(--fs-ui);line-height:1.6;color:var(--muted)}
 .spine{
+  font-family:var(--font-serif);
   max-width:var(--measure);
   margin-top:var(--space-5);
   padding:var(--space-4) var(--space-5);
@@ -71,6 +76,7 @@
 .fit{max-width:29rem}
 .fit-card{padding:var(--space-5);border:1px solid var(--ink)}
 .fit-card h2{
+  font-family:var(--font-mono);
   margin-bottom:var(--space-3);
   font-size:var(--fs-small);
   font-weight:500;
@@ -85,6 +91,7 @@
 /* The sample */
 .slot{padding:var(--space-6);border:1px solid var(--ink);text-align:center}
 .slot-tag{
+  font-family:var(--font-mono);
   display:block;
   margin-bottom:var(--space-3);
   font-size:var(--fs-micro);

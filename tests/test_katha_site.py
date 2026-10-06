@@ -12,6 +12,7 @@ import pytest
 import yaml
 
 from checks import copycheck, htmlcheck
+from css_guard import page_css_violations
 from sitebuild.claims import ClaimRegister
 from sitebuild.content import load_pages
 from sitebuild.pipeline import build
@@ -152,6 +153,30 @@ def test_the_claims_register_loads_and_every_claim_has_a_public_source():
     for id in ("org-legal-name", "org-llpin", "katha-sample-length"):
         assert register.get(id)
     assert register.get("org-llpin").text.startswith("LLPIN ")   # the footer adds no label of its own
+
+
+# ---- the page's own stylesheet ----
+
+# Type roles as on today's page: the labels were IBM Plex Mono, the lead lines Fraunces. A page asks for a
+# role by token; tokens.css decides the family.
+SERIF = (".devanagari", ".sub", ".roman", ".beat strong", ".spine")
+MONO = (".figcap", ".label", ".beat::marker", ".fit-card h2", ".slot-tag")
+
+
+def rule(css: str, selector: str) -> str:
+    match = re.search(r"(?m)^" + re.escape(selector) + r"\s*\{([^}]*)\}", css)
+    assert match, f"no rule for {selector}"
+    return match.group(1)
+
+
+@pytest.mark.parametrize("selector, token", [(s, "--font-serif") for s in SERIF] + [(s, "--font-mono") for s in MONO])
+def test_the_page_css_gives_each_role_its_family_by_token(selector, token):
+    css = (REPO / "tokens" / "pages" / "katha-index.css").read_text(encoding="utf-8")
+    assert re.search(r"font-family:\s*var\(" + token + r"\)", rule(css, selector)), selector
+
+
+def test_the_page_css_passes_the_stricter_guard():
+    assert page_css_violations((REPO / "tokens" / "pages" / "katha-index.css").read_text(encoding="utf-8")) == []
 
 
 # ---- the port: markup-only changes, each one pinned ----

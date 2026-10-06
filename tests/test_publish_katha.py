@@ -73,7 +73,7 @@ def with_origin(tmp_path):
 
 def test_copies_and_commits_without_touching_feed(tmp_path):
     r = feed_repo(tmp_path); d = dist(tmp_path)
-    res = run("--repo", str(r), "--dist", str(d), "--no-fetch")
+    res = run("--repo", str(r), "--dist", str(d), "--no-fetch", "--site-sha", SITE_SHA)
     assert res.returncode == 0, res.stderr
     assert (r / "index.html").read_text() == "new" and (r / "feed.xml").read_text() == "<rss/>"
     changed = git(r, "show", "--name-only", "--format=", "HEAD").stdout.split()
@@ -82,19 +82,19 @@ def test_copies_and_commits_without_touching_feed(tmp_path):
 
 def test_refuses_dist_with_feed(tmp_path):
     r = feed_repo(tmp_path); d = dist(tmp_path, extra="feed.xml")
-    res = run("--repo", str(r), "--dist", str(d), "--no-fetch")
+    res = run("--repo", str(r), "--dist", str(d), "--no-fetch", "--site-sha", SITE_SHA)
     assert res.returncode == 2 and "feed.xml" in (res.stdout + res.stderr)
 
 
 def test_refuses_dirty_repo(tmp_path):
     r = feed_repo(tmp_path); (r / "index.html").write_text("dirty"); d = dist(tmp_path)
-    assert run("--repo", str(r), "--dist", str(d), "--no-fetch").returncode == 2
+    assert run("--repo", str(r), "--dist", str(d), "--no-fetch", "--site-sha", SITE_SHA).returncode == 2
 
 
 def test_dry_run_changes_nothing(tmp_path):
     r = feed_repo(tmp_path); d = dist(tmp_path)
     head_before = git(r, "rev-parse", "HEAD").stdout
-    assert run("--repo", str(r), "--dist", str(d), "--no-fetch", "--dry-run").returncode == 0
+    assert run("--repo", str(r), "--dist", str(d), "--no-fetch", "--dry-run", "--site-sha", SITE_SHA).returncode == 0
     assert git(r, "rev-parse", "HEAD").stdout == head_before and (r / "index.html").read_text() == "old"
 
 
@@ -164,21 +164,38 @@ def test_dry_run_lists_the_files_and_changes_nothing(tmp_path):
     assert (r / "index.html").read_text() == "old" and (r / "assets" / "old.css").exists()
 
 
-def test_a_dirty_site_checkout_is_named_in_the_commit_sha(tmp_path):
-    # Without --site-sha the tool asks the site repo. This test repo is not a git repo, so run the
-    # tool from a copy of itself placed in a fresh dirty repo.
-    site = tmp_path / "site"; (site / "tools").mkdir(parents=True)
-    git(site, "init", "-q", "-b", "main")
-    (site / "tools" / "publish_katha.py").write_text(TOOL.read_text(encoding="utf-8"), encoding="utf-8")
-    git(site, "add", "tools/publish_katha.py"); git(site, "commit", "-q", "-m", "tool")
-    (site / "stray.txt").write_text("uncommitted")
-    r = feed_repo(tmp_path); d = dist(tmp_path)
-    res = subprocess.run([sys.executable, str(site / "tools" / "publish_katha.py"), "--repo", str(r),
-                          "--dist", str(d), "--no-fetch"], capture_output=True, text=True, env=ENV)
-    assert res.returncode == 0, said(res)
-    subject = git(r, "log", "-1", "--format=%s").stdout.strip()
-    site_head = git(site, "rev-parse", "--short", "HEAD").stdout.strip()
-    assert subject == f"katha.syahi.sh: index from syahi-labs/site {site_head}-dirty [agent]"
+def test_the_commit_subject_uses_the_site_sha_verbatim(tmp_path):
+    for number, given in enumerate(("0123abc", "9" * 40, "abcd")):
+        (tmp_path / f"r{number}").mkdir()
+        r = feed_repo(tmp_path / f"r{number}"); d = dist(tmp_path / f"r{number}")
+        (d / "index.html").write_text(f"new {given}")
+        assert run("--repo", str(r), "--dist", str(d), "--no-fetch", "--site-sha", given).returncode == 0
+        assert git(r, "log", "-1", "--format=%s").stdout.strip() == f"katha.syahi.sh: index from syahi-labs/site {given} [agent]"
+
+
+def test_the_site_sha_is_required_and_nothing_is_guessed_from_the_tools_own_checkout(tmp_path):
+    r = feed_repo(tmp_path); d = dist(tmp_path); before = head(r)
+    res = run("--repo", str(r), "--dist", str(d), "--no-fetch")
+    assert res.returncode == 2 and "--site-sha" in said(res), said(res)
+    assert head(r) == before and (r / "index.html").read_text() == "old" and git(r, "status", "--porcelain").stdout == ""
+
+
+@pytest.mark.parametrize("given", ["abc1234-dirty", "main", "xyz", "abc", "ABC1234", "abc1234 [agent]", "", "abc1234\n", "0" * 41])
+def test_a_site_sha_that_is_not_a_git_sha_is_refused(tmp_path, given):
+    r = feed_repo(tmp_path); d = dist(tmp_path); before = head(r)
+    res = run("--repo", str(r), "--dist", str(d), "--no-fetch", "--site-sha", given)
+    assert res.returncode == 2 and "--site-sha" in said(res), said(res)
+    assert head(r) == before and (r / "index.html").read_text() == "old"
+
+
+def test_the_help_says_the_sha_is_required_and_that_a_dry_run_still_fetches():
+    res = run("--help")
+    assert res.returncode == 0
+    text = " ".join(res.stdout.split())
+    assert "[--site-sha" not in text and "--site-sha SITE_SHA" in text          # required: no brackets in the usage
+    assert "verbatim" in text and "required" in text.lower()
+    dry = text[text.index("--dry-run", text.index("options:")):]
+    assert "still fetches" in dry and "refs/remotes/origin/main" in dry
 
 
 # ---- every refusal exits 2 and names its reason ----
@@ -398,7 +415,7 @@ def test_publish_puts_the_feed_back_and_commits_nothing_if_a_copy_ever_changes_i
 
     monkeypatch.setattr(tool, "copy_file", hostile)
     with pytest.raises(tool.Refusal) as err:
-        tool.publish(r, d, dry_run=False, fetch=False, explicit_sha=SITE_SHA, say=lambda line: None)
+        tool.publish(r, d, dry_run=False, fetch=False, site_sha=SITE_SHA, say=lambda line: None)
     assert "feed.xml" in str(err.value) and "nothing is committed" in str(err.value)
     assert (r / "feed.xml").read_text() == "<rss/>"
     assert head(r) == before
@@ -409,3 +426,156 @@ def test_staging_is_by_explicit_path_and_there_is_no_push():
     text = TOOL.read_text(encoding="utf-8")
     assert re.search(r'"add",\s*"(?:-A|--all|-u|\.)"', text) is None
     assert re.search(r'git\(repo,\s*"push"', text) is None and '"push"' not in text.replace("git push", "")
+
+
+# ---- git metadata in the dist: a copy of it would plant a repository, hooks or config inside katha-feed ----
+
+@pytest.mark.parametrize("relative", [
+    ".git/config", ".git/hooks/pre-commit", "assets/.git/config", "assets/sub/.git/HEAD",
+    ".gitignore", ".gitattributes", "assets/.gitignore", "assets/sub/deep/.gitmodules", ".github/workflows/x.yml",
+    ".GIT/config", ".Gitignore",
+])
+def test_refuses_any_git_named_entry_in_the_dist_at_any_depth(tmp_path, relative):
+    r = feed_repo(tmp_path); d = dist(tmp_path)
+    (d / relative).parent.mkdir(parents=True, exist_ok=True); (d / relative).write_text("x")
+    res = publish(r, d, "--no-fetch")
+    refused(res, ".git")
+    assert (r / "index.html").read_text() == "old" and git(r, "status", "--porcelain").stdout == ""
+    assert not (r / "assets").exists() and not (r / ".gitignore").exists()
+
+
+def test_a_gitlink_file_named_dot_git_is_refused_too(tmp_path):
+    r = feed_repo(tmp_path); d = dist(tmp_path); (d / ".git").write_text("gitdir: ../elsewhere\n")
+    refused(publish(r, d, "--no-fetch"), ".git")
+
+
+def test_other_dotfiles_in_the_dist_are_skipped_not_refused(tmp_path):
+    r = feed_repo(tmp_path); d = dist(tmp_path); (d / ".DS_Store").write_text("x")
+    res = publish(r, d, "--no-fetch")
+    assert res.returncode == 0, said(res)
+    assert ".DS_Store" in res.stdout and not (r / ".DS_Store").exists()
+
+
+# ---- a failure in the middle of the copy ----
+
+PARTLY = "partly written"
+
+
+def test_an_os_error_while_copying_is_a_refusal_that_says_to_check_git_status(tmp_path, capsys):
+    tool = load_tool()
+    r = feed_repo(tmp_path); d = dist(tmp_path)
+    real = tool.copy_file
+
+    def fails_on_the_third_file(src, dest):
+        if dest.name == "robots.txt":
+            raise PermissionError(13, "Permission denied", str(dest))
+        real(src, dest)
+
+    tool.copy_file = fails_on_the_third_file
+    code = tool.main(["--repo", str(r), "--dist", str(d), "--no-fetch", "--site-sha", SITE_SHA])
+    err = capsys.readouterr().err
+    assert code == 2
+    assert PARTLY in err and "git status" in err and str(r) in err and "robots.txt" in err
+    assert (r / "index.html").read_text() == "new"                      # the warning is true: some files are written
+    assert git(r, "status", "--porcelain").stdout != "" and head(r) == git(r, "rev-parse", "main").stdout.strip()
+    assert (r / "feed.xml").read_text() == "<rss/>"
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root ignores directory permissions")
+def test_a_read_only_assets_directory_is_a_refusal_not_a_traceback(tmp_path):
+    r = feed_repo(tmp_path)
+    (r / "assets").mkdir(); (r / "assets" / "old.css").write_text("old")
+    git(r, "add", "assets/old.css"); git(r, "commit", "-q", "-m", "assets")
+    d = dist(tmp_path)
+    (r / "assets").chmod(0o555)
+    try:
+        res = publish(r, d, "--no-fetch")
+    finally:
+        (r / "assets").chmod(0o755)
+    assert res.returncode == 2, said(res)
+    assert "Traceback" not in said(res) and PARTLY in said(res) and "git status" in said(res)
+    assert (r / "feed.xml").read_text() == "<rss/>" and (r / "CNAME").exists()
+
+
+def test_an_os_error_while_removing_a_stale_file_is_the_same_refusal(tmp_path, capsys):
+    tool = load_tool()
+    r = feed_repo(tmp_path)
+    (r / "assets").mkdir(); (r / "assets" / "old.css").write_text("old")
+    git(r, "add", "assets/old.css"); git(r, "commit", "-q", "-m", "assets")
+    d = dist(tmp_path)
+
+    def cannot_remove(repo, rel):
+        raise OSError(30, "Read-only file system", rel)
+
+    tool.remove_file = cannot_remove
+    code = tool.main(["--repo", str(r), "--dist", str(d), "--no-fetch", "--site-sha", SITE_SHA])
+    err = capsys.readouterr().err
+    assert code == 2 and PARTLY in err and "git status" in err and "assets/old.css" in err
+
+
+def test_a_git_failure_after_the_copy_also_says_the_tree_may_be_partly_written(tmp_path, capsys):
+    tool = load_tool()
+    r = feed_repo(tmp_path); d = dist(tmp_path)
+    real = tool.git
+
+    def add_fails(repo, *args, **kwargs):
+        if args[0] == "add":
+            raise tool.Refusal("git add failed: index.lock exists")
+        return real(repo, *args, **kwargs)
+
+    tool.git = add_fails
+    code = tool.main(["--repo", str(r), "--dist", str(d), "--no-fetch", "--site-sha", SITE_SHA])
+    err = capsys.readouterr().err
+    assert code == 2 and "index.lock" in err and PARTLY in err and "git status" in err
+
+
+def test_a_failure_before_the_copy_does_not_claim_the_tree_was_touched(tmp_path):
+    r = feed_repo(tmp_path); d = dist(tmp_path, extra="feed.xml")
+    res = publish(r, d, "--no-fetch")
+    assert res.returncode == 2 and PARTLY not in said(res)
+
+
+# ---- names are never globs ----
+
+def test_git_add_runs_with_literal_pathspecs(tmp_path, monkeypatch):
+    tool = load_tool()
+    r = feed_repo(tmp_path); d = dist(tmp_path)
+    seen = []
+    real = subprocess.run
+
+    def spy(cmd, *args, **kwargs):
+        seen.append((cmd, (kwargs.get("env") or {}).get("GIT_LITERAL_PATHSPECS")))
+        return real(cmd, *args, **kwargs)
+
+    monkeypatch.setattr(tool.subprocess, "run", spy)
+    monkeypatch.setenv("GIT_LITERAL_PATHSPECS", "0")               # whatever the caller had, the tool decides
+    for key, value in ENV.items():
+        monkeypatch.setenv(key, value)
+    tool.publish(r, d, dry_run=False, fetch=False, site_sha=SITE_SHA, say=lambda line: None)
+    adds = [flag for cmd, flag in seen if cmd[3:4] == ["add"]]
+    assert adds and set(adds) == {"1"}, seen
+
+
+def test_file_names_with_glob_characters_are_copied_and_committed_as_themselves(tmp_path):
+    r = feed_repo(tmp_path)
+    (r / "assets").mkdir()
+    for name, text in (("a.css", "old a"), ("[ab].css", "old star"), ("gone.css", "gone")):
+        (r / "assets" / name).write_text(text)
+    git(r, "add", "assets"); git(r, "commit", "-q", "-m", "assets")
+    d = dist(tmp_path)
+    (d / "assets" / "*.css").write_text("star")
+    (d / "assets" / "[ab].css").write_text("bracket")
+    (d / "assets" / "a?.css").write_text("question")
+    res = publish(r, d, "--no-fetch")
+    assert res.returncode == 0, said(res)
+    changed = sorted(git(r, "show", "--name-only", "--format=", "HEAD", "-z").stdout.split("\0"))
+    assert [c for c in changed if c] == ["assets/*.css", "assets/[ab].css", "assets/a.css", "assets/a?.css",
+                                        "assets/gone.css", "index.html", "robots.txt", "sitemap.xml"]
+    shown = lambda name: git(r, "show", f"HEAD:assets/{name}").stdout
+    assert (shown("*.css"), shown("[ab].css"), shown("a?.css"), shown("a.css")) == ("star", "bracket", "question", "a{}")
+    assert not (r / "assets" / "gone.css").exists() and git(r, "status", "--porcelain").stdout == ""
+
+
+def test_the_staged_set_guard_is_still_there():
+    text = TOOL.read_text(encoding="utf-8")
+    assert 'git(repo, "diff", "--cached", "--name-only"' in text and "staged != sorted(changed + stale)" in text
