@@ -66,7 +66,7 @@ def test_the_default_image_carries_its_real_pixel_size(real_site, host):
     assert (width, height) == (1200, 630)
     own = own_images() if host == "syahi.sh" else {}
     for page in sorted((real_site.out / host).rglob("*.html")):
-        if page.name in own:
+        if "-".join(page.relative_to(real_site.out / host).parts) in own:     # services/quote.html is services-quote.html
             continue                                      # a page's own image is the next test's
         tags = metas(page.read_text(encoding="utf-8"))
         assert tags["og:image"].endswith("/assets/brand/og-default.png"), page.name
