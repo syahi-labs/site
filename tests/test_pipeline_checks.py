@@ -5,13 +5,14 @@ from checks import sitecheck
 from sitebuild.pipeline import BuildResult, build
 
 EM = chr(0x2014)
-FRONT = "---\ntitle: T\ndescription: d\nupdated: 2026-10-06\napproved: 2026-10-06\nlayout: page\n{extra}---\n"
+FRONT = "---\ntitle: {title}\ndescription: {description}\nupdated: 2026-10-06\napproved: 2026-10-06\nlayout: {layout}\n{extra}---\n"
 
 
-def add_page(root, rel, body, extra="", base="content"):
+def add_page(root, rel, body, extra="", base="content", title="T", description="d", layout="page"):
     path = root / base / rel
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(FRONT.format(extra=extra) + body + "\n", encoding="utf-8")
+    front = FRONT.format(title=title, description=description, layout=layout, extra=extra)
+    path.write_text(front + body + "\n", encoding="utf-8")
     return path
 
 
@@ -204,3 +205,27 @@ def test_a_page_that_is_not_pending_is_never_downgraded(mini_root, tmp_path):
         (mini_root / "site.yaml").read_text(encoding="utf-8").replace("pending_pages: [/services]", "pending_pages: [/media]"), encoding="utf-8")
     r = built(mini_root, tmp_path)
     assert naming(r.problems, "internal-link", "/services") and r.warnings == []
+
+
+# ---- fix round 1: the title and description are copy, and a page needs exactly one main ----
+
+@pytest.mark.parametrize("field, value, rule", [
+    ("title", "We leverage data", "buzzword"),
+    ("description", "It isn't a tool; it's a teammate.", "contrast-framing"),
+    ("title", "In today's market", "throat-clearing"),
+])
+def test_the_page_title_and_description_go_through_the_copy_check(mini_root, tmp_path, field, value, rule):
+    page = add_page(mini_root, "meta.html", "<h1>Meta</h1>", **{field: value})
+    assert len(naming(built(mini_root, tmp_path).problems, str(page), f"copycheck: {rule}: {field}: ")) == 1
+
+
+def test_a_layout_without_main_fails_the_one_main_rule(mini_root, tmp_path):
+    (mini_root / "templates" / "layouts" / "bare.html").write_text(
+        "<!doctype html><html lang=\"en\"><head><title>t</title></head><body>{{ body }}</body></html>", encoding="utf-8")
+    page = add_page(mini_root, "bare.html", "<h1>Bare</h1>", layout="bare")
+    assert naming(built(mini_root, tmp_path).problems, str(page), "htmlcheck: one-main")
+
+
+def test_a_page_with_a_second_main_fails_the_one_main_rule(mini_root, tmp_path):
+    page = add_page(mini_root, "two.html", "<h1>Two</h1><main><p>inner</p></main>")
+    assert naming(built(mini_root, tmp_path).problems, str(page), "htmlcheck: one-main")

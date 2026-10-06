@@ -1,7 +1,10 @@
 """The HTML checks (spec section 7): the markup rules a rendered page must keep.
 
 `check(html)` returns one finding per problem as "<rule-id>: <detail>". No findings means the page
-passes. Rules: one-h1, heading-order, lang-hi, numbers-from-claims and balanced.
+passes. Rules: one-h1, one-main, heading-order, lang-hi, numbers-from-claims and balanced.
+
+`one-main` matters beyond markup: the copy check and numbers-from-claims read `<main>` only, so a
+page without one would pass both unread.
 
 `balanced` is the spec's HTML validity check. It is strict on purpose: every element that is not
 void must be closed with its own end tag, in order, and a stray end tag fails. Closing tags the HTML
@@ -47,6 +50,7 @@ class _Scan(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.stack: list[_Open] = []
         self.h1 = 0
+        self.mains = 0
         self.levels: list[int] = []
         self.hindi: list[str] = []
         self.numbers: list[str] = []
@@ -101,6 +105,8 @@ class _Scan(HTMLParser):
             foreign=parent.foreign or tag in FOREIGN,
             raw=tag in RAW_TEXT,
         )
+        if tag == "main":
+            self.mains += 1
         if tag in HEADINGS:
             self.levels.append(HEADINGS[tag])
             if tag == "h1":
@@ -130,6 +136,8 @@ def check(html: str) -> list[str]:
     found: list[str] = []
     if scan.h1 != 1:
         found.append(f"one-h1: found {scan.h1} h1 elements, expected exactly 1")
+    if scan.mains != 1:
+        found.append(f"one-main: found {scan.mains} main elements, expected exactly 1")
     for before, after in zip(scan.levels, scan.levels[1:]):
         if after > before + 1:
             found.append(f"heading-order: h{after} follows h{before}, skipping h{before + 1}")

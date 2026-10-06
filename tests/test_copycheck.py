@@ -63,10 +63,13 @@ def test_contrast_framing_forms(text):
     assert "contrast-framing" in ids(check(main(f"<p>{text}</p>"), None))
 
 @pytest.mark.parametrize("text", [
-    "We do not buy leads, we sell them.",
     "It's a teammate, not a tool.",
+    "We don't store your rate card.",
     "Note the date, but not the price.",
     "It's not ready yet. We ship on Friday.",
+    "Don't worry, you will get a reply.",
+    "You don't need a login. You get a link.",
+    "We don't spam; replies are quick.",
 ])
 def test_contrast_framing_leaves_ordinary_negatives_alone(text):
     assert "contrast-framing" not in ids(check(main(f"<p>{text}</p>"), None))
@@ -98,7 +101,7 @@ def test_buzzwords(word):
     assert "buzzword" in ids(check(main(f"<p>A {word} approach.</p>"), None))
     assert "buzzword" in ids(check(main(f"<p>{word.title()} approach.</p>"), None))
 
-@pytest.mark.parametrize("text", ["A leveraged buyout.", "Unlocking doors.", "Roboustness.", "Synergistic.", "Seamlessness."])
+@pytest.mark.parametrize("text", ["A leveraged buyout.", "Leveraged.", "Roboustness.", "Synergistic.", "Seamlessness.", "Leverager."])
 def test_buzzwords_match_whole_words_only(text):
     assert "buzzword" not in ids(check(main(f"<p>{text}</p>"), None))
 
@@ -169,3 +172,140 @@ def test_a_page_without_main_has_no_copy_to_check():
 def test_the_same_finding_is_reported_once():
     findings = check(main("<p>We leverage data. We leverage data.</p>"), None)
     assert len(findings) == len(set(findings)) == 1
+
+# ---- fix round 1, ruling 1: buzzwords match their inflections and their spaced and hyphenated forms ----
+
+def test_signet_empowers_and_leverages():
+    findings = check(main("<p>Signet empowers owners and leverages data.</p>"), None)
+    assert 'buzzword: "empowers"' in findings and 'buzzword: "leverages"' in findings
+
+INFLECTED = [
+    "leverage", "leverages", "leveraging",
+    "unlock", "unlocks", "unlocking", "unlocked",
+    "empower", "empowers", "empowering", "empowered",
+    "elevate", "elevates", "elevating", "elevated",
+    "revolutionize", "revolutionizes", "revolutionizing", "revolutionized",
+    "revolutionise", "revolutionises", "revolutionising", "revolutionised",
+    "supercharge", "supercharges", "supercharging", "supercharged",
+    "synergy", "synergies",
+    "seamless", "seamlessly", "robust", "holistic",
+]
+
+@pytest.mark.parametrize("word", INFLECTED)
+def test_every_inflection_of_a_buzzword_fires(word):
+    assert f'buzzword: "{word}"' in check(main(f"<p>We {word} your shop.</p>"), None)
+    assert f'buzzword: "{word}"' in check(main(f"<p>{word.capitalize()} your shop.</p>"), None)
+
+def test_the_finance_sense_of_leveraged_stays_legal():
+    for text in ("A leveraged buyout.", "The fund was leveraged.", "Highly leveraged firms fail first."):
+        assert "buzzword" not in ids(check(main(f"<p>{text}</p>"), None))
+
+@pytest.mark.parametrize("phrase", [
+    "cutting-edge", "cutting edge", "Cutting Edge",
+    "game-changer", "game changer", "game-changers", "game changers",
+    "game-changing", "game changing",
+    "world-class", "world class", "best-in-class", "best in class", "next-level", "next level",
+])
+def test_spaced_and_hyphenated_buzzword_variants_fire(phrase):
+    assert "buzzword" in ids(check(main(f"<p>A {phrase} tool.</p>"), None))
+
+def test_a_spaced_variant_reports_what_the_page_says():
+    assert 'buzzword: "world class"' in check(main("<p>World  Class replies.</p>"), None)
+
+@pytest.mark.parametrize("text", ["The cutting of the edge.", "A world of class.", "In class, at the next stop level.", "Gamechanger"])
+def test_the_compound_buzzwords_need_their_words_together(text):
+    assert "buzzword" not in ids(check(main(f"<p>{text}</p>"), None))
+
+# ---- ruling 2: contrast framing is contraction-aware and punctuation-aware ----
+
+@pytest.mark.parametrize("text", [
+    "It isn't a tool; it's a teammate.",
+    "It isn't just a tool, it's a teammate.",
+    "This is not a tool; it's a teammate.",
+    "It's not a tool - it's a teammate.",
+    "It's not a tool. It is a teammate.",
+    "We don't sell tools, we sell time.",
+    "We do not buy leads, we sell them.",
+    "It doesn't just reply, it decides.",
+    "You don't need a tool; you need a teammate.",
+    "Signet isn't a tool, it's a teammate.",
+    "This isn't just a tool, this is a teammate.",
+    "It's not a tool -- it's a teammate.",
+    "It's not a tool – it's a teammate.",
+    f"It's not a tool {EM} it's a teammate.",
+    f"It's not a tool{EM}it's a teammate.",
+    "It's not a tool: it's a teammate.",
+])
+def test_contrast_framing_contracted_and_punctuated_forms(text):
+    assert "contrast-framing" in ids(check(main(f"<p>{text}</p>"), None))
+
+@pytest.mark.parametrize("html", [
+    "<h1>It's not a tool</h1><p>It's a teammate.</p>",
+    "<h1>It isn't a tool</h1><p>It is a teammate.</p>",
+    "<h1>This is not a tool</h1><h2>It's a teammate</h2>",
+])
+def test_contrast_framing_across_blocks_without_a_full_stop(html):
+    assert "contrast-framing" in ids(check(main(html), None))
+
+def test_two_blocks_that_do_not_frame_a_contrast_stay_clean():
+    assert "contrast-framing" not in ids(check(main("<h1>Quotes in a day</h1><p>It's not ready yet, and we say so.</p>"), None))
+
+# ---- ruling 4: the owner rule also reads the h1, and knows A.I. and agentic ----
+
+def test_an_eyebrow_before_the_h1_cannot_hide_it():
+    assert "owner-first-line" in ids(check(main("<p>New this week</p><h1>AI that answers enquiries</h1>"), "owner"))
+    assert "owner-first-line" not in ids(check(main("<p>New this week</p><h1>Answer every enquiry first</h1><p>AI later.</p>"), "owner"))
+
+def test_the_h1_is_read_whole_not_only_its_first_sentence():
+    assert "owner-first-line" in ids(check(main("<p>New</p><h1>Quotes sent. AI does the rest.</h1>"), "owner"))
+
+def test_one_finding_when_the_h1_is_also_the_first_block():
+    findings = [f for f in check(main("<h1>AI that answers enquiries</h1>"), "owner") if f.startswith("owner-first-line")]
+    assert len(findings) == 1
+
+@pytest.mark.parametrize("first", ["A.I. answers enquiries", "Built with A.I. for owners", "A.I replies", "Agentic replies", "Meet our agentic team"])
+def test_owner_first_line_catches_dotted_ai_and_agentic(first):
+    assert "owner-first-line" in ids(check(main(f"<h1>{first}</h1><p>Plain.</p>"), "owner"))
+
+@pytest.mark.parametrize("first", ["Agentless installs", "A. Ideal fit", "Said it"])
+def test_owner_first_line_dotted_ai_and_agentic_stay_whole_words(first):
+    assert "owner-first-line" not in ids(check(main(f"<h1>{first}</h1><p>Plain.</p>"), "owner"))
+
+# ---- ruling 5: the copy rules also read the page title and meta description ----
+
+HEAD = '<html><head><title>{title}</title><meta name="description" content="{desc}"></head><body><main><p>Plain words.</p></main></body></html>'
+
+def test_title_and_description_are_checked_and_labelled():
+    findings = check(HEAD.format(title="We leverage data", desc=f"It's not a tool, it's a teammate. In today's market {EM} done."), None)
+    assert 'buzzword: title: "leverage"' in findings
+    for rule in ("contrast-framing", "throat-clearing", "em-dash"):
+        assert any(f.startswith(f"{rule}: description: ") for f in findings), rule
+    assert not any(EM in f for f in findings)
+
+@pytest.mark.parametrize("title, rule", [
+    (f"A {EM} B", "em-dash"),
+    ("It's not a tool, it's a teammate", "contrast-framing"),
+    ("In today's market", "throat-clearing"),
+    ("Robust replies", "buzzword"),
+    ("Peace of mind for owners", "intangible"),
+])
+def test_every_copy_rule_reads_the_title_and_the_description(title, rule):
+    assert any(f.startswith(f"{rule}: title: ") for f in check(HEAD.format(title=title, desc="Plain."), None))
+    assert any(f.startswith(f"{rule}: description: ") for f in check(HEAD.format(title="Plain", desc=title), None))
+
+def test_the_title_and_description_skip_the_two_rules_that_belong_to_the_page_body():
+    html = HEAD.format(title="AI first, agents next", desc="Fast, cheap and simple. Quotes, replies and follow-ups.")
+    assert check(html, "owner") == []
+
+def test_the_description_meta_is_found_by_name_and_other_metas_are_not_copy():
+    html = ('<html><head><title>Plain</title><meta name="Description" content="We leverage">'
+            '<meta property="og:description" content="We empower"><meta name="keywords" content="robust"></head>'
+            '<body><main><p>Plain.</p></main></body></html>')
+    assert check(html, None) == ['buzzword: description: "leverage"']
+
+def test_a_title_inside_an_svg_is_not_the_page_title():
+    html = '<html><head><title>Plain</title></head><body><header><svg><title>We leverage</title></svg></header><main><p>Plain.</p></main></body></html>'
+    assert check(html, None) == []
+
+def test_a_clean_title_and_description_add_nothing():
+    assert check(HEAD.format(title="Plain title", desc="Plain description."), "owner") == []

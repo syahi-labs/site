@@ -178,3 +178,25 @@ def test_a_stray_closing_tag_is_named():
 def test_the_same_finding_is_reported_once():
     findings = check(doc("<h1>a</h1><p>7 and 7</p>"))
     assert len(findings) == len(set(findings))
+
+# ---- fix round 1, ruling 3: one main per page ----
+
+BARE = "<html><head><title>t</title></head><body>{}</body></html>"
+
+def test_one_main():
+    assert "one-main" not in ids(check(doc("<h1>a</h1>")))
+    assert "one-main" in ids(check(BARE.format("<h1>a</h1><p>no main</p>")))
+    two = BARE.format("<main><h1>a</h1></main><main><p>x</p></main>")
+    assert "one-main" in ids(check(two))
+
+def test_a_main_inside_a_main_is_two():
+    assert "one-main" in ids(check(BARE.format("<main><h1>a</h1><main><p>x</p></main></main>")))
+
+def test_the_one_main_finding_counts_them():
+    (zero,) = [f for f in check(BARE.format("<h1>a</h1>")) if f.startswith("one-main")]
+    (two,) = [f for f in check(BARE.format("<main><h1>a</h1></main><main></main>")) if f.startswith("one-main")]
+    assert "0" in zero and "2" in two
+
+def test_a_page_with_no_main_still_gets_the_other_rules():
+    findings = check(BARE.format("<h1>a</h1><h1>b</h1>"))
+    assert ids(findings) == {"one-main", "one-h1"}
