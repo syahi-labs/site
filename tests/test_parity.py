@@ -96,18 +96,45 @@ def test_the_page_passes_every_check_on_its_own(dist, snapshot, name, slug, upda
     assert jsonld_mismatches(html) == []
 
 
+DRAFTS = {"privacy.html"}      # ported word for word, but three statements are untrue on the new site (below)
+DRAFT_LINE = "Drafted with AI from our own records. Not yet approved."
+
+
 @pytest.mark.parametrize("snapshot, name, slug, updated, levels", PAGES, ids=IDS)
 def test_front_matter_is_the_ports_contract(snapshot, name, slug, updated, levels):
     page = next(p for p in load_pages(REPO / "content") if p.slug == slug)
-    assert page.approved == APPROVED                 # the live page was last approved and shipped on 6 Oct 2026
     assert page.layout == "page" and page.css == "policy"
     assert page.audience is None and page.schema == ()
     assert page.claims and len(set(page.claims)) == len(page.claims)
+    if name in DRAFTS:
+        assert page.draft is True and page.approved is None   # no approval date: nobody has approved the new site's version
+    else:
+        assert page.draft is False and page.approved == APPROVED   # the live page was last approved and shipped on 6 Oct 2026
 
 
 @pytest.mark.parametrize("snapshot, name, slug, updated, levels", PAGES, ids=IDS)
-def test_the_made_by_line_carries_the_approval_date(dist, snapshot, name, slug, updated, levels):
-    assert f"Checked and approved by Surabhi Pradhan on {format_date(APPROVED)}." in built(dist, name)
+def test_the_made_by_line_says_what_is_true_of_the_page(dist, snapshot, name, slug, updated, levels):
+    html = built(dist, name)
+    if name in DRAFTS:
+        assert f'<p class="made-by">{DRAFT_LINE}</p>' in html and "Checked and approved" not in html
+    else:
+        assert f"Checked and approved by Surabhi Pradhan on {format_date(APPROVED)}." in html
+
+
+def test_privacy_names_the_three_statements_that_are_untrue_on_the_new_site():
+    # Ported word for word, so the words stay; the front matter says what must be edited with her in Part B.
+    source = (REPO / "content" / "privacy.html").read_text(encoding="utf-8")
+    front = source.split("\n---\n", 1)[0]
+    comment = "\n".join(line for line in front.splitlines() if line.lstrip().startswith("#"))
+    assert "Google Fonts" in comment and "self-hosted" in comment                 # the fonts paragraph
+    assert "moving ink" in comment and "D21" in comment                           # the canvas is gone
+    assert "X and YouTube" in comment and "D5" in comment                         # the footer's four profiles
+    assert "Part B" in comment
+    # and the three statements are still in the body, because the copy is not edited here
+    body = source.split("\n---\n", 1)[1]
+    assert "The typefaces come from Google Fonts." in body
+    assert "The moving ink is drawn inside your browser" in body
+    assert "Links to WhatsApp, Cal.com, X, GitHub and YouTube" in body
 
 
 # ---- text parity ----
@@ -200,15 +227,18 @@ def test_the_terms_pricing_plate_keeps_its_anchor(dist):
 FIGURES = {
     "contact.html": [("+91 89514 49537", "whatsapp-number"), ("30 minutes", "booking-call-length"),
                      ("ADB-1993", "org-llpin"), ("560076", "org-registered-address"),
-                     ("2020", "law-ecommerce-rules"), ("48 hours", "grievance-ack-window")],
+                     ("2020", "law-ecommerce-rules"), ("48 hours", "grievance-ack-window"),
+                     ("three working days", "reply-window"), ("one month", "grievance-resolve-window")],
     "privacy.html": [("ADB-1993", "org-llpin"), ("2023", "law-dpdp-act"), ("30 days", "signet-deletion-window"),
-                     ("under 18", "minor-age-limit")],
+                     ("under 18", "minor-age-limit"), ("seven working days", "privacy-request-window")],
     "terms.html": [("ADB-1993", "org-llpin"), ("₹1,499 a month", "signet-price-monthly"),
-                   ("₹14,999 a year", "signet-price-yearly"), ("day 30", "qtm-guarantee-day")],
+                   ("₹14,999 a year", "signet-price-yearly"), ("day 30", "qtm-guarantee-day"),
+                   ("four hours a month", "retainer-hours"), ("ten months for twelve", "signet-yearly-ratio")],
     "refund.html": [("14 days", "signet-annual-refund-window"), ("day 30", "qtm-guarantee-day"),
                     ("18% under SAC 998432", "katha-gst-treatment"), ("48 hours", "grievance-ack-window"),
                     ("30 days", "katha-refund-resolve-window"), ("5 to 7 working days", "razorpay-refund-timing"),
-                    ("+91 89514 49537", "whatsapp-number")],
+                    ("+91 89514 49537", "whatsapp-number"), ("three working days", "reply-window"),
+                    ("seven working days", "refund-initiate-window")],
 }
 
 
@@ -242,6 +272,28 @@ def test_a_fact_two_pages_state_comes_from_one_claim(dist):
     assert 'data-claim="grievance-ack-window"' in contact and 'data-claim="grievance-ack-window"' in refund
 
 
+def test_the_two_pages_that_promise_three_working_days_use_one_id(dist):
+    contact, refund = main_of(built(dist, "contact.html")), main_of(built(dist, "refund.html"))
+    assert contact.count('data-claim="reply-window"') == 1 and refund.count('data-claim="reply-window"') == 1
+    assert claim_ids(contact) & claim_ids(refund) >= {"reply-window", "whatsapp-number", "grievance-ack-window"}
+    # no other id carries the phrase, so no third place can say it differently
+    for id, claim in ClaimRegister.load(REPO / "data" / "claims.yaml").claims.items():
+        assert ("three working days" in claim.text) == (id == "reply-window"), id
+
+
+def test_the_two_seven_working_day_promises_are_two_claims_with_their_own_ids(dist, register):
+    # Initiating an approved refund and confirming a privacy request are different promises that happen to match.
+    assert register.get("refund-initiate-window").text == register.get("privacy-request-window").text == "seven working days"
+    privacy, refund = main_of(built(dist, "privacy.html")), main_of(built(dist, "refund.html"))
+    assert claim_ids(privacy) >= {"privacy-request-window"} and "refund-initiate-window" not in claim_ids(privacy)
+    assert claim_ids(refund) >= {"refund-initiate-window"} and "privacy-request-window" not in claim_ids(refund)
+
+
+def test_the_grievance_clock_is_not_the_katha_refund_window(register):
+    assert register.get("grievance-resolve-window").text == "one month"
+    assert register.get("katha-refund-resolve-window").text == "30 days"
+
+
 def test_every_wa_me_link_dials_the_whatsapp_claim(dist, register):
     digits = re.sub(r"\D", "", register.get("whatsapp-number").text)
     links = [href for name in ("contact.html", "refund.html") for href in link_values(main_of(built(dist, name))) if "wa.me" in href]
@@ -273,20 +325,26 @@ CLAIMS = {
     "whatsapp-number": ("+91 89514 49537", "Contact page, 2026-09-10"),
     "booking-call-length": ("30 minutes", None),
     "grievance-ack-window": ("48 hours", "Contact page, 2026-09-10"),
+    "grievance-resolve-window": ("one month", "Contact page, 2026-09-10"),
+    "reply-window": ("three working days", "Contact page, 2026-09-10"),
     "law-ecommerce-rules": ("Consumer Protection (E-Commerce) Rules, 2020", "Gazette of India"),
     # privacy
     "law-dpdp-act": ("Digital Personal Data Protection Act, 2023", "Gazette of India"),
     "signet-deletion-window": ("30 days", "Privacy policy, 2026-09-10"),
     "minor-age-limit": ("under 18", "Privacy policy, 2026-09-10"),
+    "privacy-request-window": ("seven working days", "Privacy policy, 2026-09-10"),
     # terms
     "signet-price-monthly": ("\u20b91,499 a month", "Terms of service, 2026-09-12"),
     "signet-price-yearly": ("\u20b914,999 a year", "Terms of service, 2026-09-12"),
+    "signet-yearly-ratio": ("ten months for twelve", "Terms of service, 2026-09-12"),
+    "retainer-hours": ("four hours a month", "Terms of service, 2026-09-12"),
     "qtm-guarantee-day": ("day 30", "Terms of service, 2026-09-12"),
     # refund
     "signet-annual-refund-window": ("14 days", "Refund policy, 2026-09-12"),
     "katha-gst-treatment": ("18% under SAC 998432", "Refund policy, 2026-09-12"),
     "katha-refund-resolve-window": ("30 days", "Refund policy, 2026-09-12"),
     "razorpay-refund-timing": ("5 to 7 working days", "Refund policy, 2026-09-12"),
+    "refund-initiate-window": ("seven working days", "Refund policy, 2026-09-12"),
 }
 
 

@@ -12,8 +12,10 @@ from pathlib import Path
 
 import yaml
 
-REQUIRED_KEYS = ("title", "description", "updated", "approved", "layout")
-OPTIONAL_KEYS = ("claims", "schema", "audience", "og_image", "css")
+REQUIRED_KEYS = ("title", "description", "updated", "layout")
+# `approved` is required too, unless the page is a draft (`draft: true`): new or changed copy that no one
+# has approved yet. A draft says so in its made-by line and a release build refuses it.
+OPTIONAL_KEYS = ("approved", "draft", "claims", "schema", "audience", "og_image", "css")
 FENCE = "---"
 # A page stylesheet is named, never pathed: tokens/pages/<name>.css, published as assets/pages/<name>.css.
 CSS_NAME = re.compile(r"[a-z0-9][a-z0-9-]*")
@@ -29,7 +31,7 @@ class Page:
     title: str
     description: str
     updated: datetime.date
-    approved: datetime.date
+    approved: datetime.date | None     # None only on a draft
     layout: str
     claims: tuple[str, ...]
     schema: tuple[str, ...]
@@ -38,6 +40,7 @@ class Page:
     source: Path
     og_image: str | None = None
     css: str | None = None     # the name of this page's own stylesheet in tokens/pages/, or None
+    draft: bool = False        # new or changed copy nobody has approved: the page says so, and cannot be released
 
 
 def load_pages(content_dir: Path) -> list[Page]:
@@ -61,13 +64,14 @@ def _load_page(path: Path, content_dir: Path) -> Page:
     except (OSError, UnicodeDecodeError) as err:
         raise ContentError(f"{path}: cannot read file ({err})") from err
     meta, body = _split_front_matter(text, path)
-    _check_keys(meta, path)
+    draft = _draft(meta, path)
+    _check_keys(meta, path, draft)
     return Page(
         slug=_slug(path, content_dir),
         title=_text(meta, "title", path),
         description=_text(meta, "description", path),
         updated=_date(meta, "updated", path),
-        approved=_date(meta, "approved", path),
+        approved=None if draft and meta.get("approved") is None else _date(meta, "approved", path),
         layout=_text(meta, "layout", path),
         claims=_text_list(meta, "claims", path),
         schema=_text_list(meta, "schema", path),
@@ -76,6 +80,7 @@ def _load_page(path: Path, content_dir: Path) -> Page:
         source=path,
         og_image=_optional_text(meta, "og_image", path),
         css=_css_name(meta, path),
+        draft=draft,
     )
 
 
@@ -101,8 +106,10 @@ def _split_front_matter(text: str, path: Path) -> tuple[dict, str]:
     return meta, "".join(lines[end + 1:])
 
 
-def _check_keys(meta: dict, path: Path) -> None:
+def _check_keys(meta: dict, path: Path, draft: bool) -> None:
     missing = [key for key in REQUIRED_KEYS if key not in meta]
+    if "approved" not in meta and not draft:
+        missing.append("approved (or mark the page `draft: true` until someone approves it)")
     if missing:
         raise ContentError(f"{path}: missing required key(s): {', '.join(missing)}")
     unknown = sorted(str(key) for key in meta if key not in REQUIRED_KEYS + OPTIONAL_KEYS)
@@ -114,6 +121,13 @@ def _text(meta: dict, key: str, path: Path) -> str:
     value = meta[key]
     if not isinstance(value, str) or not value.strip():
         raise ContentError(f"{path}: '{key}' must be a non-empty string")
+    return value
+
+
+def _draft(meta: dict, path: Path) -> bool:
+    value = meta.get("draft", False)
+    if type(value) is not bool:
+        raise ContentError(f"{path}: 'draft' must be true or false, got {value!r}")
     return value
 
 

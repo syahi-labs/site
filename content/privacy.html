@@ -2,10 +2,16 @@
 title: Privacy · Syahi
 description: "What syahi.sh and Syahi's products collect, why, how long it's kept, and how to ask for deletion. SYAHI TECHNOLOGIES LLP, Bengaluru."
 updated: 2026-10-06
-approved: 2026-10-06
+draft: true
+# Ported word for word from the live page (446f625), so the words are not edited here. It is a draft because
+# three statements will not be true on the new site, and must be edited with her in Part B before release:
+#   1. The Google Fonts paragraph in section II ("The typefaces come from Google Fonts"). Fonts are self-hosted now.
+#   2. "The moving ink is drawn inside your browser and sends nothing anywhere". The canvas is gone (D21).
+#   3. The X and YouTube links line ("Links to WhatsApp, Cal.com, X, GitHub and YouTube ..."). The footer now
+#      lists LinkedIn, Instagram, Threads and GitHub (D5).
 layout: page
 css: policy
-claims: [org-legal-name, org-llpin, law-dpdp-act, signet-deletion-window, minor-age-limit]
+claims: [org-legal-name, org-llpin, law-dpdp-act, signet-deletion-window, minor-age-limit, privacy-request-window]
 ---
 <div class="page-head">
   <p class="devanagari"><span lang="hi">स्याही</span> &nbsp;·&nbsp; ink</p>
@@ -77,7 +83,7 @@ claims: [org-legal-name, org-llpin, law-dpdp-act, signet-deletion-window, minor-
 <section>
   <div class="section-head"><span class="roman">VII</span><span class="label">Your rights</span></div>
   <div class="doc">
-    <p>You can ask to see what we hold about you, correct it, delete it, or withdraw a consent you gave. Email <a href="mailto:hello@syahi.sh">hello@syahi.sh</a> from the address we know you by. We'll confirm within seven working days and tell you what we did.</p>
+    <p>You can ask to see what we hold about you, correct it, delete it, or withdraw a consent you gave. Email <a href="mailto:hello@syahi.sh">hello@syahi.sh</a> from the address we know you by. We'll confirm within {{ claim("privacy-request-window") }} and tell you what we did.</p>
     <p>Grievances go to the same address, marked for Surabhi Pradhan. Nothing here is aimed at anyone {{ claim("minor-age-limit") }}, and we don't knowingly collect their data.</p>
   </div>
 </section>

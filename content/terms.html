@@ -5,7 +5,7 @@ updated: 2026-10-06
 approved: 2026-10-06
 layout: page
 css: policy
-claims: [org-legal-name, org-llpin, signet-price-monthly, signet-price-yearly, qtm-guarantee-day]
+claims: [org-legal-name, org-llpin, signet-price-monthly, signet-price-yearly, signet-yearly-ratio, retainer-hours, qtm-guarantee-day]
 ---
 <div class="page-head">
   <p class="devanagari"><span lang="hi">स्याही</span> &nbsp;·&nbsp; ink</p>
@@ -43,7 +43,7 @@ claims: [org-legal-name, org-llpin, signet-price-monthly, signet-price-yearly, q
   <div class="plate" id="pricing">
     <span class="label">Signet · founding price</span>
     <p class="price">{{ claim("signet-price-monthly") }}<small>GST included</small></p>
-    <p class="price">{{ claim("signet-price-yearly") }}<small>GST included · ten months for twelve</small></p>
+    <p class="price">{{ claim("signet-price-yearly") }}<small>GST included · {{ claim("signet-yearly-ratio") }}</small></p>
     <p class="fine">Locked for life for founding users, as long as the subscription stays active. Studio Services carry no list price on this site. Each engagement is quoted in writing.</p>
   </div>
 </section>
@@ -55,7 +55,7 @@ claims: [org-legal-name, org-llpin, signet-price-monthly, signet-price-yearly, q
     <p><b>The guarantee.</b> Named in the scope, every time. For Quote in Ten Minutes it reads: if your average quote turnaround isn't under an hour by {{ claim("qtm-guarantee-day") }}, you don't pay. "Quote turnaround" is defined in writing before the build starts, so there's nothing to argue about on {{ claim("qtm-guarantee-day") }}.</p>
     <p><b>Included running.</b> After go-live, the build runs for the period named in the scope, with a weekly receipt showing what ran, what it produced, and what broke.</p>
     <h2>Keep It Running, the retainer</h2>
-    <p>Per account, month to month or a year prepaid. It includes <b>four hours a month</b> of fixes and tuning, the weekly receipt, and one number to call. Extra agents inside an area you already own are covered by those hours.</p>
+    <p>Per account, month to month or a year prepaid. It includes <b>{{ claim("retainer-hours") }}</b> of fixes and tuning, the weekly receipt, and one number to call. Extra agents inside an area you already own are covered by those hours.</p>
     <p>Four things are outside the retainer, and they're named in writing when you sign:</p>
     <ol>
       <li>New integrations to systems not in the original scope.</li>

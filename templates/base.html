@@ -11,6 +11,12 @@
 <meta property="og:url" content="{{ canonical }}">
 <meta property="og:type" content="website">
 <meta property="og:image" content="{{ og_image }}">
+{% if og_image_size %}
+<meta property="og:image:width" content="{{ og_image_size[0] }}">
+<meta property="og:image:height" content="{{ og_image_size[1] }}">
+{% endif %}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{{ og_image }}">
 <meta name="theme-color" content="#F0E8D2">
 <link rel="icon" href="/assets/brand/favicon.ico" sizes="48x48">
 <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
@@ -66,7 +72,11 @@
         {% endfor %}
       </ul>
     </nav>
+    {% if page.draft %}
+    <p class="made-by">Drafted with AI from our own records. Not yet approved.</p>
+    {% else %}
     <p class="made-by">Drafted with AI from our own records. Checked and approved by Surabhi Pradhan on {{ page.approved|date }}.</p>
+    {% endif %}
   </div>
 </footer>
 </body>

@@ -222,6 +222,7 @@ def _build_host(root: Path, out: Path, item: _Loaded, claims: ClaimRegister, rel
     problems.extend(_publish_page_css(root, host_out, rendered_pages))
     if release:
         problems.extend(_release_site_problems(item))
+        problems.extend(_release_draft_problems(item))
     _site_checks(host_out, item, release, result)
     result.outputs[host.name] = host_out
     result.pages.extend(item.pages)
@@ -326,6 +327,13 @@ def _release_site_problems(item: _Loaded) -> list[str]:
         if target in site.pending_pages:
             problems.append(f"{where}: release build: {kind} '{link.label}' links to pending page {target}")
     return problems
+
+
+def _release_draft_problems(item: _Loaded) -> list[str]:
+    """A release build refuses a draft page, one problem per page. A draft is copy no one has approved,
+    and the made-by line already says so; shipping it would publish what she has not read."""
+    return [f"{page.source}: release build: page is a draft (not yet approved); approve it and remove `draft: true`"
+            for page in item.pages if page.draft]
 
 
 class _MainLinks(HTMLParser):

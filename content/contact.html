@@ -5,7 +5,7 @@ updated: 2026-10-06
 approved: 2026-10-06
 layout: page
 css: policy
-claims: [whatsapp-number, booking-call-length, org-legal-name, org-llpin, org-registered-address, law-ecommerce-rules, grievance-ack-window]
+claims: [whatsapp-number, booking-call-length, org-legal-name, org-llpin, org-registered-address, law-ecommerce-rules, grievance-ack-window, reply-window, grievance-resolve-window]
 ---
 <div class="page-head">
   <p class="devanagari"><span lang="hi">स्याही</span> &nbsp;·&nbsp; ink</p>
@@ -22,7 +22,7 @@ claims: [whatsapp-number, booking-call-length, org-legal-name, org-llpin, org-re
       <div><dt>WhatsApp</dt><dd><a href="https://wa.me/918951449537">{{ claim("whatsapp-number") }}</a></dd></div>
       <div><dt>A call</dt><dd><a href="https://cal.com/surabhipradhan/30-mins-discussion-about-syahi">Book {{ claim("booking-call-length") }}</a></dd></div>
     </dl>
-    <p>Say what it's about and it reaches the right place: Signet billing or cancellation, a services enquiry or scope, a privacy request, a refund. Anything about a paying account or a live engagement gets a reply the same working day. Everything else, within three working days. Bengaluru time.</p>
+    <p>Say what it's about and it reaches the right place: Signet billing or cancellation, a services enquiry or scope, a privacy request, a refund. Anything about a paying account or a live engagement gets a reply the same working day. Everything else, within {{ claim("reply-window") }}. Bengaluru time.</p>
   </div>
 </section>
 
@@ -43,7 +43,7 @@ claims: [whatsapp-number, booking-call-length, org-legal-name, org-llpin, org-re
 <section>
   <div class="section-head"><span class="roman">III</span><span class="label">Grievance officer</span><span class="lede">{{ claim("law-ecommerce-rules") }}.</span></div>
   <div class="doc">
-    <p>Grievance officer and nodal contact: Surabhi Pradhan, <a href="mailto:hello@syahi.sh">hello@syahi.sh</a>, <a href="https://wa.me/918951449537">{{ claim("whatsapp-number") }}</a>. Complaints are acknowledged within {{ claim("grievance-ack-window") }} and resolved within one month.</p>
+    <p>Grievance officer and nodal contact: Surabhi Pradhan, <a href="mailto:hello@syahi.sh">hello@syahi.sh</a>, <a href="https://wa.me/918951449537">{{ claim("whatsapp-number") }}</a>. Complaints are acknowledged within {{ claim("grievance-ack-window") }} and resolved within {{ claim("grievance-resolve-window") }}.</p>
   </div>
 </section>
 

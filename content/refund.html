@@ -5,7 +5,7 @@ updated: 2026-10-06
 approved: 2026-10-06
 layout: page
 css: policy
-claims: [signet-annual-refund-window, qtm-guarantee-day, katha-gst-treatment, grievance-ack-window, katha-refund-resolve-window, razorpay-refund-timing, whatsapp-number]
+claims: [signet-annual-refund-window, qtm-guarantee-day, katha-gst-treatment, grievance-ack-window, katha-refund-resolve-window, razorpay-refund-timing, whatsapp-number, reply-window, refund-initiate-window]
 ---
 <div class="page-head">
   <p class="devanagari"><span lang="hi">स्याही</span> &nbsp;·&nbsp; ink</p>
@@ -67,6 +67,6 @@ claims: [signet-annual-refund-window, qtm-guarantee-day, katha-gst-treatment, gr
 <section>
   <div class="section-head"><span class="roman">VI</span><span class="label">How to ask</span></div>
   <div class="doc">
-    <p>Email <a href="mailto:hello@syahi.sh">hello@syahi.sh</a> from the address on the account or the invoice, or WhatsApp <a href="https://wa.me/918951449537">{{ claim("whatsapp-number") }}</a>. Include the invoice number or payment reference. We reply within three working days, and initiate an approved refund within seven working days of that reply.</p>
+    <p>Email <a href="mailto:hello@syahi.sh">hello@syahi.sh</a> from the address on the account or the invoice, or WhatsApp <a href="https://wa.me/918951449537">{{ claim("whatsapp-number") }}</a>. Include the invoice number or payment reference. We reply within {{ claim("reply-window") }}, and initiate an approved refund within {{ claim("refund-initiate-window") }} of that reply.</p>
   </div>
 </section>

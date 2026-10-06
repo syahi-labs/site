@@ -394,3 +394,51 @@ def test_the_output_never_holds_feed_xml_or_cname(mini_root, tmp_path, monkeypat
     monkeypatch.setattr(pipeline, "_publish_assets", leaky)
     r = build(mini_root, tmp_path / "dist")
     assert any("feed.xml" in p for p in r.problems) and any("CNAME" in p for p in r.problems)
+
+
+# ---- draft pages can be built and read, never released ----
+
+def make_draft(path: Path) -> None:
+    text = path.read_text(encoding="utf-8")
+    text = "\n".join(l for l in text.splitlines() if not l.startswith("approved:")) + "\n"
+    path.write_text(text.replace("\nlayout: page\n", "\nlayout: page\ndraft: true\n", 1), encoding="utf-8")
+
+
+def draft_problems(result: BuildResult) -> list[str]:
+    return [p for p in result.problems if "page is a draft" in p]
+
+
+def test_a_dev_build_accepts_a_draft_and_the_page_says_so(mini_root, tmp_path):
+    make_draft(mini_root / "content" / "signet.html")
+    result = build(mini_root, tmp_path / "dist")
+    assert result.problems == []
+    html = (tmp_path / "dist" / "syahi.sh" / "signet.html").read_text(encoding="utf-8")
+    assert '<p class="made-by">Drafted with AI from our own records. Not yet approved.</p>' in html
+
+
+def test_a_release_build_names_each_draft_page(mini_root, tmp_path):
+    make_draft(mini_root / "content" / "signet.html")
+    make_draft(mini_root / "content" / "404.html")
+    problems = draft_problems(build(mini_root, tmp_path / "dist", release=True))
+    assert len(problems) == 2
+    assert any("signet.html" in p and "release" in p for p in problems)
+    assert any("404.html" in p and "release" in p for p in problems)
+
+
+def test_a_release_build_names_a_draft_on_the_katha_host_too(mini_root, tmp_path):
+    make_draft(mini_root / "katha" / "content" / "index.html")
+    problems = draft_problems(build(mini_root, tmp_path / "dist", release=True))
+    assert len(problems) == 1 and "katha" in problems[0]
+
+
+def test_a_release_build_with_no_draft_has_no_draft_problem(mini_root, tmp_path):
+    assert draft_problems(build(mini_root, tmp_path / "dist", release=True)) == []
+
+
+def test_a_draft_that_fails_to_render_is_still_named_in_release(mini_root, tmp_path):
+    page = mini_root / "content" / "signet.html"
+    make_draft(page)
+    page.write_text(page.read_text(encoding="utf-8") + "{{ claim('no-such-claim') }}\n", encoding="utf-8")
+    problems = build(mini_root, tmp_path / "dist", release=True).problems
+    assert any("no-such-claim" in p for p in problems)
+    assert len([p for p in problems if "page is a draft" in p]) == 1

@@ -83,13 +83,17 @@ def test_it_carries_no_structured_data(html):
     assert "application/ld+json" not in html
 
 
-def test_it_has_the_shared_chrome_and_a_made_by_line(html):
+def test_it_has_the_shared_chrome(html):
     assert '<header class="site-header">' in html and '<footer class="site-footer">' in html
-    assert "Checked and approved by Surabhi Pradhan on 6 Oct 2026." in html
 
 
-def test_front_matter_dates_are_the_session_date_of_the_draft(page):
-    # New copy that she has not reviewed yet: the dates are the day it was drafted, and the task report flags
-    # it for her Part B edit. Her approval is what makes the made-by line true.
-    assert page.approved == datetime.date(2026, 10, 6) and page.updated == datetime.date(2026, 10, 6)
+def test_it_is_a_draft_and_the_made_by_line_claims_no_approval(html, page):
+    # New copy that she has not reviewed: the page says so, and a release build refuses it until she has.
+    assert page.draft is True and page.approved is None
+    assert '<p class="made-by">Drafted with AI from our own records. Not yet approved.</p>' in html
+    assert "Checked and approved" not in html
+
+
+def test_front_matter_update_date_is_the_session_date_of_the_draft(page):
+    assert page.updated == datetime.date(2026, 10, 6)
     assert page.layout == "page" and page.css is None
