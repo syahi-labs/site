@@ -34,7 +34,7 @@ def test_last_commit_date(tmp_path):
     g = tmp_path / "new.html"; g.write_text("y")
     assert last_commit_date(g) is None
 
-# ---- the rest is mine: the contract the brief states in prose ----
+# ---- beyond the brief's examples: the contract it states in prose ----
 
 D = datetime.date(2026, 10, 6)
 
@@ -92,6 +92,27 @@ def test_a_broken_repo_is_an_error_naming_the_file(tmp_path):
         last_commit_date(f)
     assert str(f) in str(err.value)
 
+def test_a_dangling_worktree_file_is_an_error_naming_the_file(tmp_path, monkeypatch):
+    # A `.git` file whose gitdir is gone (a deleted worktree) is a broken checkout, not an untracked
+    # file. git words it "not a git repository: <path>", unlike the genuine no-repo message.
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
+    (tmp_path / ".git").write_text(f"gitdir: {tmp_path / 'gone' / 'worktrees' / 'w'}\n", encoding="utf-8")
+    f = tmp_path / "a.html"; f.write_text("x")
+    with pytest.raises(GitDateError) as err:
+        last_commit_date(f)
+    assert str(f) in str(err.value)
+
+def test_a_filesystem_boundary_is_still_no_repo_not_an_error(tmp_path, monkeypatch):
+    # Across a mount point git words the genuine no-repo case differently; a stand-in git says it so
+    # the test does not depend on how this machine is mounted.
+    fake = tmp_path / "bin" / "git"
+    fake.parent.mkdir()
+    fake.write_text("#!/bin/sh\necho 'fatal: not a git repository (or any parent up to mount point /tmp)' >&2\nexit 128\n")
+    fake.chmod(0o755)
+    monkeypatch.setenv("PATH", str(fake.parent) + os.pathsep + os.environ["PATH"])
+    f = tmp_path / "a.html"; f.write_text("x")
+    assert last_commit_date(f) is None
+
 def test_a_missing_git_is_an_error_naming_the_file(tmp_path, monkeypatch):
     f = repo_with(tmp_path)
     monkeypatch.setenv("PATH", "")
@@ -100,25 +121,25 @@ def test_a_missing_git_is_an_error_naming_the_file(tmp_path, monkeypatch):
     assert str(f) in str(err.value)
 
 def test_sitemap_is_well_formed_with_the_09_namespace():
-    xml = sitemap_xml([("/", D), ("/signet", datetime.date(2026, 9, 3))], "https://syahi.sh")
+    xml = sitemap_xml([("/", D), ("/signet", datetime.date(2026, 9, 3))], "https://syahi.example")
     assert xml.startswith('<?xml version="1.0" encoding="UTF-8"?>\n') and xml.endswith("\n")
     root = ET.fromstring(xml.encode("utf-8"))
     assert root.tag == SITEMAP_NS + "urlset"
     urls = [(u.find(SITEMAP_NS + "loc").text, u.find(SITEMAP_NS + "lastmod").text) for u in root]
-    assert urls == [("https://syahi.sh/", "2026-10-06"), ("https://syahi.sh/signet", "2026-09-03")]
+    assert urls == [("https://syahi.example/", "2026-10-06"), ("https://syahi.example/signet", "2026-09-03")]
 
 def test_sitemap_sorts_by_slug_whatever_the_input_order():
     entries = [("/signet", D), ("/media/episode-2", D), ("/", D), ("/about", D), ("/media", D)]
-    xml = sitemap_xml(entries, "https://syahi.sh")
+    xml = sitemap_xml(entries, "https://syahi.example")
     locs = [u.find(SITEMAP_NS + "loc").text for u in ET.fromstring(xml.encode("utf-8"))]
-    assert locs == ["https://syahi.sh/", "https://syahi.sh/about", "https://syahi.sh/media",
-                    "https://syahi.sh/media/episode-2", "https://syahi.sh/signet"]
+    assert locs == ["https://syahi.example/", "https://syahi.example/about", "https://syahi.example/media",
+                    "https://syahi.example/media/episode-2", "https://syahi.example/signet"]
 
 def test_sitemap_never_has_html_or_a_trailing_slash_beyond_the_root():
-    xml = sitemap_xml([("/", D), ("/services/quote", D)], "https://syahi.sh")
+    xml = sitemap_xml([("/", D), ("/services/quote", D)], "https://syahi.example")
     locs = [u.find(SITEMAP_NS + "loc").text for u in ET.fromstring(xml.encode("utf-8"))]
     assert not any(loc.endswith(".html") for loc in locs)
-    assert [loc for loc in locs if loc.endswith("/")] == ["https://syahi.sh/"]
+    assert [loc for loc in locs if loc.endswith("/")] == ["https://syahi.example/"]
 
 def test_sitemap_escapes_xml_special_characters_in_loc():
     xml = sitemap_xml([("/a&b<c>", D)], "https://syahi.example")
@@ -126,18 +147,24 @@ def test_sitemap_escapes_xml_special_characters_in_loc():
     root = ET.fromstring(xml.encode("utf-8"))  # still well formed
     assert root[0].find(SITEMAP_NS + "loc").text == "https://syahi.example/a&b<c>"
 
+def test_sitemap_accepts_a_generator_and_lists_every_entry():
+    entries = ((slug, D) for slug in ("/signet", "/", "/about"))
+    xml = sitemap_xml(entries, "https://syahi.example")
+    locs = [u.find(SITEMAP_NS + "loc").text for u in ET.fromstring(xml.encode("utf-8"))]
+    assert locs == ["https://syahi.example/", "https://syahi.example/about", "https://syahi.example/signet"]
+
 def test_sitemap_refuses_the_404_page():
     with pytest.raises(ValueError, match="/404"):
-        sitemap_xml([("/", D), ("/404", D)], "https://syahi.sh")
+        sitemap_xml([("/", D), ("/404", D)], "https://syahi.example")
 
 def test_sitemap_refuses_a_duplicate_slug():
     with pytest.raises(ValueError, match="/signet"):
-        sitemap_xml([("/signet", D), ("/", D), ("/signet", datetime.date(2026, 9, 1))], "https://syahi.sh")
+        sitemap_xml([("/signet", D), ("/", D), ("/signet", datetime.date(2026, 9, 1))], "https://syahi.example")
 
 def test_sitemap_does_not_filter_pending_pages_itself():
     # The pipeline decides what goes in; the generator writes what it is given.
-    xml = sitemap_xml([("/", D), ("/later", D)], "https://syahi.sh")
-    assert "<loc>https://syahi.sh/later</loc>" in xml
+    xml = sitemap_xml([("/", D), ("/later", D)], "https://syahi.example")
+    assert "<loc>https://syahi.example/later</loc>" in xml
 
 def test_robots_follows_the_base_url():
     assert robots_txt("https://katha.example") == "User-agent: *\nAllow: /\n\nSitemap: https://katha.example/sitemap.xml\n"

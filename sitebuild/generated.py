@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import datetime
 import re
+from typing import Iterable
 from xml.sax.saxutils import escape
 
 from sitebuild.claims import ClaimRegister
@@ -22,11 +23,12 @@ LLMS_TITLE = "Syahi"
 SUMMARY_CLAIM = "org-summary"
 
 
-def sitemap_xml(entries: list[tuple[str, datetime.date]], base_url: str) -> str:
+def sitemap_xml(entries: Iterable[tuple[str, datetime.date]], base_url: str) -> str:
     """A sitemaps.org 0.9 urlset: one `url` per (slug, date), sorted by slug, clean URLs.
 
     Raises ValueError for the /404 page or a slug given twice: both are mistakes in the caller.
     """
+    entries = list(entries)  # read once: a generator would be spent by the slug checks
     slugs = [slug for slug, _ in entries]
     if NOT_FOUND_SLUG in slugs:
         raise ValueError(f"{NOT_FOUND_SLUG} does not belong in a sitemap")
