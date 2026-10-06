@@ -21,6 +21,7 @@ from markupsafe import Markup
 
 from sitebuild.claims import ClaimError, ClaimRegister
 from sitebuild.content import Page
+from sitebuild.schema import page_url
 from sitebuild.site import SiteConfig
 
 DEFAULT_OG_IMAGE = "/assets/brand/og-default.png"
@@ -139,7 +140,7 @@ def _render(env: SiteEnvironment, page: Page, jsonld: list[dict]) -> str:
 
 def _canonical(site: SiteConfig, page: Page) -> str:
     """Clean URL: no .html, no trailing slash, except the root."""
-    return site.base_url + page.slug
+    return page_url(site.base_url, page.slug)
 
 
 def _og_image(site: SiteConfig, page: Page) -> str:
