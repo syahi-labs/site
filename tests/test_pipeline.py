@@ -444,3 +444,25 @@ def test_a_draft_that_fails_to_render_is_still_named_in_release(mini_root, tmp_p
     problems = build(mini_root, tmp_path / "dist", release=True).problems
     assert any("no-such-claim" in p for p in problems)
     assert len([p for p in problems if "page is a draft" in p]) == 1
+
+
+def test_each_host_gets_a_headers_file_with_the_year_long_rule_and_short_stable_names(mini_root, tmp_path):
+    from sitebuild import assets
+    result = build(mini_root, tmp_path / "dist")
+    assert result.problems == []
+    for host in ("syahi.sh", "katha.syahi.sh"):
+        text = (tmp_path / "dist" / host / "_headers").read_text(encoding="utf-8")
+        assert text.startswith("/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n")
+        for key in (*assets.STABLE_ONLY, *assets.ALSO_STABLE):
+            held = (tmp_path / "dist" / host / "assets" / key).is_file()
+            assert (f"/assets/{key}\n  ! Cache-Control\n  Cache-Control: public, max-age=3600\n" in text) == held, (host, key)
+        # Every rule other than the first is a short-cache rule for a stable name, never a second immutable one.
+        assert text.count("immutable") == 1
+    assert (tmp_path / "dist" / "syahi.sh" / "_headers").read_text(encoding="utf-8").count("max-age=3600") >= 1
+    assert result.warnings == [] or all("_headers" not in w for w in result.warnings)
+
+
+def test_the_headers_file_is_deterministic(mini_root, tmp_path):
+    build(mini_root, tmp_path / "a")
+    build(mini_root, tmp_path / "b")
+    assert (tmp_path / "a" / "syahi.sh" / "_headers").read_bytes() == (tmp_path / "b" / "syahi.sh" / "_headers").read_bytes()

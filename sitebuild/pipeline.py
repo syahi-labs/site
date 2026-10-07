@@ -48,7 +48,7 @@ from checks import copycheck, htmlcheck, sitecheck
 from sitebuild import assets
 from sitebuild.claims import ClaimError, ClaimRegister
 from sitebuild.content import ContentError, Page, load_pages
-from sitebuild.generated import NOT_FOUND_SLUG, llms_txt, robots_txt, sitemap_xml
+from sitebuild.generated import NOT_FOUND_SLUG, headers_txt, llms_txt, robots_txt, sitemap_xml
 from sitebuild.gitdates import GitDateError, has_uncommitted_changes, last_commit_date
 from sitebuild.includes import included_templates
 from sitebuild.render import RenderError, make_env, render_page
@@ -247,6 +247,8 @@ def _build_host(root: Path, out: Path, item: _Loaded, claims: ClaimRegister, rel
     for page, html in zip(rendered_pages, rendered_html):
         _write(host_out / _file_for(page.slug), assets.rewrite_html(html, manifest))
     _drop_unreferenced_images(host_out)
+    stable = [key for key in (*assets.STABLE_ONLY, *assets.ALSO_STABLE) if (host_out / assets.URL_BASE.lstrip("/") / key).is_file()]
+    _write(host_out / "_headers", headers_txt(stable))
     if release:
         problems.extend(_release_site_problems(item))
         problems.extend(_release_draft_problems(item))

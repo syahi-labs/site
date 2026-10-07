@@ -1,4 +1,4 @@
-"""The files a crawler reads: sitemap.xml, robots.txt, llms.txt.
+"""The files a crawler or the edge reads: sitemap.xml, robots.txt, llms.txt, _headers.
 
 Each function returns text and decides nothing about which pages exist. The
 pipeline passes `sitemap_xml` exactly the entries that belong in it. `llms_txt`
@@ -71,3 +71,20 @@ def llms_txt(site: SiteConfig, pages: list[Page], claims: ClaimRegister) -> str:
 def _one_line(text: str) -> str:
     """Whitespace runs, newlines included, become one space: a folded YAML value must not split a list line."""
     return re.sub(r"\s+", " ", text).strip()
+
+
+IMMUTABLE_CACHE = "public, max-age=31536000, immutable"
+SHORT_CACHE = "public, max-age=3600"
+
+
+def headers_txt(stable_assets: Iterable[str]) -> str:
+    """Cloudflare Workers static-assets `_headers`: a hashed asset never changes under its name, so it is cached for a year.
+
+    `stable_assets` are the paths under assets/ that keep a name whose bytes can change (the share images, the
+    favicons, the marks): each gets a short cache instead. The edge adds up every rule a path matches, so the
+    stable rule first detaches the Cache-Control the /assets/* rule set, then sets its own.
+    """
+    lines = ["/assets/*", f"  Cache-Control: {IMMUTABLE_CACHE}"]
+    for key in sorted(set(stable_assets)):
+        lines += ["", f"/assets/{key}", "  ! Cache-Control", f"  Cache-Control: {SHORT_CACHE}"]
+    return "\n".join(lines) + "\n"
