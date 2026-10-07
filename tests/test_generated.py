@@ -347,3 +347,18 @@ def test_a_missing_git_is_an_error_for_uncommitted_changes_too(tmp_path, monkeyp
     with pytest.raises(GitDateError) as err:
         has_uncommitted_changes(f)
     assert str(f) in str(err.value)
+
+
+# ---- _headers (Cloudflare Workers static assets) ----
+
+def test_headers_txt_exact():
+    from sitebuild.generated import headers_txt
+    assert headers_txt(["brand/og-default.png", "brand/favicon.ico"]) == (
+        "/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n"
+        "\n/assets/brand/favicon.ico\n  ! Cache-Control\n  Cache-Control: public, max-age=3600\n"
+        "\n/assets/brand/og-default.png\n  ! Cache-Control\n  Cache-Control: public, max-age=3600\n")
+
+
+def test_headers_txt_with_no_stable_names_is_the_one_rule():
+    from sitebuild.generated import headers_txt
+    assert headers_txt([]) == "/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n"

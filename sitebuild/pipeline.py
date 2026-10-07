@@ -16,9 +16,11 @@ does not fail the build lands in `BuildResult.warnings`: a link to a pending pag
 sitecheck's own WARN findings. A problem on one page never stops the others from being built, so a
 single run reports everything it can.
 
-A page is its source plus every partial it includes. Its sitemap `lastmod` is the latest author date of a
-commit over all of them (the author date survives a rebase, an amend and a squash; the committer date does not).
-A non-draft page whose source or partial was written after its `approved` date was changed after she approved
+A page is its source plus every partial it includes (its body), and `lastmod` also counts its layout chain
+(the layout, base.html and what they include), so a chrome change moves lastmod. Its sitemap `lastmod` is the
+latest author date of a commit over all of them (the author date survives a rebase, an amend and a squash; the committer date does not).
+Only the body is approved per page: chrome words are approved once, as their own item, so a chrome-only
+change never asks for a page re-approval. A non-draft page whose source or partial was written after its `approved` date was changed after she approved
 it, and one with uncommitted changes has a date that does not describe it: a release build refuses both, a dev
 build warns.
 
@@ -37,13 +39,16 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
 from pathlib import Path, PurePosixPath
+from typing import NamedTuple
 from urllib.parse import urlsplit
 
-from checks import copycheck, htmlcheck, sitecheck
+import jinja2
+
+from checks import copycheck, d10check, htmlcheck, sitecheck
 from sitebuild import assets
 from sitebuild.claims import ClaimError, ClaimRegister
 from sitebuild.content import ContentError, Page, load_pages
-from sitebuild.generated import NOT_FOUND_SLUG, llms_txt, robots_txt, sitemap_xml
+from sitebuild.generated import NOT_FOUND_SLUG, headers_txt, llms_txt, robots_txt, sitemap_xml
 from sitebuild.gitdates import GitDateError, has_uncommitted_changes, last_commit_date
 from sitebuild.includes import included_templates
 from sitebuild.render import RenderError, make_env, render_page
@@ -213,7 +218,7 @@ def _build_host(root: Path, out: Path, item: _Loaded, claims: ClaimRegister, rel
     rendered_pages = []
     rendered_html = []
     for page in item.pages:
-        html = _render(env, site, claims, page, release, problems)
+        html = _render(env, site, claims, page, release, problems, result.warnings)
         if html is not None:
             rendered_pages.append(page)
             rendered_html.append(html)
@@ -224,7 +229,7 @@ def _build_host(root: Path, out: Path, item: _Loaded, claims: ClaimRegister, rel
     git = _GitFacts()
     _write(host_out / "robots.txt", robots_txt(site.base_url))
     try:
-        _write(host_out / "sitemap.xml", sitemap_xml([(p.slug, _lastmod(p, files[p.slug], git)) for p in listed], site.base_url))
+        _write(host_out / "sitemap.xml", sitemap_xml([(p.slug, _lastmod(p, files[p.slug].all, git)) for p in listed], site.base_url))
     except (GitDateError, ValueError) as err:
         problems.append(f"{host.name}: sitemap.xml: {err}")
     _approval_findings(rendered_pages, files, git, release, result)
@@ -242,6 +247,8 @@ def _build_host(root: Path, out: Path, item: _Loaded, claims: ClaimRegister, rel
     for page, html in zip(rendered_pages, rendered_html):
         _write(host_out / _file_for(page.slug), assets.rewrite_html(html, manifest))
     _drop_unreferenced_images(host_out)
+    stable = [key for key in (*assets.STABLE_ONLY, *assets.ALSO_STABLE) if (host_out / assets.URL_BASE.lstrip("/") / key).is_file()]
+    _write(host_out / "_headers", headers_txt(stable))
     if release:
         problems.extend(_release_site_problems(item))
         problems.extend(_release_draft_problems(item))
@@ -270,7 +277,8 @@ def _drop_unreferenced_images(host_out: Path) -> None:
             path.unlink()
 
 
-def _render(env, site: SiteConfig, claims: ClaimRegister, page: Page, release: bool, problems: list[str]) -> str | None:
+def _render(env, site: SiteConfig, claims: ClaimRegister, page: Page, release: bool, problems: list[str],
+            warnings: list[str]) -> str | None:
     """The page's HTML, or None with the reason in `problems`. Runs the per-page checks on what it rendered."""
     try:
         # A 404 is served with a failing status and is no entity of the site: it gets no structured data.
@@ -281,6 +289,8 @@ def _render(env, site: SiteConfig, claims: ClaimRegister, page: Page, release: b
         problems.append(str(err))
         return None
     problems.extend(_page_problems(page, html, rendered, claims, site, release))
+    # D10 placement: a problem in a release build, a warning in a dev build (as a link to a pending page is).
+    (problems if release else warnings).extend(f"{page.source}: d10check: {finding}" for finding in d10check.check(html, page.slug))
     return html
 
 
@@ -441,11 +451,38 @@ class _GitFacts:
         return self._uncommitted[path]
 
 
-def _page_files(env, page: Page, problems: list[str]) -> list[Path]:
-    """The page's source, then every template its body includes. What cannot be traced is a problem."""
+class _PageFiles(NamedTuple):
+    """The files a page is made of, split by who approves them.
+
+    `body` is the page source and the partials its body includes: the words she approved for this page, so
+    an edit after `approved` needs this page re-approved. `chrome` is the layout and everything the layout
+    extends or includes (base.html, header, footer): shared words approved once, as their own item, so an
+    edit there moves `lastmod` but never asks for a per-page re-approval.
+    """
+    body: list[Path]
+    chrome: list[Path]
+
+    @property
+    def all(self) -> list[Path]:
+        return [*self.body, *self.chrome]
+
+
+def _page_files(env, page: Page, problems: list[str]) -> _PageFiles:
+    """The page's source and body partials, then its layout chain. What cannot be traced is a problem."""
     included, untraceable = included_templates(env, page.body)
     problems.extend(f"{page.source}: {problem}" for problem in untraceable)
-    return [page.source, *included]
+    body = [page.source, *included]
+    chrome: list[Path] = []
+    try:
+        source, filename, _ = env.loader.get_source(env, f"layouts/{page.layout}.html")
+    except jinja2.TemplateNotFound:
+        return _PageFiles(body, chrome)      # rendering the page reports the missing layout
+    layout_files, layout_problems = included_templates(env, source)
+    problems.extend(f"{filename}: {problem}" for problem in layout_problems)
+    for path in [Path(filename), *layout_files]:
+        if path not in body and path not in chrome:
+            chrome.append(path)
+    return _PageFiles(body, chrome)
 
 
 def _lastmod(page: Page, files: list[Path], git: _GitFacts) -> datetime.date:
@@ -454,7 +491,7 @@ def _lastmod(page: Page, files: list[Path], git: _GitFacts) -> datetime.date:
     return max(changed) if changed else page.updated
 
 
-def _approval_findings(pages: list[Page], files: dict[str, list[Path]], git: _GitFacts, release: bool, result: BuildResult) -> None:
+def _approval_findings(pages: list[Page], files: dict[str, _PageFiles], git: _GitFacts, release: bool, result: BuildResult) -> None:
     """What makes a page's approval untrue, per file, for every non-draft page.
 
     A file written after the page's `approved` date was changed after she approved it. A file with
@@ -467,7 +504,7 @@ def _approval_findings(pages: list[Page], files: dict[str, list[Path]], git: _Gi
             continue
         messages = []
         try:
-            for path in files[page.slug]:
+            for path in files[page.slug].body:      # body files only: chrome is approved once, as its own item
                 if git.uncommitted(path):
                     messages.append(f"{page.source}: {path}: uncommitted changes; commit before release")
                 date = git.date(path)

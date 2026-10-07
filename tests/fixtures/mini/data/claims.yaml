@@ -7,5 +7,6 @@
 - {id: org-founding-date, text: "2026-01-01", source: "fixture", updated: 2026-10-06, status: live}
 - {id: org-locality, text: "Bengaluru", source: "fixture", updated: 2026-10-06, status: live}
 - {id: signet-name, text: "Signet Example", source: "fixture", updated: 2026-10-06, status: live}
+- {id: signet-d10, text: "Live today: a made-up line for the build tests.", source: "fixture", updated: 2026-10-06, status: live}
 - {id: signet-price-amount, text: "2999", source: "fixture", updated: 2026-10-06, status: live}
 - {id: signet-price-line, text: "From ₹2,999 a month.", source: "fixture", updated: 2026-10-06, status: live}

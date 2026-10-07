@@ -115,6 +115,9 @@ def make_env(root: Path, site: SiteConfig, claims: ClaimRegister) -> SiteEnviron
         source = Path(root) / "assets" / relative
         if source.is_symlink() or not source.is_file():
             raise assets.AssetError(f"picture(): assets/{relative.as_posix()} is not a file")
+        # A symlinked folder on the way would pass the checks above: only the real location decides.
+        if not source.resolve().is_relative_to((Path(root) / "assets").resolve()):
+            raise assets.AssetError(f"picture(): assets/{relative.as_posix()} must resolve to a file under assets/")
         base = "/".join(["/assets", *relative.parent.parts])
         variants = assets.image_variants(source, env.assets_out / relative.parent, url_base=base)
         return Markup(assets.picture_html(variants, alt, sizes, loading, fetchpriority, css_class, media))

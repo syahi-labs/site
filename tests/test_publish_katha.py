@@ -604,3 +604,14 @@ def test_file_names_with_glob_characters_are_copied_and_committed_as_themselves(
 def test_the_staged_set_guard_is_still_there():
     text = TOOL.read_text(encoding="utf-8")
     assert 'git(repo, "diff", "--cached", "--name-only"' in text and "staged != sorted(changed + stale)" in text
+
+
+def test_headers_file_is_published_with_the_build_and_listed_when_present(tmp_path):
+    r = feed_repo(tmp_path); d = dist(tmp_path)
+    (d / "_headers").write_text("/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n")
+    res = run("--repo", str(r), "--dist", str(d), "--no-fetch", "--site-sha", SITE_SHA)
+    assert res.returncode == 0, res.stderr
+    assert (r / "_headers").read_text().startswith("/assets/*")
+    assert "_headers" in git(r, "show", "--name-only", "--format=", "HEAD").stdout.split()
+    assert "skip   _headers" not in said(res)
+    assert (r / "feed.xml").read_text() == "<rss/>"

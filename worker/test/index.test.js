@@ -42,7 +42,7 @@ const run = (url, response, init) => {
 test("a redirect answers 301 with Location and never touches the assets", async () => {
   const { res, seen } = await run("https://signet.syahi.sh/deep/path?x=1", html());
   assert.equal(res.status, 301);
-  assert.equal(res.headers.get("location"), "https://syahi.sh/signet");
+  assert.equal(res.headers.get("location"), "https://syahi.sh/signet?x=1");
   assert.equal(seen.length, 0);
   assert.equal(FakeRewriter.made.length, 0);
 });
@@ -70,6 +70,27 @@ test("other hosts get the asset, the request passed through as it came", async (
   assert.equal(res, page);
   assert.equal(seen.length, 1);
   assert.equal(seen[0], request);
+});
+
+test("another host never reaches the assets and is passed straight through", async () => {
+  for (const host of ["approve.syahi.sh", "listen.katha.syahi.sh", "media.syahi.sh", "hook.syahi.sh", "unknown.example"]) {
+    const origin = new Response("origin " + host);
+    const calls = [];
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async (req) => (calls.push(req), origin);
+    try {
+      const { env, seen } = setup(html());
+      const request = new Request(`https://${host}/inbox?src=oct-interiors`);
+      const res = await worker.fetch(request, env);
+      assert.equal(res, origin, host);
+      assert.equal(calls.length, 1, host);
+      assert.equal(calls[0], request, host);
+      assert.equal(seen.length, 0, host);
+      assert.equal(FakeRewriter.made.length, 0, host);
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  }
 });
 
 test("html without src is returned untouched", async () => {

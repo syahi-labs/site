@@ -1,11 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { redirectFor, sanitizeSrc, stampWhatsApp, stampCal } from "../src/lib.js";
+import { isSiteHost, redirectFor, sanitizeSrc, stampWhatsApp, stampCal } from "../src/lib.js";
 
 // ---- the brief's own tests, verbatim ----
 
 test("subdomain redirects", () => {
-  assert.equal(redirectFor(new URL("https://signet.syahi.sh/anything?x=1")), "https://syahi.sh/signet");
+  assert.equal(redirectFor(new URL("https://signet.syahi.sh/anything?x=1")), "https://syahi.sh/signet?x=1");
   assert.equal(redirectFor(new URL("https://services.syahi.sh/")), "https://syahi.sh/services/quote");
   assert.equal(redirectFor(new URL("https://www.syahi.sh/terms?a=b")), "https://syahi.sh/terms?a=b");
   assert.equal(redirectFor(new URL("https://syahi.sh/signet")), null);
@@ -34,10 +34,23 @@ test("cal stamp adds metadata", () => {
 
 // ---- redirectFor ----
 
-test("signet and services collapse every path and drop the query", () => {
-  for (const path of ["/", "/a", "/a/b/c", "/a?x=1", "/?utm=1", "/a/b?x=1&y=2"]) {
-    assert.equal(redirectFor(new URL("https://signet.syahi.sh" + path)), "https://syahi.sh/signet", path);
-    assert.equal(redirectFor(new URL("https://services.syahi.sh" + path)), "https://syahi.sh/services/quote", path);
+test("signet and services collapse every path and keep the query", () => {
+  for (const [path, query] of [["/", ""], ["/a", ""], ["/a/b/c", ""], ["/a", "?x=1"], ["/", "?utm=1"], ["/a/b", "?x=1&y=2"]]) {
+    assert.equal(redirectFor(new URL("https://signet.syahi.sh" + path + query)), "https://syahi.sh/signet" + query, path + query);
+    assert.equal(redirectFor(new URL("https://services.syahi.sh" + path + query)), "https://syahi.sh/services/quote" + query, path + query);
+  }
+});
+
+test("a campaign stamp survives the signet and services redirects", () => {
+  assert.equal(redirectFor(new URL("https://signet.syahi.sh/?src=oct-interiors")), "https://syahi.sh/signet?src=oct-interiors");
+  assert.equal(redirectFor(new URL("https://services.syahi.sh/x?src=oct-interiors")), "https://syahi.sh/services/quote?src=oct-interiors");
+});
+
+test("only syahi.sh itself is a site host", () => {
+  assert.equal(isSiteHost(new URL("https://syahi.sh/x")), true);
+  assert.equal(isSiteHost(new URL("https://SYAHI.sh./x")), true);
+  for (const h of ["approve.syahi.sh", "listen.katha.syahi.sh", "media.syahi.sh", "hook.syahi.sh", "katha.syahi.sh", "syahi.sh.example"]) {
+    assert.equal(isSiteHost(new URL(`https://${h}/`)), false, h);
   }
 });
 

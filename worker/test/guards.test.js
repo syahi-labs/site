@@ -35,10 +35,11 @@ for (const file of SOURCES) {
   });
 }
 
-test("the only network call is the asset binding", () => {
+test("the only network calls are the asset binding and the passthrough for other hosts", () => {
   const calls = SOURCES.flatMap((f) => code(f).replace("async fetch(", "").match(/\bfetch\s*\(/g) || []);  // minus the handler's own definition
-  assert.equal(calls.length, 1);
+  assert.equal(calls.length, 2);
   assert.match(code("../src/index.js"), /env\.ASSETS\.fetch\(request\)/);
+  assert.match(code("../src/index.js"), /if \(!isSiteHost\(url\)\) return fetch\(request\);/);
   for (const f of SOURCES) assert.doesNotMatch(code(f), /https?:\/\/(?!syahi\.sh|wa\.me|cal\.com)/);
 });
 
