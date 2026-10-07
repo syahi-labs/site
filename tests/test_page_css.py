@@ -138,3 +138,26 @@ def test_the_published_css_is_byte_identical_to_the_source(mini_root, tmp_path):
 def test_the_base_template_has_one_page_stylesheet_hook():
     base = (Path(__file__).resolve().parents[1] / "templates" / "base.html").read_text(encoding="utf-8")
     assert len(re.findall(r"/assets/pages/", base)) == 1
+
+
+# ---- no text fades through partial opacity ----
+
+# Text caught at partial opacity fails colour contrast for as long as the fade runs, and the gate's axe pass
+# lands inside the fade on some runs. An animation that changes opacity may only draw something with no text.
+FADES_WITH_NO_TEXT = {"dropfall"}      # the ink drop on the home wordmark: an svg path
+
+
+def test_only_a_textless_animation_changes_opacity_between_its_frames():
+    import re
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1] / "tokens"
+    for sheet in sorted(root.rglob("*.css")):
+        css = re.sub(r"/\*.*?\*/", "", sheet.read_text(encoding="utf-8"), flags=re.S)
+        for match in re.finditer(r"@keyframes\s+([\w-]+)\s*\{", css):
+            depth, end = 1, match.end()
+            while depth:
+                depth += {"{": 1, "}": -1}.get(css[end], 0)
+                end += 1
+            opacities = set(re.findall(r"opacity\s*:\s*([\d.]+)", css[match.end():end]))
+            if len(opacities) > 1:
+                assert match.group(1) in FADES_WITH_NO_TEXT, f"{sheet.name}: @keyframes {match.group(1)} fades {sorted(opacities)}"

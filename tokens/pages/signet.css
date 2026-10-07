@@ -130,7 +130,8 @@
 }
 
 /* The ledger writes itself, one line at a time, then the stamp lands. Only when motion is welcome: without
-   it the lines and the stamp are simply there. */
+   it the lines and the stamp are simply there. A line arrives at full ink and settles into place. It never
+   fades in: text caught at partial opacity fails contrast for as long as the fade runs. */
 @media (prefers-reduced-motion: no-preference){
   .ledger li,.stamp{opacity:0}
   .ledger li{animation:rise .5s ease-out forwards}
@@ -139,11 +140,11 @@
   .ledger li:nth-child(3){animation-delay:1.6s}
   .stamp{animation:stamp .35s cubic-bezier(.2,1.4,.4,1) 2.2s forwards}
   @keyframes rise{
-    from{opacity:0;transform:translateY(.4rem)}
+    from{opacity:1;transform:translateY(.4rem)}
     to{opacity:1;transform:none}
   }
   @keyframes stamp{
-    from{opacity:0;transform:rotate(-8deg) scale(1.6)}
+    from{opacity:1;transform:rotate(-8deg) scale(1.6)}
     to{opacity:1;transform:rotate(-8deg) scale(1)}
   }
 }
