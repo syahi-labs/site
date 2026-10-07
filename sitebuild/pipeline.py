@@ -44,7 +44,7 @@ from urllib.parse import urlsplit
 
 import jinja2
 
-from checks import copycheck, htmlcheck, sitecheck
+from checks import copycheck, d10check, htmlcheck, sitecheck
 from sitebuild import assets
 from sitebuild.claims import ClaimError, ClaimRegister
 from sitebuild.content import ContentError, Page, load_pages
@@ -218,7 +218,7 @@ def _build_host(root: Path, out: Path, item: _Loaded, claims: ClaimRegister, rel
     rendered_pages = []
     rendered_html = []
     for page in item.pages:
-        html = _render(env, site, claims, page, release, problems)
+        html = _render(env, site, claims, page, release, problems, result.warnings)
         if html is not None:
             rendered_pages.append(page)
             rendered_html.append(html)
@@ -277,7 +277,8 @@ def _drop_unreferenced_images(host_out: Path) -> None:
             path.unlink()
 
 
-def _render(env, site: SiteConfig, claims: ClaimRegister, page: Page, release: bool, problems: list[str]) -> str | None:
+def _render(env, site: SiteConfig, claims: ClaimRegister, page: Page, release: bool, problems: list[str],
+            warnings: list[str]) -> str | None:
     """The page's HTML, or None with the reason in `problems`. Runs the per-page checks on what it rendered."""
     try:
         # A 404 is served with a failing status and is no entity of the site: it gets no structured data.
@@ -288,6 +289,8 @@ def _render(env, site: SiteConfig, claims: ClaimRegister, page: Page, release: b
         problems.append(str(err))
         return None
     problems.extend(_page_problems(page, html, rendered, claims, site, release))
+    # D10 placement: a problem in a release build, a warning in a dev build (as a link to a pending page is).
+    (problems if release else warnings).extend(f"{page.source}: d10check: {finding}" for finding in d10check.check(html, page.slug))
     return html
 
 

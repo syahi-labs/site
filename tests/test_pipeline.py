@@ -179,7 +179,7 @@ def test_a_listed_claim_missing_from_the_register_names_the_id_and_the_page(mini
 def test_json_ld_the_page_does_not_show_is_a_problem_naming_the_page(mini_root, tmp_path):
     sig = mini_root / "content" / "signet.html"
     edit(sig, "<p>{{ claim('signet-price-line') }}</p>\n", "")
-    edit(sig, "claims: [signet-name, signet-price-line]", "claims: [signet-name]")
+    edit(sig, "claims: [signet-name, signet-d10, signet-price-line]", "claims: [signet-name, signet-d10]")
     r = build(mini_root, tmp_path / "dist")
     assert any(str(sig) in p and "description" in p and "a month" in p for p in r.problems)
 
