@@ -203,22 +203,8 @@ def test_no_page_in_the_build_repeats_an_id(dist):
 
 # ---- text parity ----
 
-# Copy Surabhi approved after the snapshot (signet-landing a0bb211) and already live on signet.syahi.sh. The
-# snapshot stays the pinned blob; each change is named here with its date, and nothing else may differ.
-LIVE_COPY_SINCE_SNAPSHOT = (
-    ("2026-10-07, the battery paragraph",
-     "Two other drafts never made it to her phone at all. The system's own checks refused them first: one recipient "
-     "wasn't on the approved list, one body had drifted off template. Caught before they became her problem, not after.",
-     "Two other drafts got past her phone and were still refused at send. The system's own checks found the recipient "
-     "wasn't on an approved lead list. Caught before anyone got mail."),
-)
-
-
 def test_main_text_is_the_old_pages_text_word_for_word(main):
     old = apply_allowed(words(old_page(), "body"), SNAPSHOT)
-    for when, was, now in LIVE_COPY_SINCE_SNAPSHOT:
-        assert was in old, f"{when}: the snapshot no longer holds the old words"
-        old = old.replace(was, now)
     new = words("<main" + main + "</main>", "main")
     assert new == old
 
