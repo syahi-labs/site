@@ -159,7 +159,7 @@ def test_the_front_matter_is_the_ports_contract():
     assert found.layout == "page" and found.css == "signet"
     assert found.schema == ("SoftwareApplication",)
     assert found.audience is None                          # not set here: Part B decides
-    assert found.draft is False and found.approved == found.updated == APPROVED
+    assert found.draft is False and found.approved == APPROVED and found.updated == datetime.date(2026, 10, 7)   # the battery paragraph changed on 10-07, not yet re-approved
     assert found.og_image == "/assets/brand/og-signet.png"
     assert found.claims and len(set(found.claims)) == len(found.claims)
 
@@ -349,8 +349,8 @@ CLAIMS = {
     "signet-live-since": ("August 31, 2026", "Ruling D10, 2026-10-06"),
     "signet-battery-date": ("August 31, 2026", "Signet live battery, 2026-08-31"),
     "signet-battery-sent": ("One real email went out", "Signet live battery, 2026-08-31"),
-    "signet-battery-refused": ("Two other drafts never made it to her phone at all.", "Signet live battery, 2026-08-31"),
-    "signet-battery-refused-why": ("one recipient wasn't on the approved list, one body had drifted off template",
+    "signet-battery-refused": ("Two other drafts got past her phone and were still refused at send.", "Signet live battery, 2026-08-31"),
+    "signet-battery-refused-why": ("the recipient wasn't on an approved lead list",
                                    "Signet live battery, 2026-08-31"),
 }
 
@@ -418,7 +418,7 @@ def test_the_fine_line_under_the_button_is_three_claims_and_nothing_else(main):
 FIGURES = [("30-minute", "booking-call-length"), ("30 minutes", "booking-call-length"),
            ("₹1,499", "signet-d10"), ("₹14,999", "signet-price-line"), ("August 31, 2026", "signet-live-since"),
            ("August 31, 2026", "signet-battery-date"), ("One real email went out", "signet-battery-sent"),
-           ("Two other drafts never made it", "signet-battery-refused"), ("one recipient wasn't on the approved list", "signet-battery-refused-why"),
+           ("Two other drafts got past her phone", "signet-battery-refused"), ("the recipient wasn't on an approved lead list", "signet-battery-refused-why"),
            ("Founding price, locked for life", "signet-founding-lock"), ("Nothing to pay until after", "signet-pay-after-demo")]
 
 

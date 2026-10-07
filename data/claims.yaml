@@ -260,14 +260,14 @@
   updated: 2026-10-06
   status: live
 - id: signet-battery-refused
-  text: "Two other drafts never made it to her phone at all."
+  text: "Two other drafts got past her phone and were still refused at send."
   source: "Signet live battery, 2026-08-31"
-  updated: 2026-10-06
+  updated: 2026-10-07
   status: live
 - id: signet-battery-refused-why
-  text: "one recipient wasn't on the approved list, one body had drifted off template"
+  text: "the recipient wasn't on an approved lead list"
   source: "Signet live battery, 2026-08-31"
-  updated: 2026-10-06
+  updated: 2026-10-07
   status: live
 
 # ---- the Quote in Ten Minutes page ----
