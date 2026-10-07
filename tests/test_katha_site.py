@@ -194,11 +194,12 @@ def test_links_and_media_are_the_old_pages_exactly_but_for_the_hero_now_on_its_o
 
 def test_the_hero_image_is_a_file_in_the_katha_hosts_own_output(built):
     host = built[1] / "katha.syahi.sh"
-    hero = hashed_file(host, "img/gramophone.webp")
-    assert hero.read_bytes() == (REPO / "assets" / "img" / "gramophone.webp").read_bytes()
     page = (host / "index.html").read_text(encoding="utf-8")
-    img = re.search(r'<img class="hero-fig" src="(/assets/img/gramophone-900w\.[0-9a-f]{10}\.webp)"', page)
-    assert img and (host / img.group(1).lstrip("/")).is_file()          # the hero is a picture: small variants, this one the full size
+    # The hero is a picture gated to wide screens: its sources name this host's own variants, the full size among them.
+    srcset = re.search(r'<source type="image/webp" srcset="([^"]+)"', page).group(1)
+    urls = re.findall(r"(/assets/img/gramophone-\d+w\.[0-9a-f]{10}\.webp) (\d+)w", srcset)
+    assert [w for _, w in urls] == ["240", "480", "900"]
+    assert all((host / url.lstrip("/")).is_file() for url, _ in urls)
 
 
 # ---- parity with today's live page ----

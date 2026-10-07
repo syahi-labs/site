@@ -546,7 +546,7 @@ def test_the_katha_page_passes_every_check_and_names_the_shared_sheet(real_site,
     assert '<link rel="canonical" href="https://syahi.sh/katha">' in html
     assert f'<link rel="stylesheet" href="{hashed_url(dist, "pages/katha-index.css")}">' in html
     assert hashed_file(dist, "pages/katha-index.css").read_bytes() == (REPO / "tokens" / "pages" / "katha-index.css").read_bytes()
-    assert hashed_file(dist, "img/gramophone.webp").is_file()
+    assert list((dist / "assets" / "img").glob("gramophone-900w.*.webp"))
 
 
 def test_the_katha_structured_data_is_a_service_the_organization_provides(dist):
@@ -696,10 +696,11 @@ def test_the_home_alt_text_and_labels_are_the_old_pages_exactly(dist):
 
 
 def test_each_art_file_the_home_names_is_in_the_output(dist):
+    page = built(dist, "index.html")
     for name in ("inkpot", "loom", "gramophone", "cube"):
-        assert hashed_file(dist, f"img/{name}.webp").is_file()
-        page = built(dist, "index.html")
-        assert re.search(rf'<img[^>]* src="(/assets/img/{name}-900w\.[0-9a-f]{{10}}\.webp)"', page), name       # shown through picture()
+        urls = re.findall(rf"(/assets/img/{name}-\d+w\.[0-9a-f]{{10}}\.webp) \d+w", page)
+        assert len(urls) == 3, name                                         # shown through picture(): 240, 480, 900
+        assert all((dist / url.lstrip("/")).is_file() for url in urls), name
 
 
 # ---- the port's markup-only changes, each pinned ----

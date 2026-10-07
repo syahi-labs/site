@@ -35,4 +35,15 @@ def unhash(text: str) -> str:
     A plate a page shows through picture() is named by its widest variant (`inkpot-900w.<hash>.webp`); that is
     the source file's own name here too, because the variant is the same plate at the same size.
     """
-    return _VARIANT.sub(r"\1\2", _HASHED_URL.sub(r"\1\2", text))
+    return _VARIANT.sub(r"\1\2", _HASHED_URL.sub(r"\1\2", _name_gated_plates(text)))
+
+
+_BLANK_IMG = re.compile(r'(<picture>.*?srcset="(/assets/img/[^"\s,]+)[^>]*>)(?P<mid>.*?<img[^>]*? src=")data:image/gif;base64,[^"]+"', re.S)
+
+
+def _name_gated_plates(text: str) -> str:
+    """A plate gated to wide screens has a blank pixel as its img src; name the plate its sources serve instead."""
+    def swap(match):
+        plate = re.sub(r"-\d+w(\.[0-9a-f]{10})\.\w+$", r"-900w\1.webp", match.group(2))
+        return f'{match.group(1)}{match.group("mid")}{plate}"'
+    return _BLANK_IMG.sub(swap, text)

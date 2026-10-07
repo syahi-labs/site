@@ -517,20 +517,28 @@ def image_variants(src: Path, out_dir: Path, widths=(240, 480, 960, 1600), url_b
     return variants
 
 
+# One transparent pixel. The <img> of a picture whose sources are media-gated points here, so a screen the
+# media query excludes makes no request at all; the img keeps its width, height and alt.
+BLANK_PIXEL = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+
+
 def picture_html(variants: list[dict], alt: str, sizes: str, loading: str, fetchpriority: str | None,
-                 css_class: str | None = None) -> str:
+                 css_class: str | None = None, media: str | None = None) -> str:
     """<picture> with an AVIF source, a WebP source and an <img> on the widest WebP, sized from the file.
 
-    `css_class` goes on the <img>, which is the element a stylesheet sizes."""
+    `css_class` goes on the <img>, which is the element a stylesheet sizes. `media` is a media query the
+    plate is shown under (the plate is hidden elsewhere): each <source> carries it, and the <img> falls back
+    to a blank pixel, so a screen outside the query downloads nothing."""
     esc = lambda value: html.escape(str(value), quote=True)
     sources = []
+    media_attr = f' media="{esc(media)}"' if media else ""
     for fmt in ("avif", "webp"):
         group = [v for v in variants if v["format"] == fmt]
         srcset = ", ".join(f"{v['url']} {v['width']}w" for v in sorted(group, key=lambda v: v["width"]))
-        sources.append(f'<source type="image/{fmt}" srcset="{esc(srcset)}" sizes="{esc(sizes)}">')
+        sources.append(f'<source type="image/{fmt}" srcset="{esc(srcset)}" sizes="{esc(sizes)}"{media_attr}>')
     widest = max((v for v in variants if v["format"] == "webp"), key=lambda v: v["width"])
     extra = f' fetchpriority="{esc(fetchpriority)}"' if fetchpriority else ""
     klass = f' class="{esc(css_class)}"' if css_class else ""
-    img = (f'<img{klass} src="{esc(widest["url"])}" width="{widest["width"]}" height="{widest["height"]}" alt="{esc(alt)}" '
+    img = (f'<img{klass} src="{esc(BLANK_PIXEL if media else widest["url"])}" width="{widest["width"]}" height="{widest["height"]}" alt="{esc(alt)}" '
            f'loading="{esc(loading)}" decoding="async"{extra}>')
     return "<picture>" + "".join(sources) + img + "</picture>"

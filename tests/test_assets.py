@@ -90,7 +90,10 @@ def test_every_source_asset_is_published_under_its_hashed_name_byte_for_byte(rea
     for name in SOURCES:
         source = ASSETS / name
         folder = real_site.out / host / "assets" / Path(name).parent
-        if not stable_only(name):
+        if name.startswith("img/"):
+            # A plate is shown through picture(), so only its variants are published; the source is not.
+            assert not (folder / hashed_name(source)).exists(), f"{host}: {name} is published but nothing names it"
+        elif not stable_only(name):
             published = folder / hashed_name(source)
             assert published.is_file(), f"{host}: {name}"
             assert sha(published) == SOURCES[name], f"{host}: {name}"
@@ -109,7 +112,7 @@ def test_files_an_outside_consumer_requests_by_a_fixed_url_keep_a_stable_copy(re
 def test_the_published_asset_tree_is_exactly_the_sources_the_fonts_and_the_stylesheets(real_site, host):
     expected = set()
     for name in SOURCES:
-        if not stable_only(name):
+        if not stable_only(name) and not name.startswith("img/"):
             expected.add("assets/" + (Path(name).parent / hashed_name(ASSETS / name)).as_posix())
         if stable_only(name) or name in assets.ALSO_STABLE:
             expected.add("assets/" + name)
@@ -314,11 +317,11 @@ def test_a_feed_or_cname_hidden_in_assets_still_fails_the_build(mini_root, tmp_p
 
 
 def test_the_tree_is_published_to_both_hosts_and_the_build_is_deterministic(mini_root, tmp_path):
-    tree(mini_root, {"img/a.webp": b"\x00art"})
+    tree(mini_root, {"brand/a.webp": b"\x00art"})
     first, second = tmp_path / "a", tmp_path / "b"
     assert build(mini_root, first).problems == [] and build(mini_root, second).problems == []
     for host in HOSTS:
-        assert (first / host / "assets" / "img" / "a.d3b4c4b4d6.webp".replace("d3b4c4b4d6", hashlib.sha256(b"\x00art").hexdigest()[:10])).read_bytes() == b"\x00art"
+        assert (first / host / "assets" / "brand" / "a.d3b4c4b4d6.webp".replace("d3b4c4b4d6", hashlib.sha256(b"\x00art").hexdigest()[:10])).read_bytes() == b"\x00art"
     listing = lambda out: sorted((p.relative_to(out).as_posix(), sha(p)) for p in out.rglob("*") if p.is_file())
     assert listing(first) == listing(second)
 
@@ -689,12 +692,38 @@ def test_the_real_plates_ship_small_variants_not_the_900_px_file_to_a_phone(real
     for srcset in sources:
         assert " 240w" in srcset and " 480w" in srcset
 
-def test_a_phone_is_told_the_hidden_hero_plates_need_one_pixel(real_site):
-    # .hero-side is display:none under 40em on all three hero pages, so a phone must not pull a big file for it.
+def test_a_phone_downloads_nothing_for_the_hidden_hero_plates(real_site):
+    # .hero-side is display:none under 40em on all three hero pages: the sources are gated to wider screens and
+    # the img falls back to one inline pixel, so a phone makes no request for the plate.
     for host, page in (("syahi.sh", "index.html"), ("syahi.sh", "katha.html"), ("katha.syahi.sh", "index.html")):
         html = (real_site.out / host / page).read_text(encoding="utf-8")
-        hero = re.search(r"<picture>(?:(?!</picture>).)*class=\"hero-(?:mark|fig)\"(?:(?!</picture>).)*</picture>", html)
-        assert hero and 'sizes="(max-width: 39.99em) 1px,' in hero.group(0), (host, page)
+        hero = re.search(r"<picture>(?:(?!</picture>).)*class=\"hero-(?:mark|fig)\"(?:(?!</picture>).)*</picture>", html).group(0)
+        assert re.findall(r"<source [^>]*>", hero) and all('media="(min-width: 40em)"' in s for s in re.findall(r"<source [^>]*>", hero)), (host, page)
+        img = re.search(r"<img [^>]*>", hero).group(0)
+        assert f'src="{assets.BLANK_PIXEL}"' in img and 'width="900" height="900"' in img and "alt=" in img, (host, page)
+        assert "/assets/img/" not in img, (host, page)
+
+
+def test_picture_with_a_media_query_gates_every_source_and_blanks_the_img(mini_root, tmp_path):
+    Image.new("RGB", (600, 600), "white").save(mini_root / "assets" / "img" / "m.png")
+    picture_page(mini_root, '{{ picture("img/m.png", "M", media="(min-width: 40em)", loading="eager") }}')
+    build(mini_root, tmp_path / "dist")
+    html = (tmp_path / "dist" / "syahi.sh" / "index.html").read_text(encoding="utf-8")
+    block = re.search(r"<picture>.*?</picture>", html, re.S).group(0)
+    assert block.count('media="(min-width: 40em)"') == 2
+    assert f'<img src="{assets.BLANK_PIXEL}" width="600" height="600" alt="M"' in block
+
+
+def test_every_published_image_is_named_by_a_page_or_a_stylesheet_unless_it_keeps_a_stable_name(real_site):
+    for host in HOSTS:
+        root = real_site.out / host
+        named = "\n".join(p.read_text(encoding="utf-8", errors="replace") for p in root.rglob("*")
+                          if p.is_file() and p.suffix in (".html", ".css", ".txt", ".xml"))
+        stable = {"/assets/" + name for name in (*assets.STABLE_ONLY, *assets.ALSO_STABLE)}
+        for path in (root / "assets").rglob("*"):
+            if path.is_file() and path.suffix in (".webp", ".avif", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico"):
+                url = "/" + path.relative_to(root).as_posix()
+                assert url in named or url in stable, f"{host}: {url} is published and nothing names it"
 
 
 def test_the_hero_plates_keep_the_class_the_stylesheet_sizes_them_by(real_site):

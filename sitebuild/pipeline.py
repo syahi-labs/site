@@ -241,12 +241,33 @@ def _build_host(root: Path, out: Path, item: _Loaded, claims: ClaimRegister, rel
     problems.extend(asset_problems)
     for page, html in zip(rendered_pages, rendered_html):
         _write(host_out / _file_for(page.slug), assets.rewrite_html(html, manifest))
+    _drop_unreferenced_images(host_out)
     if release:
         problems.extend(_release_site_problems(item))
         problems.extend(_release_draft_problems(item))
     _site_checks(host_out, item, release, result)
     result.outputs[host.name] = host_out
     result.pages.extend(item.pages)
+
+
+_TEXT_OUTPUTS = (".html", ".css", ".txt", ".xml")
+
+
+def _drop_unreferenced_images(host_out: Path) -> None:
+    """Stop publishing an image under assets/img/ that no page, stylesheet or generated file of the host names.
+
+    A plate shown through picture() is published as its variants and the page names only those, so its source
+    file (a 900 px WebP) would be dead weight in the output. Only img/ is pruned: the brand files, with the
+    stable-name list, are named by crawlers and the share cards, not always by a page.
+    """
+    folder = host_out / "assets" / "img"
+    if not folder.is_dir():
+        return
+    named = "\n".join(path.read_text(encoding="utf-8", errors="replace")
+                      for path in sorted(host_out.rglob("*")) if path.is_file() and path.suffix in _TEXT_OUTPUTS)
+    for path in sorted(folder.rglob("*")):
+        if path.is_file() and f"{assets.URL_BASE}/img/{path.relative_to(folder).as_posix()}" not in named:
+            path.unlink()
 
 
 def _render(env, site: SiteConfig, claims: ClaimRegister, page: Page, release: bool, problems: list[str]) -> str | None:
