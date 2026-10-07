@@ -147,17 +147,47 @@ def test_the_base_template_has_one_page_stylesheet_hook():
 FADES_WITH_NO_TEXT = {"dropfall"}      # the ink drop on the home wordmark: an svg path
 
 
-def test_only_a_textless_animation_changes_opacity_between_its_frames():
+def keyframe_fades(css: str) -> dict[str, set[str]]:
+    """Each @keyframes name that changes opacity between its start and its end, with the values it passes through.
+
+    A missing `from` or `to` frame is the element's own opacity, 1 for everything here, so a keyframe with only
+    `from{opacity:0}` is a fade too.
+    """
     import re
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    found = {}
+    for match in re.finditer(r"@keyframes\s+([\w-]+)\s*\{", css):
+        depth, end = 1, match.end()
+        while depth:
+            depth += {"{": 1, "}": -1}.get(css[end], 0)
+            end += 1
+        frames = re.findall(r"([^{}]+)\{([^{}]*)\}", css[match.end():end - 1])
+        values = {"start": "1", "end": "1"}
+        for selectors, body in frames:
+            opacity = re.search(r"opacity\s*:\s*([\d.]+)", body)
+            for selector in (x.strip() for x in selectors.split(",")):
+                point = "start" if selector in ("from", "0%") else "end" if selector in ("to", "100%") else None
+                if point and opacity:
+                    values[point] = opacity.group(1)
+                elif opacity:
+                    values[selector] = opacity.group(1)
+        if len(set(values.values())) > 1:
+            found[match.group(1)] = set(values.values())
+    return found
+
+
+def test_a_from_only_fade_is_a_fade():
+    assert keyframe_fades("@keyframes a{from{opacity:0}}") == {"a": {"0", "1"}}
+    assert keyframe_fades("@keyframes a{to{opacity:0}}") == {"a": {"0", "1"}}
+    assert keyframe_fades("@keyframes a{from{opacity:0}to{opacity:1}}") == {"a": {"0", "1"}}
+    assert keyframe_fades("@keyframes a{0%{opacity:1}50%{opacity:.4}100%{opacity:1}}") == {"a": {"1", ".4"}}
+    assert keyframe_fades("@keyframes a{from,to{opacity:0;visibility:hidden}}") == {}
+    assert keyframe_fades("@keyframes a{from{transform:none}to{transform:scale(2)}}") == {}
+
+
+def test_only_a_textless_animation_changes_opacity_between_its_frames():
     from pathlib import Path
     root = Path(__file__).resolve().parents[1] / "tokens"
     for sheet in sorted(root.rglob("*.css")):
-        css = re.sub(r"/\*.*?\*/", "", sheet.read_text(encoding="utf-8"), flags=re.S)
-        for match in re.finditer(r"@keyframes\s+([\w-]+)\s*\{", css):
-            depth, end = 1, match.end()
-            while depth:
-                depth += {"{": 1, "}": -1}.get(css[end], 0)
-                end += 1
-            opacities = set(re.findall(r"opacity\s*:\s*([\d.]+)", css[match.end():end]))
-            if len(opacities) > 1:
-                assert match.group(1) in FADES_WITH_NO_TEXT, f"{sheet.name}: @keyframes {match.group(1)} fades {sorted(opacities)}"
+        for name, values in keyframe_fades(sheet.read_text(encoding="utf-8")).items():
+            assert name in FADES_WITH_NO_TEXT, f"{sheet.name}: @keyframes {name} fades {sorted(values)}"
