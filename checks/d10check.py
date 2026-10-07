@@ -25,8 +25,11 @@ from checks.copycheck import BLOCK_TAGS, SKIPPED_TAGS, _clean
 
 D10 = "signet-d10"
 PRICE_LINE = "signet-price-line"
+# "your customers" and "their users" are the buyer's own people, not Signet's, so the possessive
+# that names the reader or a third party clears the word; every other mention still counts.
 CUSTOMER_WORDS = re.compile(
-    r"\b(?:customers?|users?|sign(?:s|ed|ing)?[\s-]*up)\b|\bsignups?\b", re.IGNORECASE)
+    r"(?<!\byour )(?<!\btheir )\b(?:customers?|users?)\b|\bsign(?:s|ed|ing)?[\s-]*up\b|\bsignups?\b",
+    re.IGNORECASE)
 SIGNET = re.compile(r"\bSignet\b")
 BOOKING_HOST = "https://cal.com/"
 _BREAK = "\x00"     # where the d10 span sat: a sentence never runs across it

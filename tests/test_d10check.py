@@ -65,6 +65,16 @@ def test_on_a_signet_page_any_customer_word_outside_the_span_is_a_finding(senten
     assert rules(found) == {"d10-sentence"} and sentence in found[0]
 
 
+@pytest.mark.parametrize("sentence", ["Signet sits between your agents and your customers.", "You run agents that talk to your customers.", "Their users never see a draft."])
+def test_the_buyers_own_customers_are_not_signets(sentence):
+    assert check(doc(f"<h1>Signet</h1><p>{sentence}</p>"), "/signet") == []
+
+
+def test_a_possessive_elsewhere_in_the_sentence_does_not_clear_signets_customers():
+    found = check(doc("<h1>Signet</h1><p>Your team joins our customers.</p>"), "/signet")
+    assert rules(found) == {"d10-sentence"}
+
+
 def test_a_page_whose_h1_names_signet_is_a_signet_page_whatever_its_path():
     assert rules(check(doc("<h1>About Signet</h1><p>Our users love it.</p>"), "/elsewhere")) == {"d10-sentence"}
 
