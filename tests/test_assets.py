@@ -779,6 +779,17 @@ def test_picture_of_a_missing_or_escaping_path_fails_the_page_naming_it(mini_roo
     assert any("index.html" in p and reason in p for p in result.problems), result.problems
 
 
+def test_picture_through_a_symlinked_folder_cannot_reach_outside_assets(mini_root, tmp_path):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    Image.new("RGB", (600, 600), "white").save(outside / "secret.png")
+    (mini_root / "assets" / "img" / "linked").symlink_to(outside, target_is_directory=True)
+    picture_page(mini_root, '{{ picture("img/linked/secret.png", "x") }}')
+    result = build(mini_root, tmp_path / "dist")
+    assert any("index.html" in p and "must resolve to a file under assets/" in p for p in result.problems), result.problems
+    assert not list((tmp_path / "dist").rglob("secret*"))
+
+
 # ---- the subset cache, preloads and the whole real build ----
 
 def test_a_remembered_subset_is_the_same_bytes_as_a_fresh_one(tmp_path, monkeypatch):
