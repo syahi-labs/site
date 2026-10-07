@@ -1,6 +1,6 @@
 // Redirects, then the static site, then (only with a valid ?src=) a campaign stamp on the booking links.
 // The logic lives in lib.js. This file reads the request URL and the asset response, nothing else.
-import { redirectFor, sanitizeSrc, stampWhatsApp, stampCal } from "./lib.js";
+import { isSiteHost, redirectFor, sanitizeSrc, stampWhatsApp, stampCal } from "./lib.js";
 
 const isHtml = (response) => (response.headers.get("content-type") || "").toLowerCase().startsWith("text/html");
 
@@ -16,6 +16,9 @@ export default {
     const url = new URL(request.url);
     const target = redirectFor(url);
     if (target) return Response.redirect(target, 301);
+
+    // A broad route must never shadow another service's host: anything but syahi.sh goes on to its own origin.
+    if (!isSiteHost(url)) return fetch(request);
 
     const response = await env.ASSETS.fetch(request);
     const src = sanitizeSrc(url.searchParams.get("src"));

@@ -3,11 +3,16 @@
 
 const CAMPAIGN = /^[a-z0-9-]{1,40}$/;
 
+/** Whether the Worker serves the site for this host. Every other host (approve., listen.katha., media., hook.) is not ours to answer. */
+export function isSiteHost(url) {
+  return url.hostname.toLowerCase().replace(/\.$/, "") === "syahi.sh";
+}
+
 /** Where a request should be sent with a 301, or null when the Worker should serve it. */
 export function redirectFor(url) {
   const host = url.hostname.toLowerCase().replace(/\.$/, "");
-  if (host === "signet.syahi.sh") return "https://syahi.sh/signet";
-  if (host === "services.syahi.sh") return "https://syahi.sh/services/quote";
+  if (host === "signet.syahi.sh") return `https://syahi.sh/signet${url.search}`;
+  if (host === "services.syahi.sh") return `https://syahi.sh/services/quote${url.search}`;
   if (host === "www.syahi.sh") return `https://syahi.sh${url.pathname}${url.search}`;
   return null;
 }
