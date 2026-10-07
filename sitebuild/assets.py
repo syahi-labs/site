@@ -161,7 +161,8 @@ FACES = (
     Face("tiro-devanagari-hindi", "Tiro Devanagari Hindi", "deva", "TiroDevanagariHindi-Regular.ttf", weight=400),
 )
 KEPT_AXES = ("wght", "opsz")
-BODY_FACE = "inter"       # the body font (--font-sans on body); the only one preloaded
+BODY_FACE = "inter"       # the body font (--font-sans on body)
+HEADLINE_FACE = "fraunces"   # every page's h1; with the body font, the two faces every page preloads (base.html)
 BODY_PRELOAD_KEY = f"{FONT_OUTPUT_DIR}/{BODY_FACE}.woff2"
 
 _ROLE_USE = re.compile(r"font-family\s*:\s*var\(\s*--font-(serif|sans|mono|deva)\s*\)")
@@ -229,13 +230,15 @@ def css_content_text(css: str) -> str:
     return "".join(found)
 
 
-def _subset_bytes(source_digest: str, source_path: str, codepoints: tuple[int, ...]) -> bytes:
+def _subset_bytes(source_digest: str, source_path: str, codepoints: tuple[int, ...],
+                  weights: tuple[int, int] | None = None, all_features: bool = True) -> bytes:
     from fontTools import subset
     from fontTools.ttLib import TTFont
 
     options = subset.Options()
     options.flavor = "woff2"
-    options.layout_features = ["*"]
+    if all_features:
+        options.layout_features = ["*"]       # else fontTools' own list: the features a browser applies unasked
     options.name_IDs = ["*"]
     options.hinting = False
     options.notdef_outline = True
@@ -248,9 +251,16 @@ def _subset_bytes(source_digest: str, source_path: str, codepoints: tuple[int, .
     if "fvar" in font:
         # Axes no stylesheet asks for (Fraunces SOFT and WONK) are pinned at their defaults; wght and opsz stay.
         from fontTools.varLib import instancer
-        pinned = {axis.axisTag: axis.defaultValue for axis in font["fvar"].axes if axis.axisTag not in KEPT_AXES}
-        if pinned:
-            font = instancer.instantiateVariableFont(font, pinned, inplace=False)
+        limits: dict = {axis.axisTag: axis.defaultValue for axis in font["fvar"].axes if axis.axisTag not in KEPT_AXES}
+        if weights is not None:
+            # The weights the stylesheets use, not the whole axis: the masters beyond them are dead weight.
+            axis = next((a for a in font["fvar"].axes if a.axisTag == "wght"), None)
+            if axis is not None:
+                low, high = max(weights[0], axis.minValue), min(weights[1], axis.maxValue)
+                if (low, high) != (axis.minValue, axis.maxValue) and low <= high:
+                    limits["wght"] = instancer.AxisTriple(low, min(max(400, low), high), high)
+        if limits:
+            font = instancer.instantiateVariableFont(font, limits, inplace=False)
     buffer = io.BytesIO()
     font.recalcTimestamp = False
     font.flavor = "woff2"
@@ -260,7 +270,7 @@ def _subset_bytes(source_digest: str, source_path: str, codepoints: tuple[int, .
 
 # Everything `_subset_bytes` does besides the source and the characters. Change it with that function, so an
 # entry made by an older recipe is never read back as the new one's.
-_RECIPE = "woff2 layout=* names=* hinting=off notdef=outline drop+=meta pin-axes-except=" + ",".join(KEPT_AXES) + " v1"
+_RECIPE = "woff2 names=* hinting=off notdef=outline drop+=meta pin-axes-except=" + ",".join(KEPT_AXES) + " limit-wght v2"
 
 
 def _cache_dir() -> Path:
@@ -282,14 +292,15 @@ def _covers(data: bytes, source_path: str, codepoints: tuple[int, ...]) -> bool:
         return False
 
 
-def _cached_subset(source_digest: str, source_path: str, codepoints: tuple[int, ...]) -> bytes:
+def _cached_subset(source_digest: str, source_path: str, codepoints: tuple[int, ...],
+                   weights: tuple[int, int] | None = None, all_features: bool = True) -> bytes:
     """`_subset_bytes`, remembered on disk. A subset is a pure function of the source bytes, the characters and
     the fontTools version, so a hit is the same bytes a fresh subset would give; a cache that cannot be read or
     written is skipped, never a problem. Subsetting a big variable font costs a second or more.
     """
     from fontTools import version as fonttools_version
 
-    key = hashlib.sha256(f"{fonttools_version}|{_RECIPE}|{source_digest}|{codepoints}".encode()).hexdigest()
+    key = hashlib.sha256(f"{fonttools_version}|{_RECIPE}|{source_digest}|{codepoints}|{weights}|{all_features}".encode()).hexdigest()
     entry = _cache_dir() / f"{key}.woff2"
     try:
         cached = entry.read_bytes()
@@ -297,7 +308,7 @@ def _cached_subset(source_digest: str, source_path: str, codepoints: tuple[int, 
             return cached
     except OSError:
         pass
-    data = _subset_bytes(source_digest, source_path, codepoints)
+    data = _subset_bytes(source_digest, source_path, codepoints, weights, all_features)
     try:
         entry.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         scratch = entry.with_name(f"{entry.name}.{os.getpid()}.tmp")
@@ -308,14 +319,15 @@ def _cached_subset(source_digest: str, source_path: str, codepoints: tuple[int, 
     return data
 
 
-def _subset(src: Path, text: str) -> bytes:
+def _subset(src: Path, text: str, weights: tuple[int, int] | None = None, all_features: bool = True) -> bytes:
     """The woff2 bytes of `src` subset to `text`. Raises AssetError naming the file."""
     try:
         data = src.read_bytes()
     except OSError as err:
         raise AssetError(f"{src}: font source cannot be read ({err.strerror or err})") from err
     try:
-        return _cached_subset(hashlib.sha256(data).hexdigest(), str(src), tuple(sorted(_unicodes(text))))
+        return _cached_subset(hashlib.sha256(data).hexdigest(), str(src), tuple(sorted(_unicodes(text))),
+                              weights, all_features)
     except Exception as err:   # fontTools raises many types; every one is a build problem naming the file
         raise AssetError(f"{src}: font cannot be subset ({type(err).__name__}: {err})") from err
 
@@ -332,7 +344,43 @@ def subset_font(src: Path, text: str, out: Path) -> Path:
     return out
 
 
-def _weight_range(face: Face, source: Path) -> str:
+_FONT_WEIGHT = re.compile(r"font-weight\s*:\s*([^;}]+)", re.I)
+_FONT_SHORTHAND = re.compile(r"(?<![-\w])font\s*:\s*(?!inherit\b)", re.I)     # `font: inherit` hands down what is already set
+_FONT_FEATURES = re.compile(r"font-feature-settings|font-variant|font-kerning|font-language-override|(?<![-\w])font\s*:\s*(?!inherit\b)", re.I)
+_WEIGHT_WORDS = {"normal": 400, "bold": 700}
+
+
+def used_weights(css_texts: list[str]) -> tuple[int, int] | None:
+    """The (lowest, highest) weight the stylesheets can ask for, or None when it cannot be known.
+
+    400 and 700 are always inside: `normal`, and what the browser gives <b>, <strong>, <th> and headings that
+    set no weight. A relative keyword (`lighter`, `bolder`), a `font:` shorthand or an inherited value could
+    land anywhere, so any of them gives None and the face keeps its whole axis.
+    """
+    found = {400, 700}
+    for css in css_texts:
+        if _FONT_SHORTHAND.search(css):
+            return None
+        for match in _FONT_WEIGHT.finditer(css):
+            value = match.group(1).strip().lower().removesuffix("!important").strip()
+            if value in _WEIGHT_WORDS:
+                found.add(_WEIGHT_WORDS[value])
+            elif value.isdigit():
+                found.add(int(value))
+            else:
+                return None
+    return min(found), max(found)
+
+
+def needs_all_features(css_texts: list[str]) -> bool:
+    """Whether a stylesheet asks for font features by hand (small caps, tabular figures, ligatures off...).
+
+    Without such a rule a browser applies only the features it turns on unasked, so the rest are not shipped.
+    """
+    return any(_FONT_FEATURES.search(css) for css in css_texts)
+
+
+def _weight_range(face: Face, source: Path, limit: tuple[int, int] | None = None) -> str:
     from fontTools.ttLib import TTFont
 
     if face.weight is not None:
@@ -341,7 +389,10 @@ def _weight_range(face: Face, source: Path) -> str:
         with TTFont(str(source), lazy=True) as font:
             for axis in font["fvar"].axes:
                 if axis.axisTag == "wght":
-                    return f"{round(axis.minValue)} {round(axis.maxValue)}"
+                    low, high = round(axis.minValue), round(axis.maxValue)
+                    if limit is not None and limit[0] <= limit[1]:
+                        low, high = max(low, limit[0]), min(high, limit[1])
+                    return f"{low} {high}"
     except Exception as err:
         raise AssetError(f"{source}: font axes cannot be read ({type(err).__name__}: {err})") from err
     raise AssetError(f"{source}: no wght axis, and the face declares no static weight")
@@ -366,8 +417,10 @@ def publish_fonts(assets_src: Path, assets_out: Path, css_texts: list[str], text
             problems.append(f"{source}: a symbolic link is never used as a font source")
             continue
         try:
-            weight = _weight_range(face, source)
-            data = _subset(source, hindi if face.role == "deva" else text)
+            limit = None if face.weight is not None else used_weights(css_texts)
+            weight = _weight_range(face, source, limit)
+            data = _subset(source, hindi if face.role == "deva" else text, limit,
+                           all_features=face.role == "deva" or needs_all_features(css_texts))
         except AssetError as err:
             problems.append(str(err))
             continue
@@ -427,7 +480,7 @@ def rewrite_css(css: str, manifest: dict[str, str], where: str) -> tuple[str, li
 # ---- images ---------------------------------------------------------------------------------
 
 
-def image_variants(src: Path, out_dir: Path, widths=(480, 960, 1600), url_base: str = URL_BASE) -> list[dict]:
+def image_variants(src: Path, out_dir: Path, widths=(240, 480, 960, 1600), url_base: str = URL_BASE) -> list[dict]:
     """AVIF and WebP at each of `widths` narrower than the source, and at the source's own width.
 
     Never upscales. Each dict has `url`, `width`, `height` and `format`, widest first within a format.
@@ -460,8 +513,11 @@ def image_variants(src: Path, out_dir: Path, widths=(480, 960, 1600), url_base: 
     return variants
 
 
-def picture_html(variants: list[dict], alt: str, sizes: str, loading: str, fetchpriority: str | None) -> str:
-    """<picture> with an AVIF source, a WebP source and an <img> on the widest WebP, sized from the file."""
+def picture_html(variants: list[dict], alt: str, sizes: str, loading: str, fetchpriority: str | None,
+                 css_class: str | None = None) -> str:
+    """<picture> with an AVIF source, a WebP source and an <img> on the widest WebP, sized from the file.
+
+    `css_class` goes on the <img>, which is the element a stylesheet sizes."""
     esc = lambda value: html.escape(str(value), quote=True)
     sources = []
     for fmt in ("avif", "webp"):
@@ -470,6 +526,7 @@ def picture_html(variants: list[dict], alt: str, sizes: str, loading: str, fetch
         sources.append(f'<source type="image/{fmt}" srcset="{esc(srcset)}" sizes="{esc(sizes)}">')
     widest = max((v for v in variants if v["format"] == "webp"), key=lambda v: v["width"])
     extra = f' fetchpriority="{esc(fetchpriority)}"' if fetchpriority else ""
-    img = (f'<img src="{esc(widest["url"])}" width="{widest["width"]}" height="{widest["height"]}" alt="{esc(alt)}" '
+    klass = f' class="{esc(css_class)}"' if css_class else ""
+    img = (f'<img{klass} src="{esc(widest["url"])}" width="{widest["width"]}" height="{widest["height"]}" alt="{esc(alt)}" '
            f'loading="{esc(loading)}" decoding="async"{extra}>')
     return "<picture>" + "".join(sources) + img + "</picture>"

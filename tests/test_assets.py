@@ -116,9 +116,10 @@ def test_the_published_asset_tree_is_exactly_the_sources_the_fonts_and_the_style
     held = published_files(real_site.out, host)
     fonts = {f for f in held if f.startswith("assets/fonts/")}
     sheets = {f for f in held if f.endswith(".css")}
+    variants = {f for f in held if re.search(r"-\d+w\.[0-9a-f]{10}\.(avif|webp)$", f)}     # picture() output, one set per plate used
     assert all(HASHED.search(f) for f in fonts | sheets)
     assert {f.split("/")[-1].split(".")[0] for f in sheets} >= {"tokens", "base"}
-    assert held - fonts - sheets == expected, sorted(held - fonts - sheets ^ expected)
+    assert held - fonts - sheets - variants == expected, sorted(held - fonts - sheets - variants ^ expected)
     assert not any(f.endswith(".ttf") or "/src/" in f for f in held)          # sources are inputs, never outputs
 
 
@@ -205,10 +206,11 @@ def test_the_old_google_fonts_and_cache_busted_icon_links_did_not_come_along():
 
 def test_the_katha_hero_is_the_built_asset_on_its_own_host(real_site):
     html = (real_site.out / "katha.syahi.sh" / "index.html").read_text(encoding="utf-8")
-    url = "/assets/img/" + hashed_name(ASSETS / "img" / "gramophone.webp")
-    assert f'src="{url}"' in html
     assert "https://syahi.sh/art/" not in html
-    assert (real_site.out / "katha.syahi.sh" / url.lstrip("/")).is_file()
+    urls = re.findall(r'(?:src|srcset)="([^"]*?/assets/img/gramophone-[^"]+)"', html)
+    assert urls
+    for url in re.findall(r"/assets/img/gramophone-\d+w\.[0-9a-f]{10}\.(?:webp|avif)", " ".join(urls)):
+        assert (real_site.out / "katha.syahi.sh" / url.lstrip("/")).is_file(), url
 
 
 # ---- _publish_assets, on its own ----
@@ -374,7 +376,7 @@ def test_image_variants_never_upscale(tmp_path):
 def test_image_variants_are_hashed_files_at_each_width_narrower_than_the_source(tmp_path):
     src = tmp_path / "p.png"; Image.new("RGB", (1000, 500), "white").save(src)
     v = image_variants(src, tmp_path / "out")
-    assert sorted({x["width"] for x in v}) == [480, 960, 1000]
+    assert sorted({x["width"] for x in v}) == [240, 480, 960, 1000]
     for item in v:
         assert HASHED.search(item["url"]) and (tmp_path / "out" / item["url"].split("/")[-1]).is_file()
         with Image.open(tmp_path / "out" / item["url"].split("/")[-1]) as image:
@@ -471,8 +473,9 @@ def test_variable_faces_declare_their_weight_range_and_italic_is_its_own_rule(re
     css_url = re.search(r'href="(/assets/tokens\.[^"]+)"', (real_site.out / host / "index.html").read_text(encoding="utf-8")).group(1)
     rules = face_rules((real_site.out / host / css_url.lstrip("/")).read_text(encoding="utf-8"))
     by = {(re.search(r"font-family:'([^']+)'", r).group(1), re.search(r"font-style:(\w+)", r).group(1)): r for r in rules}
-    assert "font-weight:100 900" in by[("Fraunces", "normal")] and "font-weight:100 900" in by[("Fraunces", "italic")]
-    assert "font-weight:100 900" in by[("Inter", "normal")]
+    # The weights the stylesheets use (400 and 700 always), not the whole 100 to 900 axis.
+    assert "font-weight:400 700" in by[("Fraunces", "normal")] and "font-weight:400 700" in by[("Fraunces", "italic")]
+    assert "font-weight:400 700" in by[("Inter", "normal")]
     assert "font-weight:400;" in by[("Tiro Devanagari Hindi", "normal")]
     mono = [r for r in rules if "IBM Plex Mono" in r]
     assert sorted(re.search(r"font-weight:(\d+)", r).group(1) for r in mono) == ["400", "500"]
@@ -491,12 +494,15 @@ def test_the_published_subsets_hold_the_pages_glyphs_and_not_the_whole_font(real
 
 
 @pytest.mark.parametrize("host", HOSTS)
-def test_only_the_body_font_is_preloaded_and_it_is_the_published_inter(real_site, host):
-    inter = next((real_site.out / host / "assets" / "fonts").glob("inter.*.woff2"))
+def test_every_page_preloads_the_body_and_headline_faces_and_only_what_it_declares_besides(real_site, host):
+    fonts = real_site.out / host / "assets" / "fonts"
+    face = lambda key: next(fonts.glob(f"{key}.*.woff2")).name
+    link = lambda key: f'<link rel="preload" href="/assets/fonts/{face(key)}" as="font" type="font/woff2" crossorigin>'
     for page in sorted((real_site.out / host).rglob("*.html")):
         head = page.read_text(encoding="utf-8").split("</head>")[0]
         links = re.findall(r'<link rel="preload"[^>]*>', head)
-        assert links == [f'<link rel="preload" href="/assets/fonts/{inter.name}" as="font" type="font/woff2" crossorigin>'], page.name
+        extra = [link("fraunces-italic")] if (host, page.name) == ("syahi.sh", "index.html") else []
+        assert links == [link("inter"), link("fraunces"), *extra], (host, page.name)
 
 
 def test_a_host_without_hindi_text_ships_no_devanagari_font(mini_root, tmp_path):
@@ -603,7 +609,90 @@ def test_every_family_has_its_ofl_text_beside_the_sources():
         assert "SIL OPEN FONT LICENSE Version 1.1" in (ASSETS / "fonts" / "src" / f"OFL-{family}.txt").read_text(encoding="utf-8")
 
 
+# ---- the weights and features a face ships ----
+
+def test_used_weights_always_hold_normal_and_bold_and_grow_to_what_the_css_asks():
+    assert assets.used_weights([]) == (400, 700)
+    assert assets.used_weights(["h1{font-weight:600} p{font-weight:500}"]) == (400, 700)
+    assert assets.used_weights([".a{font-weight:300}", ".b{font-weight:800 !important}"]) == (300, 800)
+    assert assets.used_weights([".a{font-weight:normal} .b{font-weight:bold}"]) == (400, 700)
+
+
+@pytest.mark.parametrize("css", [
+    ".a{font-weight:lighter}", ".a{font-weight:bolder}", ".a{font-weight:var(--w)}",
+    ".a{font:italic 600 1rem/1.4 serif}",
+])
+def test_a_weight_that_cannot_be_known_keeps_the_whole_axis(css):
+    assert assets.used_weights([css]) is None
+
+
+def test_font_inherit_asks_for_nothing_new():
+    assert assets.used_weights(["input,button{font:inherit}"]) == (400, 700)
+    assert not assets.needs_all_features(["input,button{font:inherit}"])
+
+
+@pytest.mark.parametrize("css", [
+    ".a{font-feature-settings:'tnum'}", ".a{font-variant-numeric:tabular-nums}", ".a{font-variant:small-caps}",
+    ".a{font-kerning:none}", ".a{font:600 1rem serif}",
+])
+def test_a_stylesheet_that_asks_for_font_features_keeps_them_all(css):
+    assert assets.needs_all_features([css])
+
+
+def test_a_face_limited_to_the_used_weights_keeps_the_look_inside_them_and_ships_less(tmp_path):
+    src = ASSETS / "fonts" / "src" / "Inter[opsz,wght].ttf"
+    whole = assets._subset(src, "Syahi receipts 123")
+    lean = assets._subset(src, "Syahi receipts 123", (400, 700), all_features=False)
+    font = TTFont(io.BytesIO(lean))
+    axes = {a.axisTag: (a.minValue, a.defaultValue, a.maxValue) for a in font["fvar"].axes}
+    assert axes["wght"] == (400, 400, 700) and axes["opsz"] == (14, 14, 32)
+    assert len(lean) < len(whole) * 0.6
+    tags = {r.FeatureTag for r in font["GSUB"].table.FeatureList.FeatureRecord}
+    assert {"kern"} <= {r.FeatureTag for r in font["GPOS"].table.FeatureList.FeatureRecord}
+    assert not tags & {"ss01", "cv01", "tnum", "zero"}, tags          # nothing the page can switch on is shipped
+
+
+@pytest.mark.parametrize("host", HOSTS)
+def test_the_real_variable_faces_stop_at_the_weights_the_site_uses(real_site, host):
+    for path in (real_site.out / host / "assets" / "fonts").glob("*.woff2"):
+        font = TTFont(str(path))
+        if "fvar" in font:
+            wght = next(a for a in font["fvar"].axes if a.axisTag == "wght")
+            assert (wght.minValue, wght.maxValue) == (400, 700), path.name
+
+
 # ---- picture() ----
+
+def test_picture_puts_the_class_on_the_img_the_stylesheet_sizes(mini_root, tmp_path):
+    Image.new("RGB", (600, 600), "white").save(mini_root / "assets" / "img" / "c.png")
+    picture_page(mini_root, '{{ picture("img/c.png", "C", css_class="hero-mark") }}')
+    build(mini_root, tmp_path / "dist")
+    html = (tmp_path / "dist" / "syahi.sh" / "index.html").read_text(encoding="utf-8")
+    assert re.search(r'<img class="hero-mark" src="/assets/img/c-600w\.[0-9a-f]{10}\.webp"', html)
+
+
+@pytest.mark.parametrize("host, page", [("syahi.sh", "index.html"), ("syahi.sh", "katha.html"), ("katha.syahi.sh", "index.html")])
+def test_the_real_plates_ship_small_variants_not_the_900_px_file_to_a_phone(real_site, host, page):
+    html = (real_site.out / host / page).read_text(encoding="utf-8")
+    assert not re.search(r'<img[^>]*src="/assets/img/[a-z]+\.[0-9a-f]{10}\.webp"', html)       # no bare plate
+    sources = re.findall(r'<source type="image/avif" srcset="([^"]+)"', html)
+    assert sources
+    for srcset in sources:
+        assert " 240w" in srcset and " 480w" in srcset
+
+def test_a_phone_is_told_the_hidden_hero_plates_need_one_pixel(real_site):
+    # .hero-side is display:none under 40em on all three hero pages, so a phone must not pull a big file for it.
+    for host, page in (("syahi.sh", "index.html"), ("syahi.sh", "katha.html"), ("katha.syahi.sh", "index.html")):
+        html = (real_site.out / host / page).read_text(encoding="utf-8")
+        hero = re.search(r"<picture>(?:(?!</picture>).)*class=\"hero-(?:mark|fig)\"(?:(?!</picture>).)*</picture>", html)
+        assert hero and 'sizes="(max-width: 39.99em) 1px,' in hero.group(0), (host, page)
+
+
+def test_the_hero_plates_keep_the_class_the_stylesheet_sizes_them_by(real_site):
+    home = (real_site.out / "syahi.sh" / "index.html").read_text(encoding="utf-8")
+    assert '<img class="hero-mark" ' in home
+    katha = (real_site.out / "katha.syahi.sh" / "index.html").read_text(encoding="utf-8")
+    assert '<img class="hero-fig" ' in katha
 
 def picture_page(mini_root: Path, call: str) -> None:
     page = mini_root / "content" / "index.html"

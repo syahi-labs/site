@@ -4,6 +4,7 @@ description: "Syahi (स्याही, ink) is a one-person AI venture studio 
 updated: 2026-10-06
 approved: 2026-10-06
 layout: page
+preload_fonts: [fraunces-italic]
 css: home
 claims: [venture-count, qtm-quote-time, qtm-live-time, founder-years]
 og_title: "Syahi · ink for the agent age"
@@ -19,7 +20,7 @@ og_description: "One human, many hands. Software, audiobooks, education, and sto
       <p class="hero-ventures">{{ claim("venture-count") }}&nbsp;ventures &middot; signet &middot; studio&nbsp;services &middot; katha&nbsp;audio &middot; paper&nbsp;machine</p>
     </div>
     <figure class="hero-side">
-      <div class="torn torn-a"><img class="hero-mark" src="/assets/img/inkpot.webp" alt="Engraving of an Indian brass inkpot with a reed pen, the Syahi house mark" width="900" height="900"></div>
+      <div class="torn torn-a">{{ picture("img/inkpot.webp", "Engraving of an Indian brass inkpot with a reed pen, the Syahi house mark", sizes="(max-width: 39.99em) 1px, 18.75rem", loading="eager", fetchpriority="high", css_class="hero-mark") }}</div>
       <figcaption class="hero-mark-cap">the house mark · dawat &amp; qalam</figcaption>
     </figure>
   </div>
@@ -53,7 +54,7 @@ og_description: "One human, many hands. Software, audiobooks, education, and sto
       <div class="card-top"><span class="roman">II</span><span class="label">Services</span></div>
       <div class="card-main">
         <div class="card-fig">
-          <div class="torn torn-b"><img src="/assets/img/loom.webp" alt="Copperplate engraving of a wooden handloom" width="900" height="900" loading="lazy"></div>
+          <div class="torn torn-b">{{ picture("img/loom.webp", "Copperplate engraving of a wooden handloom", sizes="6rem") }}</div>
         </div>
         <div>
           <h2>Quote in Ten Minutes</h2>
@@ -68,7 +69,7 @@ og_description: "One human, many hands. Software, audiobooks, education, and sto
       <div class="card-top"><span class="roman">III</span><span class="label">Audio</span></div>
       <div class="card-main">
         <div class="card-fig">
-          <div class="torn torn-c"><img src="/assets/img/gramophone.webp" alt="Copperplate engraving of a vintage gramophone" width="900" height="900" loading="lazy"></div>
+          <div class="torn torn-c">{{ picture("img/gramophone.webp", "Copperplate engraving of a vintage gramophone", sizes="6rem") }}</div>
         </div>
         <div>
           <h2>Katha Audio</h2>
@@ -83,7 +84,7 @@ og_description: "One human, many hands. Software, audiobooks, education, and sto
       <div class="card-top"><span class="roman">IV</span><span class="label">Media</span></div>
       <div class="card-main">
         <div class="card-fig">
-          <div class="torn torn-d"><img src="/assets/img/cube.webp" alt="Engraving of a paper cube pinned like a specimen, its front face washed in teal" width="900" height="900" loading="lazy"></div>
+          <div class="torn torn-d">{{ picture("img/cube.webp", "Engraving of a paper cube pinned like a specimen, its front face washed in teal", sizes="6rem") }}</div>
         </div>
         <div>
           <h2>Paper Machine</h2>

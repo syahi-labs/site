@@ -101,7 +101,8 @@ def make_env(root: Path, site: SiteConfig, claims: ClaimRegister) -> SiteEnviron
         """
         return claims.text(id, form)
 
-    def picture(src: str, alt: str, sizes: str = "100vw", loading: str = "lazy", fetchpriority: str | None = None) -> Markup:
+    def picture(src: str, alt: str, sizes: str = "100vw", loading: str = "lazy", fetchpriority: str | None = None,
+                css_class: str | None = None) -> Markup:
         """<picture> of an image under assets/: AVIF and WebP variants, an <img> sized from the file.
 
         The page's first image passes loading="eager" and fetchpriority="high"; every other one stays lazy.
@@ -116,7 +117,7 @@ def make_env(root: Path, site: SiteConfig, claims: ClaimRegister) -> SiteEnviron
             raise assets.AssetError(f"picture(): assets/{relative.as_posix()} is not a file")
         base = "/".join(["/assets", *relative.parent.parts])
         variants = assets.image_variants(source, env.assets_out / relative.parent, url_base=base)
-        return Markup(assets.picture_html(variants, alt, sizes, loading, fetchpriority))
+        return Markup(assets.picture_html(variants, alt, sizes, loading, fetchpriority, css_class))
 
     env.root = Path(root)
     env.default_og_size, env.default_og_error = _image_size(Path(root) / DEFAULT_OG_IMAGE.lstrip("/"))

@@ -196,7 +196,9 @@ def test_the_hero_image_is_a_file_in_the_katha_hosts_own_output(built):
     host = built[1] / "katha.syahi.sh"
     hero = hashed_file(host, "img/gramophone.webp")
     assert hero.read_bytes() == (REPO / "assets" / "img" / "gramophone.webp").read_bytes()
-    assert f'src="{hashed_url(host, "img/gramophone.webp")}"' in (host / "index.html").read_text(encoding="utf-8")
+    page = (host / "index.html").read_text(encoding="utf-8")
+    img = re.search(r'<img class="hero-fig" src="(/assets/img/gramophone-900w\.[0-9a-f]{10}\.webp)"', page)
+    assert img and (host / img.group(1).lstrip("/")).is_file()          # the hero is a picture: small variants, this one the full size
 
 
 # ---- parity with today's live page ----

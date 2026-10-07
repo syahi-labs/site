@@ -698,7 +698,8 @@ def test_the_home_alt_text_and_labels_are_the_old_pages_exactly(dist):
 def test_each_art_file_the_home_names_is_in_the_output(dist):
     for name in ("inkpot", "loom", "gramophone", "cube"):
         assert hashed_file(dist, f"img/{name}.webp").is_file()
-        assert f'src="{hashed_url(dist, f"img/{name}.webp")}"' in built(dist, "index.html")
+        page = built(dist, "index.html")
+        assert re.search(rf'<img[^>]* src="(/assets/img/{name}-900w\.[0-9a-f]{{10}}\.webp)"', page), name       # shown through picture()
 
 
 # ---- the port's markup-only changes, each pinned ----

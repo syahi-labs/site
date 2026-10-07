@@ -26,6 +26,13 @@ def hashed_url(host_dir: Path, name: str) -> str:
 _HASHED_URL = re.compile(rf"(/assets/[^\"'\s)]*?)\.{HASH}(\.[a-z0-9]+)")
 
 
+_VARIANT = re.compile(r"(/assets/img/[a-z0-9-]+?)-\d+w(\.[a-z0-9]+)")
+
+
 def unhash(text: str) -> str:
-    """`text` with the content hash taken out of every /assets/ URL, to compare a built page with its source."""
-    return _HASHED_URL.sub(r"\1\2", text)
+    """`text` with the content hash taken out of every /assets/ URL, to compare a built page with its source.
+
+    A plate a page shows through picture() is named by its widest variant (`inkpot-900w.<hash>.webp`); that is
+    the source file's own name here too, because the variant is the same plate at the same size.
+    """
+    return _VARIANT.sub(r"\1\2", _HASHED_URL.sub(r"\1\2", text))
