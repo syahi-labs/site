@@ -258,6 +258,10 @@ def _subset_bytes(source_digest: str, source_path: str, codepoints: tuple[int, .
             if axis is not None:
                 low, high = max(weights[0], axis.minValue), min(weights[1], axis.maxValue)
                 if (low, high) != (axis.minValue, axis.maxValue) and low <= high:
+                    if not hasattr(instancer, "AxisTriple"):
+                        from fontTools import version as fonttools_version
+                        raise RuntimeError(f"fontTools {fonttools_version} cannot move an axis default; "
+                                           "the build needs fonttools>=4.50 (requirements.txt), run it from the .venv")
                     limits["wght"] = instancer.AxisTriple(low, min(max(400, low), high), high)
         if limits:
             font = instancer.instantiateVariableFont(font, limits, inplace=False)

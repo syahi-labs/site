@@ -652,6 +652,15 @@ def test_a_face_limited_to_the_used_weights_keeps_the_look_inside_them_and_ships
     assert not tags & {"ss01", "cv01", "tnum", "zero"}, tags          # nothing the page can switch on is shipped
 
 
+def test_an_old_fonttools_is_a_named_problem_not_a_silent_full_axis(monkeypatch, tmp_path):
+    from fontTools.varLib import instancer
+    monkeypatch.delattr(instancer, "AxisTriple")
+    monkeypatch.setenv("SITEBUILD_CACHE", str(tmp_path / "cache"))
+    src = ASSETS / "fonts" / "src" / "Inter[opsz,wght].ttf"
+    with pytest.raises(assets.AssetError, match=r"Inter.*fonttools>=4\.50"):
+        assets._subset(src, "Hi", (400, 700))
+
+
 @pytest.mark.parametrize("host", HOSTS)
 def test_the_real_variable_faces_stop_at_the_weights_the_site_uses(real_site, host):
     for path in (real_site.out / host / "assets" / "fonts").glob("*.woff2"):
