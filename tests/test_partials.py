@@ -396,3 +396,54 @@ def test_a_tree_outside_any_repo_has_nothing_uncommitted(mini_root, tmp_path):
     include_note(mini_root, "index.html")
     result = build(mini_root, tmp_path / "release", release=True)
     assert uncommitted(result.problems, "html") == [] and uncommitted(result.warnings, "html") == []
+
+
+# ---- chrome: the layout chain moves lastmod and never asks for a page re-approval ----
+
+def test_a_base_template_change_moves_every_pages_lastmod(mini_root, tmp_path):
+    commit(mini_root, "2026-09-01", "content/index.html", "content/signet.html")
+    commit(mini_root, "2026-09-28", "templates/base.html")
+    assert build(mini_root, tmp_path / "dist").problems == []
+    assert lastmods(tmp_path / "dist") == {"/": "2026-09-28", "/signet": "2026-09-28"}
+
+
+def test_a_layout_change_moves_lastmod_and_a_partial_the_layout_includes_does_too(mini_root, tmp_path):
+    base = mini_root / "templates" / "base.html"
+    write(mini_root / "templates" / "partials" / "chrome-bit.html", "<!-- made-up chrome -->\n")
+    base.write_text(base.read_text(encoding="utf-8").replace("</body>", '{% include "partials/chrome-bit.html" %}</body>', 1), encoding="utf-8")
+    commit(mini_root, "2026-09-01", "content/index.html", "content/signet.html", "templates/base.html", "templates/layouts/page.html")
+    commit(mini_root, "2026-09-25", "templates/partials/chrome-bit.html")
+    assert build(mini_root, tmp_path / "dist").problems == []
+    assert lastmods(tmp_path / "dist") == {"/": "2026-09-25", "/signet": "2026-09-25"}
+    layout = mini_root / "templates" / "layouts" / "page.html"
+    layout.write_text(layout.read_text(encoding="utf-8") + "{# made-up edit #}\n", encoding="utf-8")
+    commit(mini_root, "2026-09-26", "templates/layouts/page.html")
+    assert build(mini_root, tmp_path / "again").problems == []
+    assert lastmods(tmp_path / "again") == {"/": "2026-09-26", "/signet": "2026-09-26"}
+
+
+def test_a_chrome_only_change_after_approval_moves_lastmod_but_asks_for_no_reapproval(mini_root, tmp_path):
+    commit(mini_root, "2026-10-06", "content/index.html", "content/signet.html", "katha/content")
+    commit(mini_root, "2026-10-09", "templates/base.html", "templates/layouts/page.html")
+    release = build(mini_root, tmp_path / "release", release=True)
+    assert stale(release.problems, "html") == [] and stale(release.warnings, "html") == []
+    assert [p for p in release.problems if "base.html" in p or "layouts/page.html" in p] == []
+    assert lastmods(tmp_path / "release") == {"/": "2026-10-09", "/signet": "2026-10-09"}
+
+
+def test_the_split_is_explicit_body_files_are_approved_per_page_chrome_files_are_not(mini_root):
+    from sitebuild.content import load_pages
+    from sitebuild.pipeline import _page_files
+    from sitebuild.render import make_env
+    from sitebuild.claims import ClaimRegister
+    from sitebuild.site import load_site
+    include_note(mini_root, "index.html")
+    site = load_site(mini_root / "site.yaml")
+    env = make_env(mini_root, site, ClaimRegister.load(mini_root / "data" / "claims.yaml"))
+    page = next(p for p in load_pages(mini_root / "content") if p.slug == "/")
+    problems: list[str] = []
+    files = _page_files(env, page, problems)
+    assert problems == []
+    assert [p.name for p in files.body] == ["index.html", "note.html"]
+    assert [p.name for p in files.chrome][:2] == ["page.html", "base.html"]
+    assert files.all == [*files.body, *files.chrome]
