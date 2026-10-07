@@ -227,3 +227,16 @@ def test_the_preview_copy_may_not_hold_an_em_dash(tmp_path, key):
         load_pages(tmp_path)
     message = str(e.value)
     assert "x.html" in message and key in message and "em dash" in message and chr(0x2014) not in message
+
+
+def test_preload_fonts_names_published_faces(tmp_path):
+    write(tmp_path / "a.html", FM.replace("layout: page", "layout: page\npreload_fonts: [fraunces-italic]"))
+    write(tmp_path / "b.html", FM)
+    a, b = load_pages(tmp_path)
+    assert a.preload_fonts == ("fraunces-italic",) and b.preload_fonts == ()
+
+
+def test_preload_fonts_naming_no_face_is_an_error_naming_file_and_key(tmp_path):
+    write(tmp_path / "a.html", FM.replace("layout: page", "layout: page\npreload_fonts: [comic-sans]"))
+    with pytest.raises(ContentError, match=r"a\.html.*preload_fonts.*comic-sans"):
+        load_pages(tmp_path)

@@ -454,7 +454,7 @@ PINNED = {   # git rev-parse 446f625:<file> in the live site repo
 
 PINNED["site-index.html"] = "965a18a0a06ed3df2c10aa7054b74964464a0a01"     # git rev-parse 446f625:index.html (site)
 PINNED["katha-index.html"] = "8ebde0c01f978766bac5b5e604ec9356efba089d"     # git rev-parse 71e0a6d:index.html (katha-feed)
-PINNED["signet.html"] = "84257339c5d222b03a18f2b64dabbd6a54541fbc"          # git rev-parse a0bb211:index.html (signet-landing)
+PINNED["signet.html"] = "dfe791c3f6706de85dcc1774bebacb5c1d2b9631"          # git rev-parse c069f92:index.html (signet-landing)
 PINNED["services.html"] = "fb5a87159727fbe0c63880b173fb8a8af4c6850d"        # git rev-parse c66925f:index.html (studioservices-landing)
 
 
@@ -546,7 +546,7 @@ def test_the_katha_page_passes_every_check_and_names_the_shared_sheet(real_site,
     assert '<link rel="canonical" href="https://syahi.sh/katha">' in html
     assert f'<link rel="stylesheet" href="{hashed_url(dist, "pages/katha-index.css")}">' in html
     assert hashed_file(dist, "pages/katha-index.css").read_bytes() == (REPO / "tokens" / "pages" / "katha-index.css").read_bytes()
-    assert hashed_file(dist, "img/gramophone.webp").is_file()
+    assert list((dist / "assets" / "img").glob("gramophone-900w.*.webp"))
 
 
 def test_the_katha_structured_data_is_a_service_the_organization_provides(dist):
@@ -696,9 +696,11 @@ def test_the_home_alt_text_and_labels_are_the_old_pages_exactly(dist):
 
 
 def test_each_art_file_the_home_names_is_in_the_output(dist):
+    page = built(dist, "index.html")
     for name in ("inkpot", "loom", "gramophone", "cube"):
-        assert hashed_file(dist, f"img/{name}.webp").is_file()
-        assert f'src="{hashed_url(dist, f"img/{name}.webp")}"' in built(dist, "index.html")
+        urls = re.findall(rf"(/assets/img/{name}-\d+w\.[0-9a-f]{{10}}\.webp) \d+w", page)
+        assert len(urls) == 3, name                                         # shown through picture(): 240, 480, 900
+        assert all((dist / url.lstrip("/")).is_file() for url in urls), name
 
 
 # ---- the port's markup-only changes, each pinned ----

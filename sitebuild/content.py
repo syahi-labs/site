@@ -12,11 +12,13 @@ from pathlib import Path
 
 import yaml
 
+from sitebuild.assets import FACES
+
 REQUIRED_KEYS = ("title", "description", "updated", "layout")
 # `approved` is required too, unless the page is a draft (`draft: true`): new or changed copy that no one
 # has approved yet. A draft says so in its made-by line and a release build refuses it.
 OPTIONAL_KEYS = ("approved", "draft", "claims", "schema", "audience", "og_image", "css",
-                 "og_title", "og_description", "og_image_alt")
+                 "og_title", "og_description", "og_image_alt", "preload_fonts")
 FENCE = "---"
 EM_DASH = chr(0x2014)
 # A page stylesheet is named, never pathed: tokens/pages/<name>.css, published as assets/pages/<name>.css.
@@ -48,6 +50,9 @@ class Page:
     og_description: str | None = None
     og_image_alt: str | None = None    # the share image's alt text; no tag is written without it
     draft: bool = False        # new or changed copy nobody has approved: the page says so, and cannot be released
+    # Faces this page draws above the fold beyond the two every page preloads (body and headline), by published
+    # key, e.g. ("fraunces-italic"). A face that swaps in after first paint reflows the hero; a preload stops it.
+    preload_fonts: tuple[str, ...] = ()
 
 
 def load_pages(content_dir: Path) -> list[Page]:
@@ -91,6 +96,7 @@ def _load_page(path: Path, content_dir: Path) -> Page:
         og_description=_preview_text(meta, "og_description", path),
         og_image_alt=_preview_text(meta, "og_image_alt", path),
         draft=draft,
+        preload_fonts=_font_keys(meta, path),
     )
 
 
@@ -163,6 +169,15 @@ def _css_name(meta: dict, path: Path) -> str | None:
             f"(lowercase letters, digits and hyphens, no path or extension), got {name!r}"
         )
     return name
+
+
+def _font_keys(meta: dict, path: Path) -> tuple[str, ...]:
+    keys = _text_list(meta, "preload_fonts", path)
+    known = {face.key for face in FACES}
+    unknown = [key for key in keys if key not in known]
+    if unknown:
+        raise ContentError(f"{path}: 'preload_fonts' names no font face: {', '.join(unknown)} (known: {', '.join(sorted(known))})")
+    return keys
 
 
 def _date(meta: dict, key: str, path: Path) -> datetime.date:
