@@ -1,0 +1,153 @@
+/* The story pages (B1): /services, /about, /media and /paper-machine. Layout and type roles only; every colour,
+   family and size comes from tokens.css and tests/css_guard.py fails this folder on a raw one.
+   Text pairs used, all in test_tokens TEXT_PAIRS: ink on ground, muted on ground, act on ground.
+   The head and the section head are the policy sheet's, restated here because a page names one sheet. Hoist them
+   into base.css in one pass over home, katha-index, policy and this sheet (the debt policy.css already names). */
+
+.page > section + section{margin-top:var(--space-8)}
+.page-head + section{margin-top:var(--space-7)}
+
+.page-head > * + *{margin-top:var(--space-4)}
+.devanagari{
+  font-family:var(--font-serif);
+  font-size:var(--fs-ui);
+  letter-spacing:.4em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.thesis{
+  max-width:38rem;
+  margin-top:var(--space-5);
+  font-family:var(--font-serif);
+  font-size:var(--fs-lead);
+  line-height:1.45;
+  text-wrap:balance;
+}
+.section-head{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:baseline;
+  gap:var(--space-2) var(--space-5);
+  margin-bottom:var(--space-3);
+  padding-bottom:var(--space-3);
+  border-bottom:1px solid var(--ink);
+}
+.roman{font-family:var(--font-serif);font-size:var(--fs-h2);font-weight:600;line-height:var(--lh-tight)}
+.label{
+  font-family:var(--font-mono);
+  font-size:var(--fs-small);
+  font-weight:400;
+  letter-spacing:.3em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.lede{margin-left:auto;font-family:var(--font-serif);font-size:var(--fs-ui);font-style:italic;color:var(--muted)}
+
+.doc{max-width:var(--measure)}
+.doc > * + *{margin-top:var(--space-4)}
+.doc h3{font-size:var(--fs-h3)}
+
+.cta-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-3) var(--space-5)}
+.page-head .cta-row{margin-top:var(--space-6)}
+.quiet-link{font-size:var(--fs-ui)}
+
+/* /services: the closed list. Each item is a numeral, a name, then FOR and YOU END UP WITH. */
+.items{margin:0;padding:0;list-style:none;counter-reset:item}
+.item{
+  position:relative;
+  padding:var(--space-5) 0 var(--space-5) var(--space-8);
+  border-bottom:1px solid var(--rule);
+  counter-increment:item;
+}
+.item::before{
+  content:counter(item, upper-roman);
+  position:absolute;
+  left:0;
+  top:var(--space-5);
+  font-family:var(--font-serif);
+  font-size:var(--fs-h2);
+  font-weight:600;
+  line-height:var(--lh-tight);
+}
+.item h3{font-size:var(--fs-h3)}
+.fy{margin-top:var(--space-4);max-width:var(--measure)}
+.fy > div{display:grid;grid-template-columns:8.75rem minmax(0,1fr);gap:var(--space-4);padding-block:var(--space-2)}
+.fy dt{
+  padding-top:.3rem;
+  font-family:var(--font-mono);
+  font-size:var(--fs-micro);
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.builds{margin:var(--space-4) 0 0;padding:0;list-style:none;max-width:var(--measure)}
+.builds li{padding-block:var(--space-3);border-top:1px solid var(--hair)}
+.builds b{font-weight:600}
+
+/* The closing action */
+.closing{padding-block:var(--space-5)}
+.closing-line{
+  max-width:38rem;
+  margin-bottom:var(--space-5);
+  font-family:var(--font-serif);
+  font-size:var(--fs-h3);
+  font-weight:600;
+  line-height:var(--lh-tight);
+  text-wrap:balance;
+}
+
+/* /media: three cards, each one link */
+.media-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.625rem;margin-top:var(--space-6)}
+.media-card{
+  display:flex;
+  flex-direction:column;
+  padding:1.75rem 1.625rem 1.5rem;
+  border:1.5px solid var(--ink);
+  color:inherit;
+  text-decoration:none;
+  transition:background-color var(--dur-base) var(--ease);
+}
+.media-card:hover{background:var(--ground-deep);color:var(--ink)}
+.media-card h3{font-size:var(--fs-h3);letter-spacing:-.015em}
+.media-card .prose{margin-top:var(--space-3);font-size:var(--fs-ui);line-height:1.6;color:var(--muted)}
+.media-card .prose b{font-weight:500;color:var(--ink)}
+.media-card .for{
+  margin-top:auto;
+  padding-top:1.25rem;
+  font-family:var(--font-mono);
+  font-size:var(--fs-micro);
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.media-card .for b{font-weight:500;color:var(--ink)}
+.media-card .act{margin-top:var(--space-3);font-family:var(--font-mono);font-size:var(--fs-small);font-weight:500;color:var(--act)}
+.media-card:hover .act{text-decoration:underline;text-underline-offset:3px}
+
+/* /paper-machine: the plate index. The numeral is a counter, so no digit sits in the markup. */
+.plates{margin:var(--space-5) 0 0;padding:0;list-style:none;counter-reset:plate}
+.plates li{
+  display:grid;
+  grid-template-columns:var(--space-8) minmax(0,1fr);
+  gap:var(--space-4);
+  align-items:baseline;
+  padding-block:var(--space-4);
+  border-bottom:1px solid var(--rule);
+  counter-increment:plate;
+}
+.plates li::before{
+  content:counter(plate, upper-roman);
+  font-family:var(--font-serif);
+  font-size:var(--fs-h2);
+  font-weight:600;
+  line-height:var(--lh-tight);
+}
+.plates a{font-family:var(--font-serif);font-size:var(--fs-lead)}
+
+@media (max-width:47.5em){
+  .lede{margin-left:0;width:100%}
+  .media-cards{grid-template-columns:minmax(0,1fr)}
+  .item{padding-left:var(--space-7)}
+  .fy > div{grid-template-columns:minmax(0,1fr);gap:var(--space-1)}
+  .plates li{grid-template-columns:var(--space-7) minmax(0,1fr)}
+}
