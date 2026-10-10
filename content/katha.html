@@ -7,11 +7,13 @@ draft: true
 layout: page
 css: katha-index
 schema: [Service]
+claims: [katha-sample-length, media-store-sample, katha-title-name]
 og_title: "Katha Audio · every sentence verified"
 og_description: "Indian Language audiobooks for rights-holders whose catalog has no audio. Manuscript in, retail-ready audio out."
 ---
 {# DRAFT for her Sunday edit (B2). The publisher pitch. The listener copy (the listen line's two titles, the sample
-   clip) moved to katha.syahi.sh, which has its own body; this page keeps a one-line pointer to it. #}
+   clip) moved to katha.syahi.sh, which has its own body; this page keeps a one-line pointer to it. The 45-second
+   clip is back here too, under "Hear the quality" (her call 2026-10-10, quiz item 9). #}
 <section class="hero">
   <div class="hero-grid">
     <div>
@@ -70,6 +72,20 @@ og_description: "Indian Language audiobooks for rights-holders whose catalog has
 <section>
   <div class="section-head">
     <span class="roman">III</span>
+    <span class="label">Hear the quality</span>
+  </div>
+  <div class="slot live">
+    <span class="slot-tag"><span lang="hi">{{ claim("katha-title-name") }}</span> &nbsp;·&nbsp; chapter one</span>
+    <p>{{ claim("katha-sample-length") }} of chapter one, right here. {{ claim("media-store-sample") }}</p>
+    <audio controls controlsList="nodownload" preload="none">
+      <source src="https://media.katha.syahi.sh/samples/adhoore-hisaab.mp3" type="audio/mpeg">
+    </audio>
+  </div>
+</section>
+
+<section>
+  <div class="section-head">
+    <span class="roman">IV</span>
     <span class="label">The ask</span>
   </div>
   <div class="ask">

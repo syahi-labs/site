@@ -479,6 +479,27 @@
   updated: 2026-10-10
   status: live
 
+- id: pm-playlist-agents-name
+  text: "The Control Room: AI Agents"
+  source: "YouTube, @papermachine07 playlists, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: pm-playlist-agents-url
+  text: "https://www.youtube.com/playlist?list=PLAxWjMEpGWxI"
+  source: "YouTube, @papermachine07 playlists, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: pm-playlist-core-name
+  text: "Core AI Concepts, Simply Explained"
+  source: "YouTube, @papermachine07 playlists, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: pm-playlist-core-url
+  text: "https://www.youtube.com/playlist?list=PLE-Rl7inR4Z4"
+  source: "YouTube, @papermachine07 playlists, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+
 # ---- katha.syahi.sh, the listener page (B2) ----
 # Dahshat, the free show, and the one title in the store. Structured data (PodcastSeries, Audiobook) reads
 # katha-show-name, katha-show-url, katha-title-name, katha-title-url, katha-title-price-amount and katha-title-price.
@@ -491,6 +512,11 @@
 - id: katha-show-url
   text: "https://listen.katha.syahi.sh/shows/dahshat"
   source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-show-spotify-url
+  text: "https://open.spotify.com/show/5oquXvtv05QJeBgsftB2mN"
+  source: "Spotify, 2026-10-10"
   updated: 2026-10-10
   status: live
 - id: katha-show-disclosure
@@ -509,7 +535,7 @@
   updated: 2026-10-10
   status: live
 - id: katha-title-blurb
-  text: "A founder's startup is sinking. His great-grandfather leaves a ledger with an unfinished account from 1947."
+  text: "Kabir Mehra's startup is sinking. His great-grandfather left him a ledger with one account still open, from 1947."
   source: "listen.katha.syahi.sh, 2026-10-10"
   updated: 2026-10-10
   status: live

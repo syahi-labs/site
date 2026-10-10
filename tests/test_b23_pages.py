@@ -61,7 +61,9 @@ CHANGED = [("main", "/"), ("main", "/404"), ("main", "/contact"), ("main", "/pri
 @pytest.mark.parametrize("host, slug", CHANGED)
 def test_every_changed_page_is_a_draft_with_no_approval_updated_today(host, slug):
     found = page(host, slug)
-    assert found.draft is True and found.approved is None and found.updated == DAY
+    # Quiz item 8: contact, terms and refund have no text change, so they keep their earlier dates (still drafts).
+    expected = {"/contact": datetime.date(2026, 9, 10), "/terms": datetime.date(2026, 9, 12), "/refund": datetime.date(2026, 9, 12)}
+    assert found.draft is True and found.approved is None and found.updated == expected.get(slug, DAY)
 
 
 # ---- B2: the listener page ----
@@ -88,8 +90,16 @@ def test_the_listener_page_names_the_show_the_title_the_store_and_the_clip(liste
     assert 'href="https://syahi.sh/katha"' in main                      # the pointer to the publisher pitch
 
 
-def test_the_listener_page_has_no_spotify_link_because_the_corpus_has_no_url(listener):
-    assert "spotify" not in listener.lower()
+def test_the_listener_page_links_dahshat_on_spotify_from_the_claim_and_lists_it_in_the_json_ld(listener, register):
+    url = register.get("katha-show-spotify-url").text
+    assert url == "https://open.spotify.com/show/5oquXvtv05QJeBgsftB2mN"
+    assert register.claims["katha-show-spotify-url"].source == "Spotify, 2026-10-10"
+    main = main_of(listener)
+    assert main.count(f'<a class="btn" href="{url}">Listen on Spotify</a>') == 1
+    assert main.index('href="https://listen.katha.syahi.sh/shows/dahshat"') < main.index(url) < main.index("In the store")
+    (series,) = [n for n in ld(listener) if n["@type"] == "PodcastSeries"]
+    assert series["sameAs"] == [url]
+    assert len(re.findall(r"open\.spotify\.com", listener)) == 2      # the link and the JSON-LD, nowhere else
 
 
 def test_the_listener_page_carries_a_podcast_series_and_an_audiobook_from_claims(listener, register):
@@ -108,8 +118,9 @@ def test_the_two_katha_pages_have_one_self_canonical_each_and_no_shared_sentence
     assert publisher.count('<link rel="canonical" href="https://syahi.sh/katha">') == 1
     a, b = visible(main_of(listener)), visible(main_of(publisher))
     sentences = lambda text: {s.strip() for s in re.split(r"(?<=[.!?])\s+", text) if len(s.split()) >= 6}
-    assert sentences(a) & sentences(b) == set()
-    assert "Dahshat" not in b and "Forty-five seconds" not in b
+    # Quiz item 9 puts the sample clip on both pages, so its two lines are shared on purpose and nothing else is.
+    assert sentences(a) & sentences(b) == {"Every title has a free sample chapter."}
+    assert "Dahshat" not in b
 
 
 def test_every_dahshat_description_says_the_same_thing(dist, listener, register):
@@ -136,7 +147,7 @@ def test_privacy_links_line_names_only_services_the_built_site_links_to(dist):
     text = visible(main_of(built(dist, "privacy.html")))
     line = re.search(r"Links to (.*?) take you to those services", text).group(1)
     named = {"WhatsApp": "wa.me", "Cal.com": "cal.com", "YouTube": "youtube.com", "GitHub": "github.com",
-             "LinkedIn": "linkedin.com", "Instagram": "instagram.com", "Threads": "threads.com", "X": "x.com"}
+             "LinkedIn": "linkedin.com", "Instagram": "instagram.com", "Threads": "threads.com"}   # no X: her personal profiles are off the site (quiz item 1)
     assert set(re.split(r", | and ", line)) == set(named)
     every_link = "".join(p.read_text(encoding="utf-8") for p in dist.glob("*.html"))
     for host in named.values():
@@ -160,7 +171,7 @@ def test_signet_has_no_d10_finding_and_the_old_lines_are_gone(dist):
     html = built(dist, "signet.html")
     assert d10check.check(html, "/signet") == []
     text = visible(main_of(html))
-    assert "A self-serve app you start on your own today" in text and "A system with years of outside use behind it" in text
+    assert "A self-serve app you start on your own today" in text and "A system with years of outside use behind it" not in text   # quiz item 11
     assert "sign up for today" not in text and "customers running it" not in text
 
 
@@ -184,7 +195,7 @@ def test_home_thesis_and_the_card_head_claim_no_total(dist, register):
     assert ("We take the repeat work off your desk, so your business can operate efficiently, analyze deeply and grow immensely.") in text
     assert "an owner's desk" not in text
     assert '<span class="roman"><span data-claim="home-card-count">4</span></span>' in main
-    assert "Ventures to start with" in text and "4 Ventures Pick" not in text
+    assert "Where to start Pick the one you came for." in text and "Ventures to start with" not in text and "4 Ventures Pick" not in text
     assert text.count("<") == 0 and len(re.findall(r'class="card"', main)) == int(register.get("home-card-count").short)
     assert register.claims["venture-count"].status == "retired"
 

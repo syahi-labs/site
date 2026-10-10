@@ -19,11 +19,6 @@ profiles:
   - {label: Threads, href: "https://www.threads.com/@syahitech"}
   - {label: GitHub, href: "https://github.com/syahi-labs"}
 
-# The founder's own profiles (D5): structured data on /about and the visible list there, never the footer.
-founder_profiles:
-  - {label: X, href: "https://x.com/surabhipradhan"}
-  - {label: GitHub, href: "https://github.com/surpradhan"}
-
 policies:
   - {label: Contact, href: /contact}
   - {label: Privacy, href: /privacy}

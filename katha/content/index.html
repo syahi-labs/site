@@ -7,13 +7,13 @@ draft: true
 layout: page
 css: katha-index
 schema: [PodcastSeries, Audiobook]
-claims: [katha-show-name, media-dahshat-line, katha-show-disclosure, katha-title-name, katha-title-blurb, katha-title-shape, katha-title-price, katha-title-disclosure, katha-sample-length, media-store-sample]
+claims: [katha-show-name, media-dahshat-line, katha-show-disclosure, katha-show-spotify-url, katha-title-name, katha-title-blurb, katha-title-shape, katha-title-price, katha-title-disclosure, katha-sample-length, media-store-sample]
 og_title: "Katha · stories to press play on"
 og_description: "Dahshat is free to listen. अधूरे हिसाब is a Hindi audiobook in the Katha store, with a free sample chapter."
 ---
 {# DRAFT for her Sunday edit (B2). The listener page: the free show, the one title in the store, the 45-second clip.
-   The publisher pitch lives on syahi.sh/katha and shares no body with this page. Spotify has no link here: its URL
-   is not in the corpus (a question in the B2/B3 report). #}
+   The publisher pitch lives on syahi.sh/katha and shares no body with this page. Dahshat's Spotify link is the
+   claim katha-show-spotify-url (receipt 2026-10-10-dahshat-spotify-url). #}
 <section class="hero">
   <div class="hero-grid">
     <div>
@@ -39,6 +39,7 @@ og_description: "Dahshat is free to listen. अधूरे हिसाब is a
     <p class="fine">{{ claim("katha-show-disclosure") }}</p>
     <div class="cta-row">
       <a class="btn primary" href="https://listen.katha.syahi.sh/shows/dahshat">Listen to {{ claim("katha-show-name") }}</a>
+      <a class="btn" href="{{ claim_text('katha-show-spotify-url') }}">Listen on Spotify</a>
     </div>
   </div>
 </section>
@@ -79,6 +80,6 @@ og_description: "Dahshat is free to listen. अधूरे हिसाब is a
     <span class="label">Publishers</span>
   </div>
   <div class="ask">
-    <p>Have a catalogue with no audio? We produce Indian Language audiobooks with every sentence checked against the printed text. <a href="https://syahi.sh/katha">See how it works for publishers.</a></p>
+    <p>Have a catalogue with no audio? We produce Indian-language audiobooks with every sentence checked against the printed text. <a href="https://syahi.sh/katha">See how it works for publishers.</a></p>
   </div>
 </section>
