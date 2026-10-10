@@ -17,6 +17,31 @@ export function redirectFor(url) {
   return null;
 }
 
+// One clean path: no repeated slash, no trailing slash, no /index.html, no .html. The root stays "/".
+function cleanPath(pathname) {
+  let path = pathname;
+  for (;;) {
+    let next = path.replace(/\/{2,}/g, "/").replace(/(.)\/+$/, "$1");
+    if (next.endsWith("/index.html")) next = next.slice(0, -"index.html".length);
+    else if (next.endsWith(".html")) next = next.slice(0, -".html".length);
+    next = next.replace(/(.)\/+$/, "$1") || "/";
+    if (next === path) return path;
+    path = next;
+  }
+}
+
+/**
+ * Where a site-host request for a non-clean URL (/x.html, /x/, /index.html) should go with a 301, or null.
+ * The target is built from the fixed host plus a path with no leading double slash, so it can only ever
+ * land on syahi.sh. The query string is carried over untouched. The root "/" is never redirected.
+ */
+export function cleanUrlFor(url) {
+  if (!isSiteHost(url)) return null;
+  const clean = cleanPath(url.pathname);
+  if (clean === url.pathname) return null;
+  return `https://syahi.sh${clean}${url.search}`;
+}
+
 /** The campaign name when it is safe to write into a page, else null. Never anything about a person. */
 export function sanitizeSrc(raw) {
   return typeof raw === "string" && CAMPAIGN.test(raw) ? raw : null;
