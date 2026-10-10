@@ -160,6 +160,10 @@ B3_TEXT_EDITS = {
          "Fonts. The typefaces are served from syahi.sh itself. No third-party font host receives a request from your browser."),
         ("Links to WhatsApp, Cal.com, X, GitHub and YouTube take you to those services.",
          "Links to WhatsApp, Cal.com, YouTube, GitHub, LinkedIn, Instagram, Threads and X take you to those services."),
+        ("Hosting. The site is served by GitHub Pages. GitHub keeps ordinary server logs: IP address, page requested, time. "
+         "We don't see visitor-level logs.",
+         "Hosting. syahi.sh is served by Cloudflare, and katha.syahi.sh by GitHub Pages. Each keeps ordinary server logs to "
+         "deliver the pages: IP address, page requested, time. We see only the aggregate counts above, never visitor-level logs."),
     ],
 }
 
