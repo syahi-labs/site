@@ -1,0 +1,65 @@
+---
+title: About Syahi and Surabhi Pradhan
+description: "Syahi is run by its founder, Surabhi Pradhan, in Bengaluru. Her agents draft the work, she approves it, and every decision leaves a receipt."
+updated: 2026-10-10
+approved:
+draft: true
+layout: page
+css: story
+schema: [ProfilePage]
+claims: [founder-name, founder-line, founder-years, org-one-person, org-founded-month, org-legal-name, org-llpin, org-locality, signet-d10-first, booking-call-length]
+og_title: "About Syahi: who runs it and how we work"
+og_description: "A founder in Bengaluru and her agents. Everything that leaves the company waits for her yes."
+---
+{# DRAFT for her Sunday edit. The ProfilePage node (build_jsonld) takes its name and description from the claims
+   founder-name and founder-line, and sameAs from site.yaml founder_profiles; the page shows all three. #}
+<div class="page-head">
+  <p class="devanagari"><span lang="hi">स्याही</span> &nbsp;·&nbsp; ink</p>
+  <h1>Who is behind Syahi</h1>
+  <p class="thesis">One founder, in Bengaluru, with a team of agents that does the drafting.</p>
+</div>
+
+<section aria-labelledby="founder-head">
+  <div class="section-head">
+    <span class="roman">I</span>
+    <h2 class="label" id="founder-head">The founder</h2>
+  </div>
+  <div class="doc">
+    <h3>{{ claim("founder-name") }}</h3>
+    <p>{{ claim("founder-line") }} {{ claim("founder-name") }} has spent {{ claim("founder-years") }} in AI, ML and analytics. She started Syahi in {{ claim("org-founded-month") }} and signs everything that leaves it.</p>
+    <p>Find her on
+      {% for link in site.founder_profiles %}<a href="{{ link.href }}">{{ link.label }}</a>{% if not loop.last %} and {% endif %}{% endfor %}.
+    </p>
+  </div>
+</section>
+
+<section aria-labelledby="company-head">
+  <div class="section-head">
+    <span class="roman">II</span>
+    <h2 class="label" id="company-head">The company</h2>
+  </div>
+  <div class="doc">
+    <p>Syahi (<span lang="hi">स्याही</span>, ink) is {{ claim("org-one-person") }} in {{ claim("org-locality") }}. The legal entity is {{ claim("org-legal-name") }}, {{ claim("org-llpin") }}.</p>
+    <p>We make <a href="/services">services</a> for owner-run businesses, <a href="/signet">Signet</a> for approvals, and the <a href="/media">media</a> we publish.</p>
+  </div>
+</section>
+
+<section aria-labelledby="how-head">
+  <div class="section-head">
+    <span class="roman">III</span>
+    <h2 class="label" id="how-head">How we work</h2>
+  </div>
+  <div class="doc">
+    <p>Our agents draft the work. Surabhi decides what goes out, and every decision leaves a receipt.</p>
+    <p>{{ claim("signet-d10-first") }}</p>
+    <p>Every piece of work ends in a receipt: a dated commit or a log line you can read. If it has no receipt, it is not done. Our records sit in plain files, so whoever picks up the work next, human or agent, starts where the last one stopped.</p>
+  </div>
+</section>
+
+<section class="closing" aria-labelledby="talk-head">
+  <h2 id="talk-head" class="closing-line">Want to talk it through?</h2>
+  <p class="cta-row">
+    <a class="cta" href="https://cal.com/surabhipradhan/30-mins-discussion-about-syahi">Book a {{ claim("booking-call-length", "short") }} call</a>
+    <a class="quiet-link" href="/contact">or write to us</a>
+  </p>
+</section>
