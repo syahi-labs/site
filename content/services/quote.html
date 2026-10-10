@@ -1,13 +1,14 @@
 ---
 title: "Quote in Ten Minutes · Syahi"
 description: "An enquiry lands on WhatsApp. A draft quote goes back in ten minutes, priced off your own rate card. You check it. You send it."
-updated: 2026-10-06
-approved: 2026-10-06
+updated: 2026-10-10
+approved:
+draft: true
 layout: page
 css: quote
 schema: [Service]
 audience: owner
-claims: [qtm-quote-time, qtm-live-time, qtm-firm-size, qtm-running-period, qtm-check-time, org-locality]
+claims: [qtm-quote-time, qtm-live-time, qtm-firm-size, qtm-running-period, signet-d10-first, org-locality]
 ---
 {# Ported word for word from studioservices-landing c66925f (tests/parity/services.html). Markup-only changes, none of
    them copy: the page's own footer is the shared footer; the hero, a <header> today, is a <div class="hero"> so the
@@ -103,7 +104,7 @@ claims: [qtm-quote-time, qtm-live-time, qtm-firm-size, qtm-running-period, qtm-c
     <span>One founder</span><span class="dot">·</span>
     <span>{{ claim("org-locality") }}</span><span class="dot">·</span>
     <span>Agents draft, she signs</span><span class="dot">·</span>
-    <span>Every draft our agents make waits for her yes in Signet</span>
+    <span>{{ claim("signet-d10-first") }}</span>
   </p>
 </section>
 
@@ -111,7 +112,7 @@ claims: [qtm-quote-time, qtm-live-time, qtm-firm-size, qtm-running-period, qtm-c
   <h2 class="section-label">Asked before you ask</h2>
   <details>
     <summary>What if it quotes wrong?</summary>
-    <p>It can't send anything. You send, not it. Every draft waits for your check. A wrong draft costs you {{ claim("qtm-check-time") }}, not a customer.</p>
+    <p>It can't send anything. You send, not it. Every draft waits for your check. A wrong draft costs you a quick look, not a customer.</p>
   </details>
   <details>
     <summary>Do I need new software?</summary>

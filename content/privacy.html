@@ -1,14 +1,13 @@
 ---
 title: Privacy · Syahi
 description: "What syahi.sh and Syahi's products collect, why, how long it's kept, and how to ask for deletion. SYAHI TECHNOLOGIES LLP, Bengaluru."
-updated: 2026-10-06
+updated: 2026-10-10
+approved:
 draft: true
-# Ported word for word from the live page (446f625), so the words are not edited here. It is a draft because
-# three statements will not be true on the new site, and must be edited with her in Part B before release:
-#   1. The Google Fonts paragraph in section II ("The typefaces come from Google Fonts"). Fonts are self-hosted now.
-#   2. "The moving ink is drawn inside your browser and sends nothing anywhere". The canvas is gone (D21).
-#   3. The X and YouTube links line ("Links to WhatsApp, Cal.com, X, GitHub and YouTube ..."). The footer now
-#      lists LinkedIn, Instagram, Threads and GitHub (D5).
+# Launch B3 (2026-10-10) made the three edits this page waited for, each one listed old and new in the B2/B3 report:
+# the D20 privacy line (the cookies and analytics sentences), the fonts bullet (self-hosted), the moving-ink sentence
+# (gone with the canvas, D21), and the links line (only services the built site links to). Every other line is the
+# live page's, word for word. The date under the title is the page's `updated`, never typed by hand.
 layout: page
 css: policy
 claims: [org-legal-name, org-llpin, law-dpdp-act, signet-deletion-window, minor-age-limit, privacy-request-window]
@@ -17,7 +16,7 @@ claims: [org-legal-name, org-llpin, law-dpdp-act, signet-deletion-window, minor-
   <p class="devanagari"><span lang="hi">स्याही</span> &nbsp;·&nbsp; ink</p>
   <h1>Privacy</h1>
   <p class="thesis">What we collect, why, how long we keep it, and how to make us delete it. Short, because there isn't much.</p>
-  <p class="updated">Last updated <time datetime="2026-09-10">10 September 2026</time></p>
+  <p class="updated">Last updated <time datetime="{{ page.updated }}">{{ page.updated|long_date }}</time></p>
 </div>
 
 <section>
@@ -31,13 +30,13 @@ claims: [org-legal-name, org-llpin, law-dpdp-act, signet-deletion-window, minor-
 <section>
   <div class="section-head"><span class="roman">II</span><span class="label">This website</span><span class="lede">We read the code before writing this.</span></div>
   <div class="doc">
-    <p>syahi.sh sets no cookies. It runs no analytics. It has no contact form, so the site itself collects nothing you type. The moving ink is drawn inside your browser and sends nothing anywhere.</p>
-    <p>Two things do leave your browser when the page loads:</p>
+    <p>syahi.sh sets no cookies and runs no tracking scripts. Our host counts visits in aggregate (which pages, which countries, which campaign link), never who you are. Raw server logs are kept short and never joined to anything else. syahi.sh has no contact form, so the site itself collects nothing you type.</p>
+    <p>Two things happen when the page loads:</p>
     <ul>
-      <li><b>Fonts.</b> The typefaces come from Google Fonts. Google's servers receive that request, which carries your IP address and browser details. Google's privacy policy covers what they do with it.</li>
+      <li><b>Fonts.</b> The typefaces are served from syahi.sh itself. No third-party font host receives a request from your browser.</li>
       <li><b>Hosting.</b> The site is served by GitHub Pages. GitHub keeps ordinary server logs: IP address, page requested, time. We don't see visitor-level logs.</li>
     </ul>
-    <p>Links to WhatsApp, Cal.com, X, GitHub and YouTube take you to those services. Their policies apply once you're there.</p>
+    <p>Links to WhatsApp, Cal.com, YouTube, GitHub, LinkedIn, Instagram, Threads and X take you to those services. Their policies apply once you're there.</p>
   </div>
 </section>
 

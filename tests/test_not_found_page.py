@@ -2,6 +2,8 @@
 #
 # Task 9a: the 404 page. There is no old 404 to port, so this is NEW copy, drafted in the house voice for
 # her to edit in Part B. It is served by GitHub Pages for any missing path, so its links are root-absolute.
+# Launch B3 (2026-10-10) wrote the final copy: the explanation, the four tabs, then a line back home and an email.
+# It stays `draft: true` with no approval date, because a page can only lack an approval date as a draft.
 import datetime
 import re
 from pathlib import Path
@@ -40,23 +42,25 @@ def test_one_h1_and_it_says_the_page_is_not_here(main):
     assert re.findall(r"<h1>(.*?)</h1>", main) == ["That page isn't here."]
 
 
-def test_one_line_of_copy_and_nothing_else_to_read(main):
-    assert len(re.findall(r"<p\b", main)) == 1
-    line = re.search(r"<p[^>]*>(.*?)</p>", main, re.S).group(1)
-    assert len(re.sub(r"<[^>]+>", "", line).split()) <= 20
+def test_two_short_paragraphs_and_the_four_tabs(main):
+    paragraphs = [re.sub(r"<[^>]+>", "", p) for p in re.findall(r"<p\b[^>]*>(.*?)</p>", main, re.S)]
+    assert len(paragraphs) == 2
+    assert all(len(text.split()) <= 30 for text in paragraphs)
+    assert "These four tabs" in paragraphs[0]
 
 
-def test_it_links_home_and_the_four_tabs_in_the_order_the_header_has_them(main):
+def test_it_links_the_four_tabs_in_the_order_the_header_has_them_then_home_and_the_inbox(main):
     site = load_site(REPO / "site.yaml")
     tabs = [tab.href for tab in site.tabs]
     assert tabs == ["/services", "/signet", "/media", "/about"]          # the four tabs, D18
-    assert link_values(main) == ["/"] + tabs
+    assert link_values(main) == tabs + ["/", "mailto:hello@syahi.sh"]
+    assert main.index('href="/about"') < main.index('href="/"')           # the list of tabs comes first
 
 
-def test_the_link_labels_are_the_header_tab_labels(main):
+def test_the_tab_link_labels_are_the_header_tab_labels(main):
     site = load_site(REPO / "site.yaml")
     labels = re.findall(r"<a href=\"[^\"]+\">(.*?)</a>", main)
-    assert labels == ["Home"] + [tab.label for tab in site.tabs]
+    assert labels == [tab.label for tab in site.tabs] + ["home page", "hello@syahi.sh"]
 
 
 def test_it_passes_every_check_on_its_own(html, page):
@@ -94,6 +98,6 @@ def test_it_is_a_draft_and_the_made_by_line_claims_no_approval(html, page):
     assert "Checked and approved" not in html
 
 
-def test_front_matter_update_date_is_the_session_date_of_the_draft(page):
-    assert page.updated == datetime.date(2026, 10, 6)
+def test_front_matter_update_date_is_the_day_the_final_copy_was_written(page):
+    assert page.updated == datetime.date(2026, 10, 10)
     assert page.layout == "page" and page.css is None
