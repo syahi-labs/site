@@ -1,23 +1,31 @@
 ---
-title: Syahi · an AI venture studio run by one human and her agents
-description: "Syahi (स्याही, ink) is a one-person AI venture studio in Bangalore: agent software, audiobooks in Indian languages, AI education, and illustrated stories, built by Surabhi Pradhan and her agents."
-updated: 2026-10-06
-approved: 2026-10-06
+title: Syahi · AI and automation for owner-run businesses in India
+description: "Syahi takes the repeat work off an owner's desk: quotations in minutes, a brief every morning, follow-ups that go out on time. Start with a free call."
+updated: 2026-10-10
+approved:
+draft: true
 layout: page
+audience: owner
 preload_fonts: [fraunces-italic]
 css: home
-claims: [venture-count, qtm-quote-time, qtm-live-time, founder-years]
-og_title: "Syahi · ink for the agent age"
-og_description: "One human, many hands. Software, audiobooks, education, and stories. Built with AI agents, approved by a person."
+claims: [home-card-count, qtm-quote-time, qtm-live-time, founder-years, call-is-free, booking-call-length]
+og_title: "Syahi · the repeat work off your desk"
+og_description: "Quotations in minutes, a brief every morning, follow-ups on time. For owner-run businesses. You check everything before it goes out."
 ---
+{# DRAFT for her Sunday edit (D2, D16). The top sells to an owner-run business: the benefit, her triad as three beats,
+   one action (Book a call). The house mark and the four cards below it are today's, word for word. The old
+   hero-ventures line ("4 ventures · signet · ...") went with the old thesis; the ventures section head still says it. #}
 <section class="hero">
   <div class="hero-grid">
     <div>
       <p class="devanagari"><span lang="hi">स्याही</span> &nbsp;·&nbsp; ink</p>
       <h1>Syahi<svg class="drop" viewBox="20 8 60 84" aria-hidden="true"><path d="M 66 8 C 65.02 21.97 67.12 34.14 74.57 44.79 A 30 30 0 1 1 22.81 49.32 C 32.11 29.38 57.23 25.98 66 8 Z"/></svg></h1>
-      <p class="thesis">An AI venture studio run by <em>one human and her&nbsp;agents.</em></p>
-      <p class="sub">Agents do the work. A person signs it. Everything ships with a receipt. That's the whole method, and the company is the demo.</p>
-      <p class="hero-ventures">{{ claim("venture-count") }}&nbsp;ventures &middot; signet &middot; studio&nbsp;services &middot; katha&nbsp;audio &middot; paper&nbsp;machine</p>
+      <p class="thesis">We take the repeat work off your desk, so your business can <em>operate efficiently, analyze deeply and grow&nbsp;immensely.</em></p>
+      <p class="sub">Made for owner-run businesses in India. Everything that reaches your customers waits for your yes.</p>
+      <p class="hero-cta">
+        <a class="cta" href="https://cal.com/surabhipradhan/30-mins-discussion-about-syahi">Book a call</a>
+        <span class="note">A {{ claim("call-is-free") }} {{ claim("booking-call-length", "short") }} call. Tell us what eats your week.</span>
+      </p>
     </div>
     <figure class="hero-side">
       <div class="torn torn-a">{{ picture("img/inkpot.webp", "Engraving of an Indian brass inkpot with a reed pen, the Syahi house mark", sizes="18.75rem", media="(min-width: 40em)", loading="eager", fetchpriority="high", css_class="hero-mark") }}</div>
@@ -27,9 +35,27 @@ og_description: "One human, many hands. Software, audiobooks, education, and sto
 </section>
 
 <section>
+  <div class="beats">
+    <div class="beat">
+      <h2>Operate efficiently</h2>
+      <p>An enquiry lands on WhatsApp. A draft quotation goes back in {{ claim("qtm-quote-time") }}, priced off your own rate card. You check it and send it.</p>
+    </div>
+    <div class="beat">
+      <h2>Analyze deeply</h2>
+      <p>A brief reaches you every morning: what is overdue and what is stuck. You see the business without digging through chats and ledgers.</p>
+    </div>
+    <div class="beat">
+      <h2>Grow immensely</h2>
+      <p>Buyers often go with whoever answers first. Answer first, then hand us the next problem area. Each one gets the same treatment, faster than the last.</p>
+    </div>
+  </div>
+  <p class="beats-more"><a href="/services">See what we build &rarr;</a></p>
+</section>
+
+<section>
   <div class="section-head">
-    <span class="roman">{{ claim("venture-count", "short") }}</span>
-    <span class="label">Ventures</span>
+    <span class="roman">{{ claim("home-card-count", "short") }}</span>
+    <span class="label">Ventures to start with</span>
     <span class="lede">Pick the one you came for.</span>
   </div>
 

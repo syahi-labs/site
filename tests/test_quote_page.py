@@ -158,7 +158,7 @@ def test_the_front_matter_is_the_ports_contract():
     assert found.layout == "page" and found.css == "quote"
     assert found.schema == ("Service",)
     assert found.audience == "owner"                         # the plan's contract: an owner reads this page
-    assert found.draft is False and found.approved == found.updated == APPROVED
+    assert found.draft is True and found.approved is None and found.updated == datetime.date(2026, 10, 10)   # launch B3: two lines changed, so it needs her yes again
     assert found.og_image is None                            # today's page named no share image: the site default
     assert found.og_title is None and found.og_description is None and found.og_image_alt is None   # today's equal title and description
     assert found.claims and len(set(found.claims)) == len(found.claims)
@@ -174,9 +174,10 @@ def test_the_page_passes_every_check_on_its_own(html, register):
     assert jsonld_mismatches(html) == []
 
 
-def test_the_made_by_line_is_the_approval(html):
-    assert f"Checked and approved by Surabhi Pradhan on {format_date(APPROVED)}." in html
-    assert "Not yet approved" not in html
+def test_the_made_by_line_says_the_page_is_not_yet_approved(html):
+    # launch B3 changed two lines of this page; it waits for her yes
+    assert '<p class="made-by">Drafted with AI from our own records. Not yet approved.</p>' in html
+    assert "Checked and approved" not in html
 
 
 def test_the_page_names_no_share_image_of_its_own_so_it_carries_the_sites_default(dist, html):
@@ -195,8 +196,20 @@ def test_the_structured_data_is_a_service_the_organization_provides(html):
 
 # ---- text parity ----
 
-def test_main_text_is_the_old_pages_text_word_for_word(main):
+# Launch B3 (2026-10-10), the two sentences of this page that changed. Her pick for the first; the second is the D10 first
+# beat, because only that beat may name Signet's approvals outside the full D10 sentence ("every draft our agents make" claimed more).
+B3_EDITS = [
+    ("A wrong draft costs you ten seconds, not a customer.", "A wrong draft costs you a quick look, not a customer."),
+    ("Every draft our agents make waits for her yes in Signet",
+     "Live today: every post, outreach email and desk draft our agents make waits for Surabhi's yes in Signet."),
+]
+
+
+def test_main_text_is_the_old_pages_text_but_for_the_two_b3_edits(main):
     old = apply_allowed(words(old_page(), "body"), SNAPSHOT)
+    for before, after in B3_EDITS:
+        assert old.count(before) == 1, before
+        old = old.replace(before, after)
     new = words("<main" + main + "</main>", "main")
     assert new == old
 
@@ -209,7 +222,9 @@ SIGNATURE = ("Quote in Ten Minutes.",
              "Fixed price.", "Guarantee in writing before the build starts.", "Amounts on the first call.",
              "The system drafts. You send. Every quote, every time.",
              "The quote is the first desk we take over.",
-             "Agents draft, she signs", "Every draft our agents make waits for her yes in Signet",
+             "Agents draft, she signs",
+             "Live today: every post, outreach email and desk draft our agents make waits for Surabhi's yes in Signet.",
+             "A wrong draft costs you a quick look, not a customer.",
              "What if it quotes wrong?", "Do I need new software?", "Hindi or English enquiries?",
              "The next enquiry decides in hours. Answer it in ten minutes.")
 
@@ -327,7 +342,6 @@ def test_the_buttons_and_the_quiet_link_keep_their_classes_and_text(main):
 # (id, text, short, source): the claims this page adds, extends or reuses
 CLAIMS = {
     "qtm-firm-size": ("5 to 50 people", None, "Services page, 2026-10-06"),
-    "qtm-check-time": ("ten seconds", None, "Services page, 2026-10-06"),
     "qtm-quote-time": ("ten minutes", None, "Services page, 2026-10-06"),
     "qtm-live-time": ("two weeks", "Two-week", "Services page, 2026-10-06"),
     "qtm-running-period": ("30 days", None, "Offer doc, 2026-08-24"),
@@ -352,7 +366,7 @@ def test_no_id_repeats_and_the_ids_this_page_reuses_exist_once():
 
 # (figure as the page prints it, the claim that must be the only way it gets there)
 FIGURES = [("5 to 50 people", "qtm-firm-size"), ("ten minutes", "qtm-quote-time"), ("Two-week", "qtm-live-time"),
-           ("30 days", "qtm-running-period"), ("ten seconds", "qtm-check-time"), ("Bengaluru", "org-locality")]
+           ("30 days", "qtm-running-period"), ("Bengaluru", "org-locality")]
 
 
 def test_each_figure_reaches_the_page_only_through_its_claim(main, register):
@@ -392,9 +406,20 @@ def test_the_running_period_and_the_guarantee_day_are_two_claims_because_they_ar
     assert len(re.findall(r"(?m)^- id: qtm-(?:running-period|guarantee-day)$", text)) == 2
 
 
-def test_the_firm_size_and_the_check_time_sit_in_their_sentences(main):
+def test_the_check_time_claim_is_retired_and_the_faq_states_no_number(main, register):
+    # launch B3: her pick is "a quick look"; nothing else used ten seconds, so the claim is retired
+    assert register.claims["qtm-check-time"].status == "retired"
+    assert "qtm-check-time" not in page().claims and "qtm-check-time" not in claim_ids(main)
+    assert "ten seconds" not in main and "A wrong draft costs you a quick look, not a customer." in main
+
+
+def test_the_only_signet_sentence_is_the_d10_first_beat(main):
+    assert '<span data-claim="signet-d10-first">Live today: every post, outreach email and desk draft our agents make waits for Surabhi\'s yes in Signet.</span>' in main.replace("&#39;", "'")
+    assert "Every draft our agents make" not in main
+
+
+def test_the_firm_size_sits_in_its_sentence(main):
     assert 'Owner-run firms, roughly <span data-claim="qtm-firm-size">5 to 50 people</span>, quoting custom work' in main
-    assert 'A wrong draft costs you <span data-claim="qtm-check-time">ten seconds</span>, not a customer.' in main
     assert '<summary>What happens after the first <span data-claim="qtm-running-period">30 days</span>?</summary>' in main
 
 
@@ -426,7 +451,7 @@ def test_the_scenes_made_up_figures_are_inside_a_sample_and_nowhere_else(main):
 
 def test_the_real_figures_are_not_inside_a_sample(main):
     inside, outside = scenes(main)
-    for fact in ("5 to 50 people", "ten minutes", "Two-week", "30 days", "ten seconds", "Bengaluru"):
+    for fact in ("5 to 50 people", "ten minutes", "Two-week", "30 days", "Bengaluru"):
         assert fact in outside and fact not in inside, fact
 
 

@@ -29,6 +29,8 @@ DEFAULT_OG_IMAGE = "/assets/brand/og-default.png"
 LAYOUT_NAME = re.compile(r"[a-z0-9][a-z0-9-]*")
 # Fixed English abbreviations: no locale, no platform strftime flags.
 MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+MONTH_NAMES = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
+               "November", "December")
 
 
 class RenderError(Exception):
@@ -47,6 +49,13 @@ def format_date(d: datetime.date) -> str:
     if not isinstance(d, datetime.date):
         raise TypeError(f"format_date needs a date, got {type(d).__name__}")
     return f"{d.day} {MONTHS[d.month - 1]} {d.year:04d}"
+
+
+def format_long_date(d: datetime.date) -> str:
+    """6 October 2026: day without a leading zero, the month in full, four-digit year. The policy pages' "Last updated"."""
+    if not isinstance(d, datetime.date):
+        raise TypeError(f"format_long_date needs a date, got {type(d).__name__}")
+    return f"{d.day} {MONTH_NAMES[d.month - 1]} {d.year:04d}"
 
 
 class SiteEnvironment(jinja2.sandbox.SandboxedEnvironment):
@@ -129,6 +138,7 @@ def make_env(root: Path, site: SiteConfig, claims: ClaimRegister) -> SiteEnviron
     env.globals["claim_text"] = claim_text
     env.globals["picture"] = picture
     env.filters["date"] = format_date
+    env.filters["long_date"] = format_long_date
     return env
 
 

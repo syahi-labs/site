@@ -1,0 +1,38 @@
+---
+title: Paper Machine · plates of a field guide to AI
+description: "Paper Machine explains AI and ML like a naturalist's field guide. Here is every published plate, each linked to its video on YouTube."
+updated: 2026-10-10
+approved:
+draft: true
+layout: page
+css: story
+claims: [pm-series-name, pm-plate-1-title, pm-plate-1-url, pm-plate-2-title, pm-plate-2-url, pm-plate-3-title, pm-plate-3-url, pm-plate-4-title, pm-plate-4-url, pm-plate-5-title, pm-plate-5-url]
+og_title: "Paper Machine: the plates so far"
+og_description: "AI and ML explained like a naturalist's field guide. Every published plate, with its video."
+---
+{# DRAFT for her Sunday edit. Only published plates are listed (the channel's own playlist, read through the YouTube
+   API 2026-10-10). The plate numeral is a CSS counter, so no digit sits in the markup. #}
+<div class="page-head">
+  <p class="devanagari"><span lang="hi">स्याही</span> &nbsp;·&nbsp; ink</p>
+  <h1>Paper Machine</h1>
+  <p class="thesis">AI and ML explained like a naturalist's field guide. Plates, not thumbnails. Every episode is a specimen: pinned, labelled, and drawn until the mechanism is visible.</p>
+</div>
+
+<section aria-labelledby="plates-head">
+  <div class="section-head">
+    <h2 class="label" id="plates-head">{{ claim("pm-series-name") }}</h2>
+    <span class="lede">Every plate so far.</span>
+  </div>
+  <ol class="plates">
+    <li><a href="{{ claim_text('pm-plate-1-url') }}">{{ claim("pm-plate-1-title") }}</a></li>
+    <li><a href="{{ claim_text('pm-plate-2-url') }}">{{ claim("pm-plate-2-title") }}</a></li>
+    <li><a href="{{ claim_text('pm-plate-3-url') }}">{{ claim("pm-plate-3-title") }}</a></li>
+    <li><a href="{{ claim_text('pm-plate-4-url') }}">{{ claim("pm-plate-4-title") }}</a></li>
+    <li><a href="{{ claim_text('pm-plate-5-url') }}">{{ claim("pm-plate-5-title") }}</a></li>
+  </ol>
+</section>
+
+<section class="closing">
+  <p class="closing-line">New plates land on the channel.</p>
+  <p class="cta-row"><a class="cta" href="https://www.youtube.com/@papermachine07">Watch on YouTube</a></p>
+</section>

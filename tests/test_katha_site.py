@@ -157,39 +157,17 @@ def test_the_page_css_passes_the_stricter_guard():
 
 # ---- the port: markup-only changes, each one pinned ----
 
-def test_the_one_heading_below_the_h1_is_an_h2_with_its_words_kept(html):
-    # Today's page jumps from h1 to h3. Fixed by changing the level, not the words.
-    assert re.findall(r"<h([1-6])\b", html.split("<main", 1)[1].split("</main>")[0]) == ["1", "2"]
-    assert re.search(r"<h2[^>]*>For</h2>", html)
+# Launch B2 (2026-10-10) made this page the listener page. The Task 9 port tests that pinned the old publisher body
+# word for word (headings, beats, links, text and title parity against katha-index.html) moved to /katha, which kept
+# that body (tests/test_parity.py). What this page says is pinned in tests/test_launch_pages.py.
+
+def test_the_page_is_one_h1_and_h2s_below_it(html):
+    assert re.findall(r"<h([1-6])\b", html.split("<main", 1)[1].split("</main>")[0]) == ["1", "2", "2"]
 
 
-def test_both_devanagari_runs_are_marked_hindi(html):
-    assert len(re.findall(r'<span lang="hi">अधूरे हिसाब</span>', html)) == 2     # the listen line and the sample
+def test_the_devanagari_runs_are_marked_hindi(html):
     assert '<span lang="hi">कथा</span>' in html
-
-
-def test_the_beats_are_an_ordered_list_of_three(html):
-    block = re.search(r'<ol class="beats">(.*?)</ol>', html, re.S).group(1)
-    assert len(re.findall(r"<li\b", block)) == 3
-    assert [t.strip() for t in re.findall(r"<strong>(.*?)</strong>", block)] == [
-        "Agents produce", "Every sentence checked", "A human signs off"]
-
-
-HERO_OLD = "https://syahi.sh/art/gramophone.webp"   # today's page: the art lives on the other host
-HERO_NEW = "/assets/img/gramophone.webp"            # the port: the same bytes, built into this host
-
-
-def test_links_and_media_are_the_old_pages_exactly_but_for_the_hero_now_on_its_own_host(html):
-    html = unhash(html)     # the hero's URL carries its content hash; the move is from the file's own path
-    # The same href and src values, in order, in the page's own content, compared whole, not as substrings.
-    # The one move is the hero's, the same entry /katha on syahi.sh uses (parity_helpers.LINK_MOVES).
-    old = SNAPSHOT.read_text(encoding="utf-8").split('<div class="hero-grid">', 1)[1].split("</main>")[0]
-    new = html.split("<main", 1)[1].split("</main>")[0]
-    assert link_values(old).count(HERO_OLD) == 1
-    assert apply_link_moves([HERO_OLD]) == [HERO_NEW]
-    assert link_values(new) == apply_link_moves(link_values(old))
-    assert link_values(new) == [HERO_NEW if value == HERO_OLD else value for value in link_values(old)]
-    assert len(link_values(old)) == 6      # the guard cannot pass by both sides being empty
+    assert len(re.findall(r'<span lang="hi">', html)) >= 4
 
 
 def test_the_hero_image_is_a_file_in_the_katha_hosts_own_output(built):
@@ -202,29 +180,7 @@ def test_the_hero_image_is_a_file_in_the_katha_hosts_own_output(built):
     assert all((host / url.lstrip("/")).is_file() for url, _ in urls)
 
 
-# ---- parity with today's live page ----
-
-def test_main_text_is_the_old_pages_text_word_for_word(html):
-    old = apply_allowed(words(SNAPSHOT.read_text(encoding="utf-8"), "body"), "katha-index.html")
-    new = words(html, "main")
-    assert new == old
-
-
-def test_every_old_sentence_survives_in_the_new_main(html):
-    # A guard on the guard: the comparison above cannot pass by both sides being empty.
-    new = words(html, "main")
-    for phrase in ("Every sentence verified against the source.", "A human signs off",
-                   "Bring a catalog, or one title you care about.", "No checkout, no commitment."):
-        assert phrase in new
-
-
-def test_title_and_description_are_the_old_pages_exactly(html):
-    old = SNAPSHOT.read_text(encoding="utf-8")
-    title = re.search(r"<title>(.*?)</title>", old).group(1)
-    description = re.search(r'<meta name="description" content="(.*?)">', old).group(1)
-    assert f"<title>{title}</title>" in html
-    assert f'<meta name="description" content="{description}">' in html
-
+# ---- the old page's allowed diffs (still /katha's), and no remote font or script ----
 
 def test_every_allowed_diff_has_a_reason_and_none_hides_copy():
     entries = yaml.safe_load((PARITY / "allowed_diffs.yaml").read_text(encoding="utf-8"))["katha-index.html"]

@@ -165,7 +165,7 @@ def test_profile_page_has_the_founder_as_main_entity(tmp_path):
 
 def test_person_has_no_same_as_when_no_founder_profiles(tmp_path):
     site, claims = setup(tmp_path)
-    assert site.founder_profiles == ()
+    site = dataclasses.replace(site, founder_profiles=())   # the real site.yaml now carries hers
     person = node(build_jsonld(pg("/about", ["ProfilePage"]), site, claims), "ProfilePage")["mainEntity"]
     assert "sameAs" not in person
 

@@ -159,7 +159,7 @@ def test_the_front_matter_is_the_ports_contract():
     assert found.layout == "page" and found.css == "signet"
     assert found.schema == ("SoftwareApplication",)
     assert found.audience is None                          # not set here: Part B decides
-    assert found.draft is False and found.approved == APPROVED and found.updated == datetime.date(2026, 10, 7)   # the battery paragraph changed on 10-07, not yet re-approved
+    assert found.draft is True and found.approved is None and found.updated == datetime.date(2026, 10, 10)   # launch B3 changed the two "not what this is" lines, so it needs her yes again
     assert found.og_image == "/assets/brand/og-signet.png"
     assert found.claims and len(set(found.claims)) == len(found.claims)
 
@@ -183,9 +183,9 @@ def test_the_buttons_label_gets_its_digits_from_the_claim_and_the_check_proves_i
     assert [f for f in htmlcheck.check(html, moved) if "aria-label" in f and '"30"' in f]
 
 
-def test_the_made_by_line_is_the_approval(html):
-    assert f"Checked and approved by Surabhi Pradhan on {format_date(APPROVED)}." in html
-    assert "Not yet approved" not in html
+def test_the_made_by_line_says_the_page_is_not_yet_approved(html):
+    assert '<p class="made-by">Drafted with AI from our own records. Not yet approved.</p>' in html
+    assert "Checked and approved" not in html
 
 
 def test_the_share_image_is_todays_og_png_and_is_published(dist, html):
@@ -203,8 +203,17 @@ def test_no_page_in_the_build_repeats_an_id(dist):
 
 # ---- text parity ----
 
-def test_main_text_is_the_old_pages_text_word_for_word(main):
+# Launch B3 (2026-10-10): the two "Not what this is" lines the D10 check flagged, replaced so that nothing outside the D10
+# sentence speaks about customers or sign-ups.
+B3_EDITS = [("A public app you can sign up for today", "A self-serve app you start on your own today"),
+            ("A system with customers running it besides us, yet", "A system with years of outside use behind it")]
+
+
+def test_main_text_is_the_old_pages_text_but_for_the_two_b3_lines(main):
     old = apply_allowed(words(old_page(), "body"), SNAPSHOT)
+    for before, after in B3_EDITS:
+        assert old.count(before) == 1, before
+        old = old.replace(before, after)
     new = words("<main" + main + "</main>", "main")
     assert new == old
 
@@ -216,7 +225,7 @@ SIGNATURE = ("What you approved is what goes out.",
              "Hash mutation, caught", "Veto won the race", "Freeze, from a phone",
              "The seal can travel with the message",
              "Two things this page refuses to fake",
-             "A system with customers running it besides us, yet",
+             "A system with years of outside use behind it",
              "See it happen on your own draft",
              "after a demo. Book 30 minutes, bring a real email or quote you'd hand an agent")
 

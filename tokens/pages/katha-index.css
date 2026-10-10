@@ -72,6 +72,13 @@
   line-height:1.5;
 }
 
+/* The listener page: one card each for the free show and the title in the store */
+.pick{padding:var(--space-6);border:1px solid var(--ink)}
+.pick h2{font-family:var(--font-serif);font-size:var(--fs-h2);font-weight:600;line-height:var(--lh-tight);margin-bottom:var(--space-3)}
+.pick p{max-width:var(--measure)}
+.pick p + p{margin-top:var(--space-3)}
+.pick .fine{font-size:var(--fs-small);color:var(--muted)}
+
 /* Who it's for */
 .fit{max-width:29rem}
 .fit-card{padding:var(--space-5);border:1px solid var(--ink)}

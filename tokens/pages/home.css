@@ -195,3 +195,21 @@
 @media (prefers-reduced-motion: reduce){
   .hero h1 .drop{animation:none}
 }
+
+/* The owner pitch under the mark (B1): one action, then her triad as three beats */
+.hero-cta{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:var(--space-3) var(--space-5);
+  margin-top:var(--space-6);
+}
+.hero-cta .note{font-size:var(--fs-ui);color:var(--muted)}
+.beats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.625rem}
+.beat{padding-top:var(--space-4);border-top:1.5px solid var(--ink)}
+.beat h2{font-size:clamp(var(--fs-lead),3vw,var(--fs-h3));letter-spacing:-.015em}
+.beat p{margin-top:var(--space-3);font-size:var(--fs-ui);line-height:1.6;color:var(--muted)}
+.beats-more{margin-top:var(--space-5);font-family:var(--font-mono);font-size:var(--fs-small)}
+@media (max-width:47.5em){
+  .beats{grid-template-columns:minmax(0,1fr);gap:var(--space-5)}
+}

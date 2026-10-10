@@ -1,13 +1,83 @@
 ---
 title: Katha Audio · every sentence verified against the source
 description: Katha Audio builds Indian Language audiobooks for rights-holders whose catalog has no audio. Agents produce, every sentence is checked against the printed text, a human signs off.
-updated: 2026-10-06
-approved: 2026-10-06
+updated: 2026-10-10
+approved:
+draft: true
 layout: page
 css: katha-index
 schema: [Service]
-claims: [katha-sample-length]
 og_title: "Katha Audio · every sentence verified"
 og_description: "Indian Language audiobooks for rights-holders whose catalog has no audio. Manuscript in, retail-ready audio out."
 ---
-{% include "partials/katha-publishers.html" %}
+{# DRAFT for her Sunday edit (B2). The publisher pitch. The listener copy (the listen line's two titles, the sample
+   clip) moved to katha.syahi.sh, which has its own body; this page keeps a one-line pointer to it. #}
+<section class="hero">
+  <div class="hero-grid">
+    <div>
+      <p class="devanagari"><span lang="hi">कथा</span> &nbsp;·&nbsp; katha</p>
+      <h1>Every sentence verified against the source.</h1>
+      <p class="sub">Indian Language audiobooks for rights-holders whose catalog has no audio. Manuscript in, retail-ready audio out.</p>
+    </div>
+    <figure class="hero-side">
+      {{ picture("img/gramophone.webp", "Copperplate engraving of a vintage gramophone", sizes="14rem", media="(min-width: 40em)", loading="eager", fetchpriority="high", css_class="hero-fig") }}
+      <figcaption class="figcap">the horn</figcaption>
+    </figure>
+  </div>
+  <p class="listen-line">Here to listen, or to hear a sample first? Head to <a href="https://katha.syahi.sh/">katha.syahi.sh</a>.</p>
+</section>
+
+<section>
+  <div class="section-head">
+    <span class="roman">I</span>
+    <span class="label">The method is the pitch</span>
+  </div>
+  <ol class="beats">
+    <li class="beat">
+      <strong>Agents produce</strong>
+      <p>Narration, pronunciation, pacing, chapter marks. The production line is agentic end to end, which is how a catalog gets through it.</p>
+    </li>
+    <li class="beat">
+      <strong>Every sentence checked</strong>
+      <p>Each recorded sentence is verified against the printed text. Not spot-checked. Checked. A dropped line or a wrong number fails the title, not the listener.</p>
+    </li>
+    <li class="beat">
+      <strong>A human signs off</strong>
+      <p>Nothing ships on a machine's say-so. A person approves the title, and the sign-off leaves a receipt.</p>
+    </li>
+  </ol>
+  <p class="spine">Agents draft, a person signs, the record keeps the receipt.</p>
+</section>
+
+<section>
+  <div class="section-head">
+    <span class="roman">II</span>
+    <span class="label">Who it's for</span>
+  </div>
+  <div class="fit">
+    <div class="fit-card">
+      <h2>For</h2>
+      <ul>
+        <li>Rights-holders with audio-dark catalogs</li>
+        <li>Publishers who want titles out, not a project</li>
+        <li>Ed-techs with course texts worth hearing</li>
+        <li>Anyone who needs the audio faithful to the page</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="section-head">
+    <span class="roman">III</span>
+    <span class="label">The ask</span>
+  </div>
+  <div class="ask">
+    <p>Bring a catalog, or one title you care about. We'll tell you what it takes to produce it, faithfully and disclosed, and where it can land. Titles go to the audiobook stores that welcome disclosed AI narration; the exact list is named per title, in writing, before production starts.</p>
+    <div class="cta-row">
+      <a class="btn primary" href="mailto:hello@syahi.sh?subject=Katha%20Audio%3A%20catalogue%20enquiry">enquire for your catalogue</a>
+      <a class="btn" href="https://wa.me/918951449537?text=Katha%20Audio%3A%20I%20have%20a%20catalogue%20to%20discuss">WhatsApp the studio</a>
+    </div>
+    <p class="fine">A conversation first. No checkout, no commitment.</p>
+  </div>
+</section>
