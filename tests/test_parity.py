@@ -26,7 +26,11 @@ from sitebuild.schema import jsonld_mismatches
 REPO = Path(__file__).resolve().parents[1]
 EM_DASH = chr(0x2014)
 APPROVED = datetime.date(2026, 10, 6)
-LAUNCH_B3_DATE = datetime.date(2026, 10, 10)     # the day the B3 fixes touched the four policy pages
+# Her call 2026-10-10 (quiz item 8): the date each policy page says it was last updated. Only privacy has a text change
+# (10 October); the other three keep the dates they had. All four stay drafts: the build says "re-approve" for the three
+# whose Last updated line now renders from `updated`.
+POLICY_UPDATED = {"contact.html": datetime.date(2026, 9, 10), "terms.html": datetime.date(2026, 9, 12),
+                  "refund.html": datetime.date(2026, 9, 12), "privacy.html": datetime.date(2026, 10, 10)}
 MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
           "November", "December")
 
@@ -114,7 +118,7 @@ def test_front_matter_is_the_ports_contract(snapshot, name, slug, updated, level
     assert page.claims and len(set(page.claims)) == len(page.claims)
     if name in DRAFTS:
         assert page.draft is True and page.approved is None   # no approval date: nobody has approved the launch B3 version
-        assert page.updated == LAUNCH_B3_DATE
+        assert page.updated == POLICY_UPDATED[name]
     else:
         assert page.draft is False and page.approved == APPROVED   # the live page was last approved and shipped on 6 Oct 2026
 
@@ -145,9 +149,9 @@ def test_privacy_has_made_the_three_edits_it_waited_for():
 # so every other word of every policy page is still held to the live page. One entry is the date line, which now
 # renders from the page's own `updated`.
 B3_TEXT_EDITS = {
-    "site-contact.html": [("Last updated 10 September 2026", "Last updated 10 October 2026")],
-    "site-terms.html": [("Last updated 12 September 2026", "Last updated 10 October 2026")],
-    "site-refund.html": [("Last updated 12 September 2026", "Last updated 10 October 2026")],
+    "site-contact.html": [],     # quiz item 8: no text change, date stays 10 September 2026
+    "site-terms.html": [],       # likewise 12 September 2026
+    "site-refund.html": [],      # likewise 12 September 2026
     "site-privacy.html": [
         ("Last updated 10 September 2026", "Last updated 10 October 2026"),
         ("syahi.sh sets no cookies. It runs no analytics. It has no contact form, so the site itself collects nothing you type. "
@@ -159,7 +163,7 @@ B3_TEXT_EDITS = {
          "browser details. Google's privacy policy covers what they do with it.",
          "Fonts. The typefaces are served from syahi.sh itself. No third-party font host receives a request from your browser."),
         ("Links to WhatsApp, Cal.com, X, GitHub and YouTube take you to those services.",
-         "Links to WhatsApp, Cal.com, YouTube, GitHub, LinkedIn, Instagram, Threads and X take you to those services."),
+         "Links to WhatsApp, Cal.com, YouTube, GitHub, LinkedIn, Instagram and Threads take you to those services."),   # X dropped 2026-10-10 (quiz item 1): no personal profile is linked
         ("Hosting. The site is served by GitHub Pages. GitHub keeps ordinary server logs: IP address, page requested, time. "
          "We don't see visitor-level logs.",
          "Hosting. syahi.sh is served by Cloudflare, and katha.syahi.sh by GitHub Pages. Each keeps ordinary server logs to "
@@ -521,8 +525,9 @@ KATHA_B2_EDITS = [
      "the listen line now points at the listener page instead of repeating its titles"),
     ("III The sample अधूरे हिसाब · chapter one Forty-five seconds from a title already out on Spotify and Google Play. "
      "Synthetic narration, every sentence checked against the printed text, a human signed off before it shipped. IV The ask",
-     "III The ask",
-     "the sample clip moved to the listener page; the pitch has three sections now"),
+     "III Hear the quality अधूरे हिसाब · chapter one Forty-five seconds of chapter one, right here. "
+     "Every title has a free sample chapter. IV The ask",
+     "quiz item 9: the sample clip is back on the pitch, worded from the claims katha-sample-length and media-store-sample"),
 ]
 
 
@@ -546,7 +551,7 @@ def test_the_katha_page_front_matter_is_the_publisher_pitch_draft():
     assert page.layout == "page" and page.css == "katha-index"     # the one sheet both pages share
     assert page.schema == ("Service",) and page.audience is None
     assert page.draft is True and page.approved is None and page.updated == datetime.date(2026, 10, 10)
-    assert page.claims == ()                                       # the sample clip, and its claim, moved to the listener page
+    assert page.claims == ("katha-sample-length", "media-store-sample", "katha-title-name")   # the sample clip is back (quiz item 9)
 
 
 def test_the_two_katha_pages_share_no_body_and_the_shared_partial_is_gone():
@@ -556,7 +561,7 @@ def test_the_two_katha_pages_share_no_body_and_the_shared_partial_is_gone():
     assert not (REPO / "templates" / "partials" / "katha-publishers.html").exists()
     for phrase in KATHA_SIGNATURE:
         assert phrase in publisher and phrase not in listener, phrase
-    assert "<audio" in listener and "<audio" not in publisher
+    assert "<audio" in listener and "<audio" in publisher      # the clip is on both pages (quiz item 9)
 
 
 def test_the_two_hosts_render_different_mains(real_site, dist):
@@ -584,10 +589,9 @@ def test_the_katha_title_and_description_are_the_old_pages_exactly(dist):
 
 def test_the_katha_links_are_the_old_pages_with_each_move_applied_in_order_less_the_listener_links(dist):
     old, new = link_values(old_katha_content()), link_values(unhash(main_of(built(dist, "katha.html"))))
-    # launch B2: the two store links and the sample clip left with the listener copy; one pointer to katha.syahi.sh came in
+    # launch B2: the two store links left with the listener copy (the sample clip is back, quiz item 9); one pointer to katha.syahi.sh came in
     moved = [v for v in old if v not in (
-        "https://listen.katha.syahi.sh/t/adhoore-hisab", "https://listen.katha.syahi.sh/shows/dahshat",
-        "https://media.katha.syahi.sh/samples/adhoore-hisaab.mp3")]
+        "https://listen.katha.syahi.sh/t/adhoore-hisab", "https://listen.katha.syahi.sh/shows/dahshat")]
     expected = apply_link_moves(moved)
     expected.insert(1, "https://katha.syahi.sh/")      # inserted after the moves: the helper's own move table would rewrite it
     assert new == expected
@@ -696,7 +700,15 @@ def test_the_home_carries_the_organization_and_the_website_once(dist):
 # ---- text parity ----
 
 # Launch B3: the section head said "4 Ventures" and Syahi has six, so the label now says what the four cards are.
-HOME_B3_EDITS = [("Ventures Pick the one you came for.", "Ventures to start with Pick the one you came for.")]
+# Quiz items 12, 4 and 5 (her answers, 2026-10-10): the head reads "Where to start"; card IV goes to /paper-machine as
+# "see the plates"; the colophon paragraph is two sentences.
+HOME_B3_EDITS = [
+    ("Ventures Pick the one you came for.", "Where to start Pick the one you came for."),
+    ("watch on YouTube", "see the plates"),
+    ("Every venture here runs on the same loop: agents draft, a human approves, the decision gets written down. "
+     "We think that loop, not the models, is what the next decade of small companies is made of.",
+     "Every piece of work that reaches you has a person's yes behind it, and a dated record that shows it."),
+]
 
 
 def test_the_home_cards_and_colophon_are_the_old_pages_text_word_for_word(dist):
@@ -752,12 +764,12 @@ def test_what_the_home_drops_is_not_in_the_new_page(dist):
 
 def test_the_home_card_links_are_the_old_pages_with_each_move_applied_in_order(dist):
     old, new = link_values(old_home_cards_on()), link_values(unhash(new_home_cards_on(dist)))
-    assert new == apply_link_moves(old)
+    # quiz item 4: card IV's link goes to the plates page, so the old YouTube link is replaced in place
+    assert new == ["/paper-machine" if v == "https://youtube.com/@papermachine07" else v for v in apply_link_moves(old)]
     assert len(old) == 7                                # the comparison cannot pass by both sides being empty
     assert [move.old for move in moves_used(old)] == [
         "https://signet.syahi.sh", "https://services.syahi.sh", "https://katha.syahi.sh/",
         "art/loom.webp", "art/gramophone.webp", "art/cube.webp"]
-    assert "https://youtube.com/@papermachine07" in new          # a link to another site stays as it was
     hero = unhash(main_of(built(dist, "index.html")).split('<div class="section-head">')[0])
     assert "inkpot" in hero                         # the house mark's art is still the hero's
 
@@ -765,7 +777,7 @@ def test_the_home_card_links_are_the_old_pages_with_each_move_applied_in_order(d
 def test_the_four_cards_keep_their_anchors_and_go_where_the_controller_ruled(dist):
     cards = re.findall(r'<a class="card" id="([a-z]+)" href="([^"]+)"', main_of(built(dist, "index.html")))
     assert cards == [("signet", "/signet"), ("studio", "/services/quote"), ("katha", "/katha"),
-                     ("papermachine", "https://youtube.com/@papermachine07")]
+                     ("papermachine", "/paper-machine")]      # quiz item 4
     assert [id for id, _ in re.findall(r'<a class="card" id="([a-z]+)" href="([^"]+)"', old_home())] == [id for id, _ in cards]
 
 

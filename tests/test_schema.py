@@ -27,6 +27,7 @@ EXTRA_CLAIMS = """
 - {id: founder-line, text: "Founder Example has twenty years in testing.", source: s, updated: 2026-10-06, status: live}
 - {id: katha-show-name, text: "Show Example", source: s, updated: 2026-10-06, status: live}
 - {id: katha-show-url, text: "https://store.example/shows/show-example", source: s, updated: 2026-10-06, status: live}
+- {id: katha-show-spotify-url, text: "https://spotify.example/show/example", source: s, updated: 2026-10-06, status: live}
 - {id: katha-title-name, text: "शीर्षक उदाहरण", source: s, updated: 2026-10-06, status: live}
 - {id: katha-title-url, text: "https://store.example/t/title-example", source: s, updated: 2026-10-06, status: live}
 - {id: signet-price-amount, text: "1499", source: s, updated: 2026-10-06, status: live}
@@ -173,7 +174,8 @@ def test_podcast_series_node(tmp_path):
     site, claims = setup(tmp_path)
     series = node(build_jsonld(pg("/", ["PodcastSeries"]), katha_site(site), claims), "PodcastSeries")
     assert series == {"@type": "PodcastSeries", "name": "Show Example",
-                      "url": "https://store.example/shows/show-example", "inLanguage": "hi"}
+                      "url": "https://store.example/shows/show-example",
+                      "sameAs": ["https://spotify.example/show/example"], "inLanguage": "hi"}
 
 def test_audiobook_node(tmp_path):
     site, claims = setup(tmp_path)

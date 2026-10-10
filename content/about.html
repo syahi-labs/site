@@ -12,7 +12,7 @@ og_title: "About Syahi: who runs it and how we work"
 og_description: "A founder in Bengaluru and her agents. Everything that leaves the company waits for her yes."
 ---
 {# DRAFT for her Sunday edit. The ProfilePage node (build_jsonld) takes its name and description from the claims
-   founder-name and founder-line, and sameAs from site.yaml founder_profiles; the page shows all three. #}
+   founder-name and founder-line; the page shows both. No personal profiles anywhere (her call 2026-10-10). #}
 <div class="page-head">
   <p class="devanagari"><span lang="hi">स्याही</span> &nbsp;·&nbsp; ink</p>
   <h1>Who is behind Syahi</h1>
@@ -27,9 +27,6 @@ og_description: "A founder in Bengaluru and her agents. Everything that leaves t
   <div class="doc">
     <h3>{{ claim("founder-name") }}</h3>
     <p>{{ claim("founder-line") }} {{ claim("founder-name") }} has spent {{ claim("founder-years") }} in AI, ML and analytics. She started Syahi in {{ claim("org-founded-month") }} and signs everything that leaves it.</p>
-    <p>Find her on
-      {% for link in site.founder_profiles %}<a href="{{ link.href }}">{{ link.label }}</a>{% if not loop.last %} and {% endif %}{% endfor %}.
-    </p>
   </div>
 </section>
 

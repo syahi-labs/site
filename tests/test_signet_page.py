@@ -206,7 +206,7 @@ def test_no_page_in_the_build_repeats_an_id(dist):
 # Launch B3 (2026-10-10): the two "Not what this is" lines the D10 check flagged, replaced so that nothing outside the D10
 # sentence speaks about customers or sign-ups.
 B3_EDITS = [("A public app you can sign up for today", "A self-serve app you start on your own today"),
-            ("A system with customers running it besides us, yet", "A system with years of outside use behind it")]
+            ("A system with customers running it besides us, yet ", "")]    # quiz item 11: her answer deletes this line
 
 
 def test_main_text_is_the_old_pages_text_but_for_the_two_b3_lines(main):
@@ -225,7 +225,6 @@ SIGNATURE = ("What you approved is what goes out.",
              "Hash mutation, caught", "Veto won the race", "Freeze, from a phone",
              "The seal can travel with the message",
              "Two things this page refuses to fake",
-             "A system with years of outside use behind it",
              "See it happen on your own draft",
              "after a demo. Book 30 minutes, bring a real email or quote you'd hand an agent")
 

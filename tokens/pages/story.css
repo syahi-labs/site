@@ -80,7 +80,8 @@
   text-transform:uppercase;
   color:var(--muted);
 }
-.builds{margin:var(--space-4) 0 0;padding:0;list-style:none;max-width:var(--measure)}
+.builds-lead{margin:var(--space-4) 0 0;font-weight:600}
+.builds{margin:var(--space-2) 0 0;padding:0;list-style:none;max-width:var(--measure)}
 .builds li{padding-block:var(--space-3);border-top:1px solid var(--hair)}
 .builds b{font-weight:600}
 
@@ -123,6 +124,11 @@
 .media-card .for b{font-weight:500;color:var(--ink)}
 .media-card .act{margin-top:var(--space-3);font-family:var(--font-mono);font-size:var(--fs-small);font-weight:500;color:var(--act)}
 .media-card:hover .act{text-decoration:underline;text-underline-offset:3px}
+/* A card with two links: the first link stretches over the whole card, the second sits above it. */
+.media-card-multi{position:relative}
+.media-card-multi .card-main-link{color:inherit;text-decoration:none}
+.media-card-multi .card-main-link::after{content:"";position:absolute;inset:0}
+.media-card-multi .card-second-link{position:relative;z-index:1;margin-left:var(--space-3);color:var(--act);text-decoration:underline;text-underline-offset:3px}
 
 /* /paper-machine: the plate index. The numeral is a counter, so no digit sits in the markup. */
 .plates{margin:var(--space-5) 0 0;padding:0;list-style:none;counter-reset:plate}

@@ -262,6 +262,7 @@ def _podcast_series(ctx: _Context) -> dict:
         "@type": "PodcastSeries",
         "name": ctx.claim("katha-show-name"),
         "url": ctx.url_claim("katha-show-url"),
+        "sameAs": [ctx.url_claim("katha-show-spotify-url")],
         "inLanguage": "hi",
     }
 

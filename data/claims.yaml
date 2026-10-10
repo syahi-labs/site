@@ -493,6 +493,11 @@
   source: "listen.katha.syahi.sh, 2026-10-10"
   updated: 2026-10-10
   status: live
+- id: katha-show-spotify-url
+  text: "https://open.spotify.com/show/5oquXvtv05QJeBgsftB2mN"
+  source: "Spotify, 2026-10-10"
+  updated: 2026-10-10
+  status: live
 - id: katha-show-disclosure
   text: "All voices in this show are synthetic (AI). Written with AI assistance, edited and approved by a human."
   source: "listen.katha.syahi.sh, 2026-10-10"
@@ -509,7 +514,7 @@
   updated: 2026-10-10
   status: live
 - id: katha-title-blurb
-  text: "A founder's startup is sinking. His great-grandfather leaves a ledger with an unfinished account from 1947."
+  text: "Kabir Mehra's startup is sinking. His great-grandfather left him a ledger with one account still open, from 1947."
   source: "listen.katha.syahi.sh, 2026-10-10"
   updated: 2026-10-10
   status: live

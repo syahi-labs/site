@@ -138,7 +138,9 @@ def test_every_claim_the_page_renders_is_in_its_front_matter(dist, slug):
     spans = set(re.findall(r'data-claim="([^"]+)"', main_of(built(dist, slug))))   # the footer's legal line is the layout's
     assert spans <= set(page.claims)
     # a claim in front matter that shows no span is used in an attribute (a link), which only the plate URLs do
-    assert all(id.startswith("pm-plate-") and id.endswith("-url") for id in set(page.claims) - spans)
+    # (and the Dahshat Spotify link on /media, quiz item 2)
+    assert all((id.startswith("pm-plate-") and id.endswith("-url")) or id == "katha-show-spotify-url"
+               for id in set(page.claims) - spans)
 
 
 @pytest.mark.parametrize("slug", NEW)
@@ -172,13 +174,13 @@ def test_the_services_item_that_says_hours_a_month_is_keep_it_running_and_no_pri
     assert not re.search(r"\d", text.replace("30-minute", "").replace("30 days", ""))
 
 
-def test_her_personal_profiles_are_on_about_and_nowhere_else(dist, site):
-    links = [link.href for link in site.founder_profiles]
-    assert links == ["https://x.com/surabhipradhan", "https://github.com/surpradhan"]
+def test_her_personal_profiles_appear_nowhere_on_the_site(dist, site):
+    # Her call 2026-10-10: no personal profiles at all, not on /about, not in JSON-LD.
+    assert site.founder_profiles == ()
     for path in sorted(dist.rglob("*.html")):
         html = path.read_text(encoding="utf-8")
-        for href in links:
-            assert (href in html) == (path.name == "about.html"), (path.name, href)
+        for href in ("https://x.com/surabhipradhan", "https://github.com/surpradhan"):
+            assert href not in html, (path.name, href)
 
 
 def test_chhavi_films_never_appears(dist):
@@ -210,7 +212,7 @@ def test_home_keeps_the_four_cards_and_the_house_mark(dist):
     main = main_of(built(dist, "/"))
     cards = re.findall(r'<a class="card" id="(\w+)" href="([^"]+)"', main)
     assert cards == [("signet", "/signet"), ("studio", "/services/quote"), ("katha", "/katha"),
-                     ("papermachine", "https://youtube.com/@papermachine07")]
+                     ("papermachine", "/paper-machine")]   # quiz item 4: the card goes to the plates
     assert "inkpot" in main and "the house mark" in main and "partials" not in main
     assert re.search(r"<h1>Syahi<svg", main)
 
@@ -250,11 +252,9 @@ def test_about_is_a_profile_page_whose_person_matches_the_page(dist, register, s
     assert person["name"] == register.get("founder-name").text
     assert person["description"] == register.get("founder-line").text
     assert person["worksFor"] == {"@id": "https://syahi.sh/#org"}
-    assert person["sameAs"] == [link.href for link in site.founder_profiles]
+    assert "sameAs" not in person
     shown = text_of(html)
     assert person["name"] in shown and person["description"] in shown
-    for link in site.founder_profiles:
-        assert f'<a href="{link.href}">{link.label}</a>' in html
     assert jsonld_mismatches(html) == []
     assert [node["@type"] for node in nodes if node["@type"] in ("Review", "AggregateRating")] == []
 
@@ -275,8 +275,11 @@ def test_about_says_who_how_and_the_company_in_the_agreed_order(dist):
 
 def test_media_is_three_cards(dist):
     main = main_of(built(dist, "/media"))
-    assert re.findall(r'<a class="media-card" href="([^"]+)"', main) == [
-        "/paper-machine", "https://katha.syahi.sh", "https://listen.katha.syahi.sh"]
+    assert re.findall(r'<a class="media-card" href="([^"]+)"', main) == ["/paper-machine", "https://listen.katha.syahi.sh"]
+    # Dahshat's card holds two links, so it is a div: katha.syahi.sh stretches over the card, Spotify sits above it (quiz item 2)
+    (dahshat,) = re.findall(r'<div class="media-card media-card-multi">(.*?)</div>', main, re.S)
+    assert re.findall(r'<a class="card-(?:main|second)-link" href="([^"]+)"', dahshat) == [
+        "https://katha.syahi.sh", "https://open.spotify.com/show/5oquXvtv05QJeBgsftB2mN"]
     assert [text_of(h) for h in re.findall(r'<h3>(.*?)</h3>', main)] == ["Paper Machine", "Dahshat", "The Katha store"]
 
 

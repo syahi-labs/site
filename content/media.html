@@ -6,12 +6,12 @@ approved:
 draft: true
 layout: page
 css: story
-claims: [media-dahshat-name, media-dahshat-line, media-adhoore-name, media-store-sample]
+claims: [media-dahshat-name, media-dahshat-line, katha-show-spotify-url, media-adhoore-name, media-store-sample]
 og_title: "Syahi media: explainers, a podcast and audiobooks"
 og_description: "Paper Machine on YouTube, the Dahshat podcast and the Katha audiobook store."
 ---
-{# DRAFT for her Sunday edit. Three cards (D18): Paper Machine, Dahshat, the Katha store. The Spotify link for
-   Dahshat waits for her (the URL is not in the corpus). #}
+{# DRAFT for her Sunday edit. Three cards (D18): Paper Machine, Dahshat, the Katha store. Dahshat's card has two links:
+   katha.syahi.sh is the main one (the whole card), Spotify the second. #}
 <div class="page-head">
   <p class="devanagari"><span lang="hi">स्याही</span> &nbsp;·&nbsp; ink</p>
   <h1>Media</h1>
@@ -31,12 +31,12 @@ og_description: "Paper Machine on YouTube, the Dahshat podcast and the Katha aud
       <p class="act">see the plates &rarr;</p>
     </a>
 
-    <a class="media-card" href="https://katha.syahi.sh">
+    <div class="media-card media-card-multi">
       <h3>{{ claim("media-dahshat-name") }}</h3>
       <p class="prose"><b>{{ claim("media-dahshat-line") }}</b> Listen on katha.syahi.sh.</p>
       <p class="for"><b>For</b> listeners of Hinglish horror</p>
-      <p class="act">listen free &rarr;</p>
-    </a>
+      <p class="act"><a class="card-main-link" href="https://katha.syahi.sh">listen free &rarr;</a> <a class="card-second-link" href="{{ claim_text('katha-show-spotify-url') }}">Listen on Spotify</a></p>
+    </div>
 
     <a class="media-card" href="https://listen.katha.syahi.sh">
       <h3>The Katha store</h3>

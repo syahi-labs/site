@@ -41,8 +41,7 @@ def test_real_site_yaml_holds_the_fixed_values():
     assert [p.label for p in site.profiles] == ["LinkedIn", "Instagram", "Threads", "GitHub"]
     assert [(p.label, p.href) for p in site.policies] == [
         ("Contact", "/contact"), ("Privacy", "/privacy"), ("Terms", "/terms"), ("Refunds", "/refund")]
-    assert [(p.label, p.href) for p in site.founder_profiles] == [   # hers, for /about only (D5)
-        ("X", "https://x.com/surabhipradhan"), ("GitHub", "https://github.com/surpradhan")]
+    assert site.founder_profiles == ()      # her call 2026-10-10: no personal profiles on the site
     assert site.pending_pages == frozenset()            # launch B1 built the four pages the nav pointed at
 
 
