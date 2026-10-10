@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { isSiteHost, redirectFor, sanitizeSrc, stampWhatsApp, stampCal } from "../src/lib.js";
+import { isSiteHost, redirectFor, cleanUrlFor, httpsUpgradeFor, sanitizeSrc, stampWhatsApp, stampCal } from "../src/lib.js";
 
 // ---- the brief's own tests, verbatim ----
 
@@ -320,4 +320,93 @@ test("the stamp functions agree on what a campaign is", () => {
   assert.equal(sanitizeSrc(src), src);
   assert.equal(new URL(stampWhatsApp(WA, src)).searchParams.get("text"), `[ref: ${src}]`);
   assert.equal(new URL(stampCal(CAL, src)).searchParams.get("metadata[src]"), src);
+});
+
+// ---- cleanUrlFor: one clean URL per page, by 301 ----
+
+test("a .html name, a trailing slash and /index.html redirect to the clean URL", () => {
+  const want = {
+    "/signet.html": "/signet",
+    "/signet/": "/signet",
+    "/signet//": "/signet",
+    "/services/quote.html": "/services/quote",
+    "/services/quote/": "/services/quote",
+    "/katha/": "/katha",
+    "/index.html": "/",
+    "/services/index.html": "/services",
+    "/.html": "/",
+  };
+  for (const [path, clean] of Object.entries(want)) {
+    assert.equal(cleanUrlFor(new URL("https://syahi.sh" + path)), "https://syahi.sh" + clean, path);
+  }
+});
+
+test("clean URLs and the root are left alone", () => {
+  for (const path of ["/", "/signet", "/services/quote", "/assets/base.6f962a67fe.css", "/robots.txt", "/sitemap.xml", "/nope"]) {
+    assert.equal(cleanUrlFor(new URL("https://syahi.sh" + path)), null, path);
+  }
+});
+
+test("the query string is kept byte for byte", () => {
+  assert.equal(cleanUrlFor(new URL("https://syahi.sh/signet.html?src=oct-x&a=b%20c")), "https://syahi.sh/signet?src=oct-x&a=b%20c");
+  assert.equal(cleanUrlFor(new URL("https://syahi.sh/signet/?src=x")), "https://syahi.sh/signet?src=x");
+  assert.equal(cleanUrlFor(new URL("https://syahi.sh/index.html?src=x")), "https://syahi.sh/?src=x");
+});
+
+test("the target is always syahi.sh, whatever the path says (no open redirect)", () => {
+  for (const path of ["//evil.example/", "//evil.example.html", "/\\evil.example/", "///evil.example/x/", "/%2F%2Fevil.example/", "/@evil.example/", "/https://evil.example/"]) {
+    const out = cleanUrlFor(new URL("https://syahi.sh" + path));
+    if (out === null) continue;
+    assert.equal(new URL(out).host, "syahi.sh", path);
+    assert.equal(new URL(out).protocol, "https:", path);
+    assert.ok(out.startsWith("https://syahi.sh/"), out);
+    assert.ok(!out.startsWith("https://syahi.sh//"), out);
+  }
+});
+
+test("a redirect target is itself clean, so there is never a second hop", () => {
+  for (const path of ["/a.html", "/a/", "/a/index.html", "/index.html", "//a.html", "/a.html/", "/a/b.html//"]) {
+    const out = cleanUrlFor(new URL("https://syahi.sh" + path));
+    if (out !== null) assert.equal(cleanUrlFor(new URL(out)), null, path + " -> " + out);
+  }
+});
+
+test("only the site host gets clean-URL redirects", () => {
+  for (const host of ["approve.syahi.sh", "katha.syahi.sh", "listen.katha.syahi.sh", "media.syahi.sh", "hook.syahi.sh", "unknown.example"]) {
+    assert.equal(cleanUrlFor(new URL(`https://${host}/signet.html`)), null, host);
+  }
+  assert.equal(cleanUrlFor(new URL("https://SYAHI.SH/signet.html")), "https://syahi.sh/signet");
+});
+
+// ---- httpsUpgradeFor: plain http on the four hosts goes to https ----
+
+test("http on the site host goes to https, same path and query", () => {
+  assert.equal(httpsUpgradeFor(new URL("http://syahi.sh/")), "https://syahi.sh/");
+  assert.equal(httpsUpgradeFor(new URL("http://syahi.sh/signet?src=oct-x&a=b%20c")), "https://syahi.sh/signet?src=oct-x&a=b%20c");
+  assert.equal(httpsUpgradeFor(new URL("http://SYAHI.SH/services/quote")), "https://syahi.sh/services/quote");
+});
+
+test("an unclean path is cleaned in the same hop, never two hops", () => {
+  assert.equal(httpsUpgradeFor(new URL("http://syahi.sh/signet.html?src=x")), "https://syahi.sh/signet?src=x");
+  assert.equal(httpsUpgradeFor(new URL("http://syahi.sh/katha/")), "https://syahi.sh/katha");
+});
+
+test("https is left alone", () => {
+  assert.equal(httpsUpgradeFor(new URL("https://syahi.sh/signet")), null);
+  assert.equal(httpsUpgradeFor(new URL("https://syahi.sh/")), null);
+});
+
+test("http on any other host is not ours to upgrade", () => {
+  for (const host of ["approve.syahi.sh", "katha.syahi.sh", "listen.katha.syahi.sh", "media.syahi.sh", "hook.syahi.sh", "unknown.example"]) {
+    assert.equal(httpsUpgradeFor(new URL(`http://${host}/signet`)), null, host);
+  }
+});
+
+test("the upgrade target is always https on syahi.sh, whatever the path says", () => {
+  for (const path of ["//evil.example/", "/\\evil.example/", "/@evil.example/", "/https://evil.example/"]) {
+    const out = httpsUpgradeFor(new URL("http://syahi.sh" + path));
+    assert.equal(new URL(out).protocol, "https:", path);
+    assert.equal(new URL(out).host, "syahi.sh", path);
+    assert.ok(!out.startsWith("https://syahi.sh//"), out);
+  }
 });

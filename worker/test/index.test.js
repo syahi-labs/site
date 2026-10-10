@@ -185,3 +185,68 @@ test("the Worker adds no cookie of its own to a stamped page", async () => {
   const { res } = await run("https://syahi.sh/?src=x1", html());
   assert.equal(res.headers.get("set-cookie"), null);
 });
+
+test("clean-URL redirects answer 301 before the assets, query kept, no cookie", async () => {
+  for (const [from, to] of [
+    ["https://syahi.sh/signet.html", "https://syahi.sh/signet"],
+    ["https://syahi.sh/signet/?src=oct-x", "https://syahi.sh/signet?src=oct-x"],
+    ["https://syahi.sh/index.html", "https://syahi.sh/"],
+    ["https://syahi.sh/services/quote.html?src=a", "https://syahi.sh/services/quote?src=a"],
+  ]) {
+    const { res, seen } = await run(from, html());
+    assert.equal(res.status, 301, from);
+    assert.equal(res.headers.get("location"), to, from);
+    assert.equal(res.headers.get("set-cookie"), null);
+    assert.equal(seen.length, 0, "assets untouched for " + from);
+  }
+});
+
+test("the root is served, not redirected", async () => {
+  const page = html();
+  const { res, seen } = await run("https://syahi.sh/?src=x", page);
+  assert.equal(res.status, 200);
+  assert.equal(seen.length, 1);
+});
+
+test("a clean-URL path on another host is passed through untouched", async () => {
+  const origin = new Response("origin");
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => origin;
+  try {
+    const { res, seen } = await run("https://approve.syahi.sh/login.html", html());
+    assert.equal(res, origin);
+    assert.equal(seen.length, 0);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test("http on the four hosts answers one 301 to https, query kept, assets untouched", async () => {
+  for (const [from, to] of [
+    ["http://syahi.sh/signet?src=oct-x", "https://syahi.sh/signet?src=oct-x"],
+    ["http://syahi.sh/", "https://syahi.sh/"],
+    ["http://syahi.sh/signet.html?src=x", "https://syahi.sh/signet?src=x"],
+    ["http://www.syahi.sh/signet?src=x", "https://syahi.sh/signet?src=x"],
+    ["http://signet.syahi.sh/a?src=x", "https://syahi.sh/signet?src=x"],
+    ["http://services.syahi.sh/?src=x", "https://syahi.sh/services/quote?src=x"],
+  ]) {
+    const { res, seen } = await run(from, html());
+    assert.equal(res.status, 301, from);
+    assert.equal(res.headers.get("location"), to, from);
+    assert.equal(res.headers.get("set-cookie"), null);
+    assert.equal(seen.length, 0, from);
+  }
+});
+
+test("http on another host is passed through, never upgraded by the Worker", async () => {
+  const origin = new Response("origin");
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => origin;
+  try {
+    const { res, seen } = await run("http://approve.syahi.sh/", html());
+    assert.equal(res, origin);
+    assert.equal(seen.length, 0);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});

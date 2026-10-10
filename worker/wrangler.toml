@@ -3,6 +3,9 @@
 name = "syahi-site"
 main = "src/index.js"
 compatibility_date = "2026-10-06"
+# The site is served only on its own domains: no public workers.dev or preview address.
+workers_dev = false
+preview_urls = false
 
 [assets]
 directory = "../dist/syahi.sh"
