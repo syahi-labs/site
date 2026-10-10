@@ -220,3 +220,24 @@ def test_the_date_follows_the_front_matter_when_it_changes(tmp_path):
         assert template.render(page=type("P", (), {"updated": day})()) == f'<time datetime="{day.isoformat()}">{shown}</time>'
     with pytest.raises(TypeError):
         format_long_date("2026-10-10")
+
+
+# ---- /katha, Our voices (receipt 10-SYAHI/katha/runs/2026-10-10-voice-samples.md) ----
+
+VOICE_IDS = ["neha-01", "kabir-01", "aarav-01", "sameer-01", "sarla-01"]
+
+
+def test_our_voices_renders_five_players_with_the_five_urls_each_with_a_devanagari_name(dist, register):
+    main = main_of(built(dist, "katha.html"))
+    section = main.split("Our voices", 1)[1].split("The ask", 1)[0]
+    assert len(re.findall(r'<audio controls[^>]*preload="none"', section)) == 5
+    assert re.findall(r'<source src="([^"]+)"', section) == [
+        f"https://media.katha.syahi.sh/samples/voices/{v}.mp3" for v in VOICE_IDS]
+    names = re.findall(r'<p class="voice-name">(.*?)</p>', section, re.S)
+    assert len(names) == 5 and all(re.search(r'<span lang="hi"><span data-claim="[^"]+">[\u0900-\u097F]+</span></span>', n) for n in names)
+    for v in VOICE_IDS:
+        key = v.split("-")[0]
+        assert register.get(f"katha-voice-{key}-url").text == f"https://media.katha.syahi.sh/samples/voices/{v}.mp3"
+        assert register.claims[f"katha-voice-{key}-name"].source == "Katha voice samples, 2026-10-10"
+    assert "synthetic" in section and "watermarked" in section and "cloned" in section
+    assert chr(0x2014) not in section and chr(0x2013) not in section

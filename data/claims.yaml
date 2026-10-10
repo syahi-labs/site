@@ -559,3 +559,96 @@
   source: "listen.katha.syahi.sh, 2026-10-10"
   updated: 2026-10-10
   status: live
+
+# ---- /katha, Our voices: five synthetic narrator voices reading one passage (run receipt 10-SYAHI/katha/runs/2026-10-10-voice-samples.md) ----
+# The clips are staged, not uploaded; the urls go live only after her per-clip yes.
+- id: katha-voice-neha-name
+  text: "Neha"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-neha-name-hi
+  text: "नेहा"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-neha-url
+  text: "https://media.katha.syahi.sh/samples/voices/neha-01.mp3"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-neha-role
+  text: "narrator"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-kabir-name
+  text: "Kabir"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-kabir-name-hi
+  text: "कबीर"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-kabir-url
+  text: "https://media.katha.syahi.sh/samples/voices/kabir-01.mp3"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-kabir-role
+  text: "podcast host"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-aarav-name
+  text: "Aarav"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-aarav-name-hi
+  text: "आरव"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-aarav-url
+  text: "https://media.katha.syahi.sh/samples/voices/aarav-01.mp3"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-sameer-name
+  text: "Sameer"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-sameer-name-hi
+  text: "समीर"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-sameer-url
+  text: "https://media.katha.syahi.sh/samples/voices/sameer-01.mp3"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-sarla-name
+  text: "Sarla"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-sarla-name-hi
+  text: "सरला"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-sarla-url
+  text: "https://media.katha.syahi.sh/samples/voices/sarla-01.mp3"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-sarla-role
+  text: "character voice"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
