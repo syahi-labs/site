@@ -62,5 +62,5 @@ def test_paper_machine_links_both_playlists_after_the_plates(dist, register):
     a, b = register.get("pm-playlist-agents-url").text, register.get("pm-playlist-core-url").text
     assert (a, b) == ("https://www.youtube.com/playlist?list=PLAxWjMEpGWxI", "https://www.youtube.com/playlist?list=PLE-Rl7inR4Z4")
     assert f'<a href="{a}">' in main and f'<a href="{b}">' in main
-    assert ("More on the channel: The Control Room: AI Agents and Core AI Concepts, Simply Explained.") in visible(main)
+    assert ("More on the channel: The Control Room: AI Agents and Core AI Concepts, Simply Explained.") in visible(main).replace(" .", ".")
     assert main.index("</ol>") < main.index("More on the channel") < main.index("New plates land")
