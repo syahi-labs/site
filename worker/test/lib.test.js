@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { isSiteHost, redirectFor, cleanUrlFor, sanitizeSrc, stampWhatsApp, stampCal } from "../src/lib.js";
+import { isSiteHost, redirectFor, cleanUrlFor, httpsUpgradeFor, sanitizeSrc, stampWhatsApp, stampCal } from "../src/lib.js";
 
 // ---- the brief's own tests, verbatim ----
 
@@ -376,4 +376,37 @@ test("only the site host gets clean-URL redirects", () => {
     assert.equal(cleanUrlFor(new URL(`https://${host}/signet.html`)), null, host);
   }
   assert.equal(cleanUrlFor(new URL("https://SYAHI.SH/signet.html")), "https://syahi.sh/signet");
+});
+
+// ---- httpsUpgradeFor: plain http on the four hosts goes to https ----
+
+test("http on the site host goes to https, same path and query", () => {
+  assert.equal(httpsUpgradeFor(new URL("http://syahi.sh/")), "https://syahi.sh/");
+  assert.equal(httpsUpgradeFor(new URL("http://syahi.sh/signet?src=oct-x&a=b%20c")), "https://syahi.sh/signet?src=oct-x&a=b%20c");
+  assert.equal(httpsUpgradeFor(new URL("http://SYAHI.SH/services/quote")), "https://syahi.sh/services/quote");
+});
+
+test("an unclean path is cleaned in the same hop, never two hops", () => {
+  assert.equal(httpsUpgradeFor(new URL("http://syahi.sh/signet.html?src=x")), "https://syahi.sh/signet?src=x");
+  assert.equal(httpsUpgradeFor(new URL("http://syahi.sh/katha/")), "https://syahi.sh/katha");
+});
+
+test("https is left alone", () => {
+  assert.equal(httpsUpgradeFor(new URL("https://syahi.sh/signet")), null);
+  assert.equal(httpsUpgradeFor(new URL("https://syahi.sh/")), null);
+});
+
+test("http on any other host is not ours to upgrade", () => {
+  for (const host of ["approve.syahi.sh", "katha.syahi.sh", "listen.katha.syahi.sh", "media.syahi.sh", "hook.syahi.sh", "unknown.example"]) {
+    assert.equal(httpsUpgradeFor(new URL(`http://${host}/signet`)), null, host);
+  }
+});
+
+test("the upgrade target is always https on syahi.sh, whatever the path says", () => {
+  for (const path of ["//evil.example/", "/\\evil.example/", "/@evil.example/", "/https://evil.example/"]) {
+    const out = httpsUpgradeFor(new URL("http://syahi.sh" + path));
+    assert.equal(new URL(out).protocol, "https:", path);
+    assert.equal(new URL(out).host, "syahi.sh", path);
+    assert.ok(!out.startsWith("https://syahi.sh//"), out);
+  }
 });

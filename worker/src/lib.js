@@ -42,6 +42,16 @@ export function cleanUrlFor(url) {
   return `https://syahi.sh${clean}${url.search}`;
 }
 
+/**
+ * Plain http on the site host goes to https in one hop (an unclean path is cleaned in the same hop).
+ * Only syahi.sh: signet., services. and www. already redirect to https targets, and every other host is
+ * not ours. Needed because the zone-wide "Always Use HTTPS" switch is deliberately left as it is.
+ */
+export function httpsUpgradeFor(url) {
+  if (!isSiteHost(url) || url.protocol !== "http:") return null;
+  return `https://syahi.sh${cleanPath(url.pathname)}${url.search}`;
+}
+
 /** The campaign name when it is safe to write into a page, else null. Never anything about a person. */
 export function sanitizeSrc(raw) {
   return typeof raw === "string" && CAMPAIGN.test(raw) ? raw : null;
