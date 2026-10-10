@@ -131,6 +131,7 @@
 .media-card-multi .card-second-link{position:relative;z-index:1;margin-left:var(--space-3);color:var(--act);text-decoration:underline;text-underline-offset:3px}
 
 /* /paper-machine: the plate index. The numeral is a counter, so no digit sits in the markup. */
+.more{margin:var(--space-5) 0 0}
 .plates{margin:var(--space-5) 0 0;padding:0;list-style:none;counter-reset:plate}
 .plates li{
   display:grid;

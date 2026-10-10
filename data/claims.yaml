@@ -479,6 +479,27 @@
   updated: 2026-10-10
   status: live
 
+- id: pm-playlist-agents-name
+  text: "The Control Room: AI Agents"
+  source: "YouTube, @papermachine07 playlists, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: pm-playlist-agents-url
+  text: "https://www.youtube.com/playlist?list=PLAxWjMEpGWxI"
+  source: "YouTube, @papermachine07 playlists, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: pm-playlist-core-name
+  text: "Core AI Concepts, Simply Explained"
+  source: "YouTube, @papermachine07 playlists, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: pm-playlist-core-url
+  text: "https://www.youtube.com/playlist?list=PLE-Rl7inR4Z4"
+  source: "YouTube, @papermachine07 playlists, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+
 # ---- katha.syahi.sh, the listener page (B2) ----
 # Dahshat, the free show, and the one title in the store. Structured data (PodcastSeries, Audiobook) reads
 # katha-show-name, katha-show-url, katha-title-name, katha-title-url, katha-title-price-amount and katha-title-price.

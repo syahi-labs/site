@@ -139,7 +139,7 @@ def test_every_claim_the_page_renders_is_in_its_front_matter(dist, slug):
     assert spans <= set(page.claims)
     # a claim in front matter that shows no span is used in an attribute (a link), which only the plate URLs do
     # (and the Dahshat Spotify link on /media, quiz item 2)
-    assert all((id.startswith("pm-plate-") and id.endswith("-url")) or id == "katha-show-spotify-url"
+    assert all((id.startswith("pm-") and id.endswith("-url")) or id == "katha-show-spotify-url"
                for id in set(page.claims) - spans)
 
 

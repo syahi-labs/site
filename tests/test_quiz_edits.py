@@ -55,3 +55,12 @@ def test_the_publisher_page_has_the_clip_near_the_pitch(dist, register):
     main = main_of(built(dist, "katha.html"))
     assert main.index("Who it's for") < main.index("Hear the quality") < main.index("<audio") < main.index("The ask")
     assert register.get("katha-sample-length").text in visible(main)
+
+
+def test_paper_machine_links_both_playlists_after_the_plates(dist, register):
+    main = main_of(built(dist, "paper-machine.html"))
+    a, b = register.get("pm-playlist-agents-url").text, register.get("pm-playlist-core-url").text
+    assert (a, b) == ("https://www.youtube.com/playlist?list=PLAxWjMEpGWxI", "https://www.youtube.com/playlist?list=PLE-Rl7inR4Z4")
+    assert f'<a href="{a}">' in main and f'<a href="{b}">' in main
+    assert ("More on the channel: The Control Room: AI Agents and Core AI Concepts, Simply Explained.") in visible(main)
+    assert main.index("</ol>") < main.index("More on the channel") < main.index("New plates land")
