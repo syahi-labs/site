@@ -301,3 +301,169 @@
   source: "katha.syahi.sh sample page, 2026-10-06"
   updated: 2026-10-06
   status: live
+
+# ---- the launch pages (B1): home, /services, /about, /media, /paper-machine ----
+# Drafts: she edits the words on Sunday. Each claim below is one fact the new pages state.
+
+# The front door. D15: one free 30-minute call. The length is booking-call-length; "free" is its own fact.
+- id: call-is-free
+  text: "free"
+  source: "Site decision D15, 2026-10-06"
+  updated: 2026-10-10
+  status: live
+# The paid assessment (D15). Two weeks; priced on the call, so no amount is a claim.
+- id: assessment-length
+  text: "two weeks"
+  source: "Site decision D15, 2026-10-06"
+  updated: 2026-10-10
+  status: live
+# A named build, any problem area. Not the Quote in Ten Minutes promises (qtm-live-time, qtm-running-period):
+# those are that offer's, and either side can move on its own.
+- id: build-live-time
+  text: "two weeks"
+  source: "Offer doc, 2026-08-24"
+  updated: 2026-10-10
+  status: live
+- id: build-running-period
+  text: "30 days"
+  source: "Offer doc, 2026-08-24"
+  updated: 2026-10-10
+  status: live
+- id: build-scope-in-writing
+  text: "The definition of done is in writing before we start."
+  source: "Offer doc, 2026-08-24"
+  updated: 2026-10-10
+  status: live
+- id: qtm-name
+  text: "Quote in Ten Minutes"
+  source: "Services page, 2026-10-06"
+  updated: 2026-10-10
+  status: live
+- id: keep-running-name
+  text: "Keep It Running"
+  source: "Offer doc, 2026-08-24"
+  updated: 2026-10-10
+  status: live
+# The full Agent OS rung. WORKING NAME, her pick pending (options in the B1 report). Change the text here and
+# every page that names the rung follows.
+- id: agent-os-name
+  text: "The Whole Office"
+  source: "Services page, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: agent-os-runs-syahi
+  text: "It's the setup Syahi runs on itself."
+  source: "Agent OS runbook, 2026-07-19"
+  updated: 2026-10-10
+  status: live
+
+# ---- /about ----
+
+- id: founder-name
+  text: "Surabhi Pradhan"
+  source: "MCA record"
+  updated: 2026-10-10
+  status: live
+# The Person node's description on /about. It must appear on the page word for word.
+- id: founder-line
+  text: "Founder of Syahi, an AI venture studio."
+  source: "syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: org-one-person
+  text: "a one-person AI venture studio"
+  source: "syahi.sh home page, 2026-10-06"
+  updated: 2026-10-10
+  status: live
+- id: org-founded-month
+  text: "August 2026"
+  source: "MCA record"
+  updated: 2026-10-10
+  status: live
+# Ruling D10, first beat alone: the only thing a page that does not offer Signet may say about it.
+- id: signet-d10-first
+  text: "Live today: every post, outreach email and desk draft our agents make waits for Surabhi's yes in Signet."
+  source: "Ruling D10, 2026-10-06"
+  updated: 2026-10-10
+  status: live
+
+# ---- /media ----
+
+- id: media-dahshat-name
+  text: "Dahshat"
+  source: "katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: media-dahshat-line
+  text: "A free Hindi fiction podcast with an AI cast."
+  source: "katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: media-adhoore-name
+  text: "अधूरे हिसाब"
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: media-store-sample
+  text: "Every title has a free sample chapter."
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+
+# ---- /paper-machine: the published plates of the Field Guide, from the channel's own playlist ----
+
+- id: pm-series-name
+  text: "A Field Guide to the Language Machine"
+  source: "YouTube, @papermachine07, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: pm-plate-1-title
+  text: "What happens in the 0.2 seconds after you press Enter? (AI Explainer)"
+  source: "YouTube, @papermachine07, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: pm-plate-1-url
+  text: "https://www.youtube.com/watch?v=JsBHFsB8WlA"
+  source: "YouTube, @papermachine07, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: pm-plate-2-title
+  text: "AI cannot lie. What it does instead is worse. (AI Hallucination)"
+  source: "YouTube, @papermachine07, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: pm-plate-2-url
+  text: "https://www.youtube.com/watch?v=VwmYaB2SweM"
+  source: "YouTube, @papermachine07, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: pm-plate-3-title
+  text: "How the feed learns you (Recommender Systems)"
+  source: "YouTube, @papermachine07, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: pm-plate-3-url
+  text: "https://www.youtube.com/watch?v=WFLsJqOxOnE"
+  source: "YouTube, @papermachine07, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: pm-plate-4-title
+  text: "How Do AI Models Learn?"
+  source: "YouTube, @papermachine07, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: pm-plate-4-url
+  text: "https://www.youtube.com/watch?v=sI27VV4OR3A"
+  source: "YouTube, @papermachine07, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: pm-plate-5-title
+  text: "Why Does ChatGPT Agree With You? (RLHF Explained)"
+  source: "YouTube, @papermachine07, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: pm-plate-5-url
+  text: "https://www.youtube.com/watch?v=PlgCc5JFUHw"
+  source: "YouTube, @papermachine07, 2026-10-10"
+  updated: 2026-10-10
+  status: live
