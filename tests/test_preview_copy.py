@@ -29,11 +29,12 @@ PAGES = [
     ("signet.html", "syahi.sh", "signet.html", "content/signet.html"),
     ("katha-index.html", "syahi.sh", "katha.html", "content/katha.html"),
     ("services.html", "syahi.sh", "services/quote.html", "content/services/quote.html"),
-    ("katha-index.html", "katha.syahi.sh", "index.html", "katha/content/index.html"),
+    # katha.syahi.sh `/` is not here: launch B2 made it the listener page, so no snapshot's preview is its contract.
+    # Its preview words are pinned in tests/test_launch_pages.py.
 ]
 IDS = [f"{host}/{built}" for _, host, built, _ in PAGES]
 # the pages whose preview says something other than their title and description: today's values, kept
-OWN_PREVIEW = {"content/signet.html", "content/katha.html", "katha/content/index.html"}
+OWN_PREVIEW = {"content/signet.html", "content/katha.html"}
 
 TAG = re.compile(r'<meta\s+(?:property|name)="([^"]+)"\s+content="([^"]*)"\s*/?>')
 

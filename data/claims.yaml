@@ -175,11 +175,21 @@
 
 # How many ventures the home page shows. One fact in two forms: the hero line says it in words, the
 # ventures section head shows the digit (the `short` form).
+# RETIRED 2026-10-10: Syahi has six ventures, so a head that shows "4" and "Ventures" implied a total that is not
+# true. The home page counts its cards instead (home-card-count).
 - id: venture-count
   text: "four"
   short: "4"
   source: "syahi.sh home page, 2026-10-06"
-  updated: 2026-10-06
+  updated: 2026-10-10
+  status: retired
+# How many venture cards the home page shows, said as a count of cards and never as a count of ventures. One fact in
+# two forms: the section head shows the digit (the `short` form).
+- id: home-card-count
+  text: "four"
+  short: "4"
+  source: "syahi.sh home page, 2026-10-10"
+  updated: 2026-10-10
   status: live
 # The Quote in Ten Minutes promises, as the home card says them. The offer page states the same two, so
 # it reuses these ids. The install time has the adjective form the offer line opens a sentence with
@@ -286,12 +296,13 @@
   source: "Offer doc, 2026-08-24"
   updated: 2026-10-06
   status: live
-# How long checking one draft takes: the cost of a wrong draft, as the FAQ answers "What if it quotes wrong?".
+# RETIRED 2026-10-10: the FAQ's "ten seconds" had no proof in the corpus. Her pick for the line is "a quick look"
+# (launch B3), which states no number, so nothing replaces this claim.
 - id: qtm-check-time
   text: "ten seconds"
   source: "Services page, 2026-10-06"
-  updated: 2026-10-06
-  status: live
+  updated: 2026-10-10
+  status: retired
 
 # ---- katha.syahi.sh ----
 
@@ -395,7 +406,7 @@
   updated: 2026-10-10
   status: live
 - id: media-dahshat-line
-  text: "A free Hindi fiction podcast with an AI cast."
+  text: "A free Hinglish horror fiction podcast with an AI cast."
   source: "katha.syahi.sh, 2026-10-10"
   updated: 2026-10-10
   status: live
@@ -465,5 +476,60 @@
 - id: pm-plate-5-url
   text: "https://www.youtube.com/watch?v=PlgCc5JFUHw"
   source: "YouTube, @papermachine07, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+
+# ---- katha.syahi.sh, the listener page (B2) ----
+# Dahshat, the free show, and the one title in the store. Structured data (PodcastSeries, Audiobook) reads
+# katha-show-name, katha-show-url, katha-title-name, katha-title-url, katha-title-price-amount and katha-title-price.
+
+- id: katha-show-name
+  text: "Dahshat"
+  source: "katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-show-url
+  text: "https://listen.katha.syahi.sh/shows/dahshat"
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-show-disclosure
+  text: "All voices in this show are synthetic (AI). Written with AI assistance, edited and approved by a human."
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-title-name
+  text: "अधूरे हिसाब"
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-title-url
+  text: "https://listen.katha.syahi.sh/t/adhoore-hisab"
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-title-blurb
+  text: "A founder's startup is sinking. His great-grandfather leaves a ledger with an unfinished account from 1947."
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-title-shape
+  text: "Ten chapters, about two hours."
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-title-price
+  text: "₹99 + 18% GST = ₹116.82"
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-title-price-amount
+  text: "116.82"
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-title-disclosure
+  text: "The voice in this recording is synthetic."
+  source: "listen.katha.syahi.sh, 2026-10-10"
   updated: 2026-10-10
   status: live
