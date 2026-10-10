@@ -81,9 +81,14 @@ test("wrangler.toml has a compatibility date and the entry point", () => {
 
 test("wrangler.toml has no routes, custom domains or bindings (Part C adds the routes)", () => {
   const keys = lines.map((l) => l.replace(/^\[+|\]+$/g, "").split("=")[0].trim());
-  for (const banned of ["route", "routes", "pattern", "custom_domain", "zone_name", "zone_id", "workers_dev", "kv_namespaces", "d1_databases", "r2_buckets", "analytics_engine_datasets", "queues", "services", "durable_objects", "vars", "logpush", "tail_consumers", "triggers"]) {
+  for (const banned of ["route", "routes", "pattern", "custom_domain", "zone_name", "zone_id", "kv_namespaces", "d1_databases", "r2_buckets", "analytics_engine_datasets", "queues", "services", "durable_objects", "vars", "logpush", "tail_consumers", "triggers"]) {
     assert.ok(!keys.includes(banned), `wrangler.toml has ${banned}`);
   }
+});
+
+test("wrangler.toml turns the public workers.dev address off and preview URLs off", () => {
+  assert.ok(lines.includes("workers_dev = false"), "missing: workers_dev = false");
+  assert.ok(lines.includes("preview_urls = false"), "missing: preview_urls = false");
 });
 
 test("wrangler.toml keeps request logging off", () => {
