@@ -7,7 +7,7 @@ draft: true
 layout: page
 css: katha-index
 schema: [Service]
-claims: [katha-sample-length, media-store-sample, katha-title-name]
+claims: [katha-sample-length, media-store-sample, katha-title-name, katha-voice-neha-name, katha-voice-neha-name-hi, katha-voice-neha-url, katha-voice-neha-role, katha-voice-kabir-name, katha-voice-kabir-name-hi, katha-voice-kabir-url, katha-voice-kabir-role, katha-voice-aarav-name, katha-voice-aarav-name-hi, katha-voice-aarav-url, katha-voice-sameer-name, katha-voice-sameer-name-hi, katha-voice-sameer-url, katha-voice-sarla-name, katha-voice-sarla-name-hi, katha-voice-sarla-url, katha-voice-sarla-role]
 og_title: "Katha Audio · every sentence verified"
 og_description: "Indian Language audiobooks for rights-holders whose catalog has no audio. Manuscript in, retail-ready audio out."
 ---
@@ -86,6 +86,49 @@ og_description: "Indian Language audiobooks for rights-holders whose catalog has
 <section>
   <div class="section-head">
     <span class="roman">IV</span>
+    <span class="label">Our voices</span>
+  </div>
+  <p class="voices-intro">Every voice reads the same opening of <span lang="hi">{{ claim("katha-title-name") }}</span>, chapter one, so you can compare. Every voice is synthetic, invented rather than cloned from a real person, and watermarked.</p>
+  <ul class="voices">
+    <li class="voice">
+      <p class="voice-name">{{ claim("katha-voice-neha-name") }} <span lang="hi">{{ claim("katha-voice-neha-name-hi") }}</span>
+        <span class="voice-role">{{ claim("katha-voice-neha-role") }}</span></p>
+      <audio controls controlsList="nodownload" preload="none">
+        <source src="{{ claim_text('katha-voice-neha-url') }}" type="audio/mpeg">
+      </audio>
+    </li>
+    <li class="voice">
+      <p class="voice-name">{{ claim("katha-voice-kabir-name") }} <span lang="hi">{{ claim("katha-voice-kabir-name-hi") }}</span>
+        <span class="voice-role">{{ claim("katha-voice-kabir-role") }}</span></p>
+      <audio controls controlsList="nodownload" preload="none">
+        <source src="{{ claim_text('katha-voice-kabir-url') }}" type="audio/mpeg">
+      </audio>
+    </li>
+    <li class="voice">
+      <p class="voice-name">{{ claim("katha-voice-aarav-name") }} <span lang="hi">{{ claim("katha-voice-aarav-name-hi") }}</span></p>
+      <audio controls controlsList="nodownload" preload="none">
+        <source src="{{ claim_text('katha-voice-aarav-url') }}" type="audio/mpeg">
+      </audio>
+    </li>
+    <li class="voice">
+      <p class="voice-name">{{ claim("katha-voice-sameer-name") }} <span lang="hi">{{ claim("katha-voice-sameer-name-hi") }}</span></p>
+      <audio controls controlsList="nodownload" preload="none">
+        <source src="{{ claim_text('katha-voice-sameer-url') }}" type="audio/mpeg">
+      </audio>
+    </li>
+    <li class="voice">
+      <p class="voice-name">{{ claim("katha-voice-sarla-name") }} <span lang="hi">{{ claim("katha-voice-sarla-name-hi") }}</span>
+        <span class="voice-role">{{ claim("katha-voice-sarla-role") }}</span></p>
+      <audio controls controlsList="nodownload" preload="none">
+        <source src="{{ claim_text('katha-voice-sarla-url') }}" type="audio/mpeg">
+      </audio>
+    </li>
+  </ul>
+</section>
+
+<section>
+  <div class="section-head">
+    <span class="roman">V</span>
     <span class="label">The ask</span>
   </div>
   <div class="ask">

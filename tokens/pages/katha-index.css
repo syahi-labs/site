@@ -109,6 +109,14 @@
 .slot p{max-width:32rem;margin-inline:auto;font-size:var(--fs-ui);color:var(--muted)}
 .slot audio{display:block;width:100%;max-width:26rem;margin:var(--space-5) auto 0}
 
+/* Our voices: one row per voice, name over player; the player is full width, so rows never overflow at 320 px */
+.voices-intro{max-width:var(--measure);margin-bottom:var(--space-5);color:var(--muted)}
+.voices{margin:0;padding:0;list-style:none;display:grid;gap:var(--space-4)}
+.voice{display:grid;grid-template-columns:minmax(0,14rem) minmax(0,1fr);gap:var(--space-4);align-items:center;padding:var(--space-4) var(--space-5);border:1px solid var(--ink)}
+.voice-name{margin:0;font-family:var(--font-serif);font-size:var(--fs-lead);font-weight:600}
+.voice-role{display:block;font-family:var(--font-mono);font-size:var(--fs-micro);font-weight:400;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+.voice audio{display:block;width:100%;min-width:0}
+
 /* The ask */
 .ask p{max-width:var(--measure);color:var(--muted)}
 .cta-row{display:flex;flex-wrap:wrap;gap:var(--space-4);margin-top:var(--space-5)}
@@ -132,4 +140,5 @@
   .hero-grid{grid-template-columns:minmax(0,1fr)}
   .hero-side{display:none}
   .beats{grid-template-columns:minmax(0,1fr)}
+  .voice{grid-template-columns:minmax(0,1fr)}
 }

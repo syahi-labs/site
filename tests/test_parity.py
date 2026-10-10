@@ -528,6 +528,11 @@ KATHA_B2_EDITS = [
      "III Hear the quality अधूरे हिसाब · chapter one Forty-five seconds of chapter one, right here. "
      "Every title has a free sample chapter. IV The ask",
      "quiz item 9: the sample clip is back on the pitch, worded from the claims katha-sample-length and media-store-sample"),
+    ("IV The ask",
+     "IV Our voices Every voice reads the same opening of अधूरे हिसाब, chapter one, so you can compare. Every voice is synthetic, "
+     "invented rather than cloned from a real person, and watermarked. "
+     "Neha नेहा narrator Kabir कबीर podcast host Aarav आरव Sameer समीर Sarla सरला character voice V The ask",
+     "Our voices: five synthetic narrator voices on one passage, worded from the katha-voice-* claims (Katha voice samples, 2026-10-10)"),
 ]
 
 
@@ -551,7 +556,8 @@ def test_the_katha_page_front_matter_is_the_publisher_pitch_draft():
     assert page.layout == "page" and page.css == "katha-index"     # the one sheet both pages share
     assert page.schema == ("Service",) and page.audience is None
     assert page.draft is True and page.approved is None and page.updated == datetime.date(2026, 10, 10)
-    assert page.claims == ("katha-sample-length", "media-store-sample", "katha-title-name")   # the sample clip is back (quiz item 9)
+    assert page.claims[:3] == ("katha-sample-length", "media-store-sample", "katha-title-name")   # the sample clip is back (quiz item 9)
+    assert page.claims[3:] and all(c.startswith("katha-voice-") for c in page.claims[3:])         # Our voices
 
 
 def test_the_two_katha_pages_share_no_body_and_the_shared_partial_is_gone():
@@ -594,6 +600,9 @@ def test_the_katha_links_are_the_old_pages_with_each_move_applied_in_order_less_
         "https://listen.katha.syahi.sh/t/adhoore-hisab", "https://listen.katha.syahi.sh/shows/dahshat")]
     expected = apply_link_moves(moved)
     expected.insert(1, "https://katha.syahi.sh/")      # inserted after the moves: the helper's own move table would rewrite it
+    # Our voices: five mp3 sources (narrator first) sit between the sample section and the ask, so before the ask's two links
+    voices = [f"https://media.katha.syahi.sh/samples/voices/{v}-01.mp3" for v in ("neha", "kabir", "aarav", "sameer", "sarla")]
+    expected[-2:-2] = voices
     assert new == expected
     assert len(old) == 6                                # the comparison cannot pass by both sides being empty
     assert [move.old for move in moves_used(old)] == ["https://syahi.sh/art/gramophone.webp"]
