@@ -248,7 +248,8 @@ def _build_host(root: Path, out: Path, item: _Loaded, claims: ClaimRegister, rel
         _write(host_out / _file_for(page.slug), assets.rewrite_html(html, manifest))
     _drop_unreferenced_images(host_out)
     stable = [key for key in (*assets.STABLE_ONLY, *assets.ALSO_STABLE) if (host_out / assets.URL_BASE.lstrip("/") / key).is_file()]
-    _write(host_out / "_headers", headers_txt(stable))
+    root = [name for name in assets.ROOT_COPIES if (host_out / name).is_file()]
+    _write(host_out / "_headers", headers_txt(stable, root))
     if release:
         problems.extend(_release_site_problems(item))
         problems.extend(_release_draft_problems(item))

@@ -359,6 +359,16 @@ def test_headers_txt_exact():
         "\n/assets/brand/og-default.png\n  ! Cache-Control\n  Cache-Control: public, max-age=3600\n")
 
 
+def test_headers_txt_short_caches_the_root_icons():
+    # Browsers ask for /favicon.ico and /apple-touch-icon.png on their own. The edge's default for them is
+    # max-age=0, so every page view refetched them (launch receipt, 11 Oct). They get the short cache too.
+    from sitebuild.generated import headers_txt
+    assert headers_txt([], root_files=["favicon.ico", "apple-touch-icon.png"]) == (
+        "/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n"
+        "\n/apple-touch-icon.png\n  ! Cache-Control\n  Cache-Control: public, max-age=3600\n"
+        "\n/favicon.ico\n  ! Cache-Control\n  Cache-Control: public, max-age=3600\n")
+
+
 def test_headers_txt_with_no_stable_names_is_the_one_rule():
     from sitebuild.generated import headers_txt
     assert headers_txt([]) == "/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n"

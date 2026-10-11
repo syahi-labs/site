@@ -77,14 +77,20 @@ IMMUTABLE_CACHE = "public, max-age=31536000, immutable"
 SHORT_CACHE = "public, max-age=3600"
 
 
-def headers_txt(stable_assets: Iterable[str]) -> str:
+def headers_txt(stable_assets: Iterable[str], root_files: Iterable[str] = ()) -> str:
     """Cloudflare Workers static-assets `_headers`: a hashed asset never changes under its name, so it is cached for a year.
 
     `stable_assets` are the paths under assets/ that keep a name whose bytes can change (the share images, the
     favicons, the marks): each gets a short cache instead. The edge adds up every rule a path matches, so the
     stable rule first detaches the Cache-Control the /assets/* rule set, then sets its own.
+
+    `root_files` are the copies at the host root that browsers ask for unprompted (/favicon.ico,
+    /apple-touch-icon.png). No rule matched them, so the edge sent its default max-age=0 and every page view
+    refetched them. They get the same short cache, with the same detach so the rule wins whatever else applies.
     """
     lines = ["/assets/*", f"  Cache-Control: {IMMUTABLE_CACHE}"]
     for key in sorted(set(stable_assets)):
         lines += ["", f"/assets/{key}", "  ! Cache-Control", f"  Cache-Control: {SHORT_CACHE}"]
+    for name in sorted(set(root_files)):
+        lines += ["", f"/{name}", "  ! Cache-Control", f"  Cache-Control: {SHORT_CACHE}"]
     return "\n".join(lines) + "\n"
