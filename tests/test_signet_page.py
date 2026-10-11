@@ -504,23 +504,26 @@ def test_no_digit_sits_outside_a_claim_a_time_or_a_sample(html):
 
 def test_the_cta_seal_is_the_shared_partial_with_a_name_and_is_decoration(main):
     source = (REPO / "content" / "signet.html").read_text(encoding="utf-8")
-    assert source.count('{% include "partials/signet-seal.html" %}') == 1 and "<svg class=\"signet-mark\"" not in source
+    assert source.count('{% include "partials/signet-seal.html" %}') == 2 and "<svg class=\"signet-mark\"" not in source
     assert '{% with seal_id = "cta", seal_decorative = true %}' in source
-    assert main.count('<svg class="signet-mark" viewBox="0 0 512 512" aria-hidden="true">') == 1
-    assert main.count('id="signet-seal-carve-cta"') == 1 and main.count('mask="url(#signet-seal-carve-cta)"') == 1
+    assert '{% with seal_id = "hero", seal_decorative = true %}' in source     # the hero shows the app icon's seal (her call 2026-10-11)
+    assert main.count('<svg class="signet-mark" viewBox="0 0 512 512" aria-hidden="true">') == 2
+    for name in ("cta", "hero"):
+        assert main.count(f'id="signet-seal-carve-{name}"') == 1 and main.count(f'mask="url(#signet-seal-carve-{name})"') == 1
     assert "role=\"img\" aria-label=\"The Signet brand seal" not in main
 
 
 def test_the_old_headers_and_footers_seals_are_the_shared_chromes_now(html):
-    assert html.count('class="signet-mark"') == 1                      # the page's own header and footer seals are gone
-    assert html.count("<mask") == 1
+    assert html.count('class="signet-mark"') == 2                      # hero and call to action; the page's own header and footer seals are gone
+    assert html.count("<mask") == 2
     assert "SIGNET" not in html and "ink &middot; seal &middot; parchment" not in html
 
 
-def test_the_hero_watermark_is_drawn_by_a_class_not_by_a_colour(main):
-    mark = re.search(r'<svg class="hero-watermark".*?</svg>', main, re.S).group(0)
-    assert 'aria-hidden="true"' in mark and "var(--" not in mark and "stroke=" not in mark.replace("stroke-width", "")
-    assert not re.search(r'#[0-9a-fA-F]{3,8}\b', mark)
+def test_the_hero_shows_the_solid_seal_not_a_watermark(main):
+    # her call 2026-10-11: the pale outline became the app icon's seal, solid ink and the copper dot
+    assert "hero-watermark" not in main
+    hero = main.split('<p class="eyebrow">', 1)[0]
+    assert 'class="signet-mark"' in hero and 'class="seal-core"' in hero and 'class="seal-dot"' in hero
 
 
 # ---- the page's stylesheet ----
