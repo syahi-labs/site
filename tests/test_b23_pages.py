@@ -62,7 +62,8 @@ CHANGED = [("main", "/"), ("main", "/404"), ("main", "/contact"), ("main", "/pri
 def test_every_changed_page_is_a_draft_with_no_approval_updated_today(host, slug):
     found = page(host, slug)
     # Quiz item 8: contact, terms and refund have no text change, so they keep their earlier dates (still drafts).
-    expected = {"/contact": datetime.date(2026, 9, 10), "/terms": datetime.date(2026, 9, 12), "/refund": datetime.date(2026, 9, 12)}
+    expected = {"/contact": datetime.date(2026, 9, 10), "/terms": datetime.date(2026, 9, 12), "/refund": datetime.date(2026, 9, 12),
+                "/katha": datetime.date(2026, 10, 11)}   # voices v2, her call 2026-10-11
     assert found.draft is True and found.approved is None and found.updated == expected.get(slug, DAY)
 
 
@@ -224,7 +225,7 @@ def test_the_date_follows_the_front_matter_when_it_changes(tmp_path):
 
 # ---- /katha, Our voices (receipt 10-SYAHI/katha/runs/2026-10-10-voice-samples.md) ----
 
-VOICE_IDS = ["neha-01", "kabir-01", "aarav-01", "sameer-01", "sarla-01"]
+VOICE_IDS = ["sameer-01", "kabir-01", "aarav-01", "neha-01", "sarla-01"]
 
 
 def test_our_voices_renders_five_players_with_the_five_urls_each_with_a_devanagari_name(dist, register):
