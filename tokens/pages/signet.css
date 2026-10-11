@@ -31,17 +31,8 @@
 
 /* Hero */
 .hero{padding-top:var(--space-5)}
-.hero-watermark{
-  display:block;
-  position:relative;
-  top:1.5rem;
-  left:4rem;
-  width:22rem;
-  height:22rem;
-  fill:none;
-  stroke:var(--ground-deep);
-  pointer-events:none;
-}
+/* The Signet seal as on the app icon: solid ink, the copper dot (her call 2026-10-11) */
+.hero .signet-mark{display:block;width:5rem;height:5rem;margin-bottom:var(--space-4)}
 .eyebrow{
   margin-bottom:1.5rem;
   font-family:var(--font-mono);
