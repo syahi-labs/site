@@ -159,7 +159,7 @@ def test_the_front_matter_is_the_ports_contract():
     assert found.layout == "page" and found.css == "signet"
     assert found.schema == ("SoftwareApplication",)
     assert found.audience is None                          # not set here: Part B decides
-    assert found.draft is True and found.approved is None and found.updated == datetime.date(2026, 10, 10)   # launch B3 changed the two "not what this is" lines, so it needs her yes again
+    assert found.draft is False and found.approved == datetime.date(2026, 10, 11) and found.updated == datetime.date(2026, 10, 10)   # launch B3 edits, approved by her 11 Oct
     assert found.og_image == "/assets/brand/og-signet.png"
     assert found.claims and len(set(found.claims)) == len(found.claims)
 
@@ -183,9 +183,9 @@ def test_the_buttons_label_gets_its_digits_from_the_claim_and_the_check_proves_i
     assert [f for f in htmlcheck.check(html, moved) if "aria-label" in f and '"30"' in f]
 
 
-def test_the_made_by_line_says_the_page_is_not_yet_approved(html):
-    assert '<p class="made-by">Drafted with AI from our own records. Not yet approved.</p>' in html
-    assert "Checked and approved" not in html
+def test_the_made_by_line_says_the_page_is_approved(html):
+    assert '<p class="made-by">Drafted with AI from our own records. Checked and approved by Surabhi Pradhan on 11 Oct 2026.</p>' in html
+    assert "Not yet approved" not in html
 
 
 def test_the_share_image_is_todays_og_png_and_is_published(dist, html):

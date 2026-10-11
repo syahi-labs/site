@@ -108,6 +108,7 @@ def test_the_page_passes_every_check_on_its_own(dist, snapshot, name, slug, upda
 # privacy page has its listed edits), so each is a draft again until she approves it on Sunday.
 DRAFTS = {"contact.html", "privacy.html", "terms.html", "refund.html"}
 DRAFT_LINE = "Drafted with AI from our own records. Not yet approved."
+APPROVED_LINE = "Drafted with AI from our own records. Checked and approved by Surabhi Pradhan on 11 Oct 2026."
 
 
 @pytest.mark.parametrize("snapshot, name, slug, updated, levels", PAGES, ids=IDS)
@@ -117,7 +118,7 @@ def test_front_matter_is_the_ports_contract(snapshot, name, slug, updated, level
     assert page.audience is None and page.schema == ()
     assert page.claims and len(set(page.claims)) == len(page.claims)
     if name in DRAFTS:
-        assert page.draft is True and page.approved is None   # no approval date: nobody has approved the launch B3 version
+        assert page.draft is False and page.approved == datetime.date(2026, 10, 11)   # she approved the launch B3 version on 11 Oct 2026
         assert page.updated == POLICY_UPDATED[name]
     else:
         assert page.draft is False and page.approved == APPROVED   # the live page was last approved and shipped on 6 Oct 2026
@@ -127,7 +128,7 @@ def test_front_matter_is_the_ports_contract(snapshot, name, slug, updated, level
 def test_the_made_by_line_says_what_is_true_of_the_page(dist, snapshot, name, slug, updated, levels):
     html = built(dist, name)
     if name in DRAFTS:
-        assert f'<p class="made-by">{DRAFT_LINE}</p>' in html and "Checked and approved" not in html
+        assert f'<p class="made-by">{APPROVED_LINE}</p>' in html and DRAFT_LINE not in html
     else:
         assert f"Checked and approved by Surabhi Pradhan on {format_date(APPROVED)}." in html
 
@@ -553,11 +554,11 @@ def test_the_katha_page_is_built_and_the_main_host_lists_it(real_site, dist):
     assert "https://syahi.sh/katha)" in (dist / "llms.txt").read_text(encoding="utf-8")
 
 
-def test_the_katha_page_front_matter_is_the_publisher_pitch_draft():
+def test_the_katha_page_front_matter_is_the_approved_publisher_pitch():
     page = next(p for p in load_pages(REPO / "content") if p.slug == "/katha")
     assert page.layout == "page" and page.css == "katha-index"     # the one sheet both pages share
     assert page.schema == ("Service",) and page.audience is None
-    assert page.draft is True and page.approved is None and page.updated == datetime.date(2026, 10, 11)
+    assert page.draft is False and page.approved == datetime.date(2026, 10, 11) and page.updated == datetime.date(2026, 10, 11)
     assert page.claims[:3] == ("katha-sample-length", "media-store-sample", "katha-title-name")   # the sample clip is back (quiz item 9)
     assert page.claims[3:] and all(c.startswith("katha-voice-") for c in page.claims[3:])         # Our voices
 
@@ -686,11 +687,12 @@ def test_the_home_front_matter_is_the_rewrites_contract(dist):
     assert page.layout == "page" and page.css == "home"
     assert page.audience == "owner"         # launch B1: an owner reads it, so the first line stays free of agents and AI
     assert page.schema == ()                # the Organization and WebSite nodes come with the main host's home page
-    assert page.draft is True and page.approved is None     # her Sunday edit and yes
+    assert page.draft is False and page.approved == datetime.date(2026, 10, 11)     # her yes, 11 Oct
     assert page.updated == datetime.date(2026, 10, 10)
     assert page.claims and len(set(page.claims)) == len(page.claims)
     assert set(page.claims) == claim_ids(main_of(built(dist, "index.html")))
-    assert "Not yet approved" in built(dist, "index.html")
+    assert "Checked and approved by Surabhi Pradhan on 11 Oct 2026." in built(dist, "index.html")
+    assert "Not yet approved" not in built(dist, "index.html")
 
 
 def test_the_home_passes_every_check_on_its_own(dist):
