@@ -6,7 +6,7 @@ header: syahi
 
 tabs:
   - {label: Services, href: /services}
-  - {label: Signet, href: /signet}
+  - {label: Products, href: /signet}
   - {label: Media, href: /media}
   - {label: About, href: /about}
 

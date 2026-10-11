@@ -246,7 +246,7 @@ def test_breadcrumbs_use_tab_labels_and_the_page_title(tmp_path):
 def test_a_tab_page_is_named_by_its_tab_not_its_long_title(tmp_path):
     site, claims = setup(tmp_path)
     assert crumbs(build_jsonld(pg("/signet"), site, claims)) == [
-        (1, "Syahi", "https://syahi.sh/"), (2, "Signet", "https://syahi.sh/signet")]
+        (1, "Syahi", "https://syahi.sh/"), (2, "Products", "https://syahi.sh/signet")]
 
 def test_the_home_page_has_one_crumb(tmp_path):
     site, claims = setup(tmp_path)
