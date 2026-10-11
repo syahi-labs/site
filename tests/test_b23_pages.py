@@ -65,6 +65,8 @@ def test_every_changed_page_is_a_draft_with_no_approval_updated_today(host, slug
     expected = {"/contact": datetime.date(2026, 9, 10), "/terms": datetime.date(2026, 9, 12), "/refund": datetime.date(2026, 9, 12),
                 "/katha": datetime.date(2026, 10, 11),   # voices v2, her call 2026-10-11
                 "/privacy": datetime.date(2026, 10, 11)}   # the play-on-a-video line, her call 2026-10-11
+    if (host, slug) == ("katha", "/"):
+        expected["/"] = datetime.date(2026, 10, 11)                    # "Hear it first" removed, her call 2026-10-11
     assert found.draft is True and found.approved is None and found.updated == expected.get(slug, DAY)
 
 
@@ -84,11 +86,10 @@ def test_the_listener_page_passes_every_check(listener):
 def test_the_listener_page_names_the_show_the_title_the_store_and_the_clip(listener, register):
     main = main_of(listener)
     assert register.get("media-dahshat-line").text == "A free Hinglish horror fiction podcast with an AI cast."
-    for needle in ("Dahshat", "अधूरे हिसाब", register.get("media-dahshat-line").text, register.get("katha-title-price").text,
-                   register.get("katha-sample-length").text):
+    for needle in ("Dahshat", "अधूरे हिसाब", register.get("media-dahshat-line").text, register.get("katha-title-price").text):
         assert needle in visible(main), needle
     assert 'href="https://listen.katha.syahi.sh/shows/dahshat"' in main and 'href="https://listen.katha.syahi.sh/t/adhoore-hisab"' in main
-    assert '<source src="https://media.katha.syahi.sh/samples/adhoore-hisaab.mp3"' in main
+    assert "<audio" not in main                                         # her call 2026-10-11: "Hear it first" removed; the clip lives on /katha
     assert 'href="https://syahi.sh/katha"' in main                      # the pointer to the publisher pitch
 
 
@@ -120,8 +121,8 @@ def test_the_two_katha_pages_have_one_self_canonical_each_and_no_shared_sentence
     assert publisher.count('<link rel="canonical" href="https://syahi.sh/katha">') == 1
     a, b = visible(main_of(listener)), visible(main_of(publisher))
     sentences = lambda text: {s.strip() for s in re.split(r"(?<=[.!?])\s+", text) if len(s.split()) >= 6}
-    # Quiz item 9 puts the sample clip on both pages, so its two lines are shared on purpose and nothing else is.
-    assert sentences(a) & sentences(b) == {"Every title has a free sample chapter."}
+    # The sample clip lives on /katha only (her call 2026-10-11), so the two pages share no sentence.
+    assert sentences(a) & sentences(b) == set()
     assert "Dahshat" not in b
 
 
