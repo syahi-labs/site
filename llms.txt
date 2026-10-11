@@ -1,0 +1,18 @@
+# Syahi
+
+> Syahi (स्याही, ink) is an AI venture studio in Bengaluru for businesses and institutions, to help them operate efficiently, analyze deeply and grow immensely. Agents do the work, a person approves what goes out, and every decision leaves a receipt.
+
+Legal name: SYAHI TECHNOLOGIES LLP. Contact: https://syahi.sh/contact
+
+## What we offer
+
+- [Quote in Ten Minutes](https://services.syahi.sh/): an enquiry on WhatsApp gets a draft quote back in ten minutes, priced off the owner's own rate card. The owner checks it and sends it.
+- [Signet by Syahi](https://signet.syahi.sh/): an approval layer and decision ledger. Your agent drafts, you see the exact words on your phone, one tap approves, and what you approved is what goes out.
+- [Katha Audio](https://katha.syahi.sh/): audiobooks in Indian languages, every sentence verified against the printed text, signed off by a person.
+- [Paper Machine](https://youtube.com/@papermachine07): AI explained like a naturalist's field guide.
+
+## Policies
+
+- [Privacy](https://syahi.sh/privacy)
+- [Terms](https://syahi.sh/terms)
+- [Refunds](https://syahi.sh/refund)
