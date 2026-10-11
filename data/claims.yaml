@@ -651,3 +651,8 @@
   source: "Katha voice samples v2, 2026-10-11"
   updated: 2026-10-11
   status: live
+- id: katha-show-youtube-url
+  text: "https://www.youtube.com/@Dahshat_KathaAudio"
+  source: "YouTube, 2026-10-11"
+  updated: 2026-10-11
+  status: live

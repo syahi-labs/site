@@ -7,7 +7,7 @@ draft: true
 layout: page
 css: katha-index
 schema: [PodcastSeries, Audiobook]
-claims: [katha-show-name, media-dahshat-line, katha-show-disclosure, katha-show-spotify-url, katha-title-name, katha-title-blurb, katha-title-shape, katha-title-price, katha-title-disclosure]
+claims: [katha-show-name, media-dahshat-line, katha-show-disclosure, katha-show-spotify-url, katha-show-youtube-url, katha-title-name, katha-title-blurb, katha-title-shape, katha-title-price, katha-title-disclosure]
 og_title: "Katha · stories to press play on"
 og_description: "Dahshat is free to listen. अधूरे हिसाब is a Hindi audiobook in the Katha store, with a free sample chapter."
 ---
@@ -40,6 +40,7 @@ og_description: "Dahshat is free to listen. अधूरे हिसाब is a
     <div class="cta-row">
       <a class="btn primary" href="https://listen.katha.syahi.sh/shows/dahshat">Listen to {{ claim("katha-show-name") }}</a>
       <a class="btn" href="{{ claim_text('katha-show-spotify-url') }}">Listen on Spotify</a>
+      <a class="btn" href="{{ claim_text('katha-show-youtube-url') }}">Watch on YouTube</a>
     </div>
   </div>
 </section>

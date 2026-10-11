@@ -110,7 +110,7 @@ def test_each_page_has_exactly_one_h1(dist, slug):
 def test_each_page_is_a_draft_awaiting_her_approval(dist, slug):
     page = source(slug)
     assert page.draft is True and page.approved is None
-    assert page.updated == (PM_UPDATED if slug == "/paper-machine" else DRAFTED)
+    assert page.updated == (PM_UPDATED if slug in ("/paper-machine", "/media") else DRAFTED)   # /media: YouTube link 2026-10-11
     assert page.layout == "page"
     assert "Not yet approved" in built(dist, slug)
 
@@ -140,7 +140,7 @@ def test_every_claim_the_page_renders_is_in_its_front_matter(dist, slug):
     assert spans <= set(page.claims)
     # a claim in front matter that shows no span is used in an attribute (a link, a data attribute), which only the
     # playlist URLs and cover sources do (and the Dahshat Spotify link on /media, quiz item 2)
-    assert all((id.startswith("pm-") and id.endswith(("-url", "-cover"))) or id == "katha-show-spotify-url"
+    assert all((id.startswith("pm-") and id.endswith(("-url", "-cover"))) or id in ("katha-show-spotify-url", "katha-show-youtube-url")
                for id in set(page.claims) - spans)
 
 
@@ -280,7 +280,8 @@ def test_media_is_three_cards(dist):
     # Dahshat's card holds two links, so it is a div: katha.syahi.sh stretches over the card, Spotify sits above it (quiz item 2)
     (dahshat,) = re.findall(r'<div class="media-card media-card-multi">(.*?)</div>', main, re.S)
     assert re.findall(r'<a class="card-(?:main|second)-link" href="([^"]+)"', dahshat) == [
-        "https://katha.syahi.sh", "https://open.spotify.com/show/5oquXvtv05QJeBgsftB2mN"]
+        "https://katha.syahi.sh", "https://open.spotify.com/show/5oquXvtv05QJeBgsftB2mN",
+        "https://www.youtube.com/@Dahshat_KathaAudio"]                                   # her ask 2026-10-11
     assert [text_of(h) for h in re.findall(r'<h3>(.*?)</h3>', main)] == ["Paper Machine", "Dahshat", "The Katha store"]
 
 
