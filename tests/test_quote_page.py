@@ -158,7 +158,7 @@ def test_the_front_matter_is_the_ports_contract():
     assert found.layout == "page" and found.css == "quote"
     assert found.schema == ("Service",)
     assert found.audience == "owner"                         # the plan's contract: an owner reads this page
-    assert found.draft is True and found.approved is None and found.updated == datetime.date(2026, 10, 10)   # launch B3: two lines changed, so it needs her yes again
+    assert found.draft is False and found.approved == datetime.date(2026, 10, 11) and found.updated == datetime.date(2026, 10, 10)   # launch B3 edits, approved by her 11 Oct
     assert found.og_image is None                            # today's page named no share image: the site default
     assert found.og_title is None and found.og_description is None and found.og_image_alt is None   # today's equal title and description
     assert found.claims and len(set(found.claims)) == len(found.claims)
@@ -174,10 +174,10 @@ def test_the_page_passes_every_check_on_its_own(html, register):
     assert jsonld_mismatches(html) == []
 
 
-def test_the_made_by_line_says_the_page_is_not_yet_approved(html):
+def test_the_made_by_line_says_the_page_is_approved(html):
     # launch B3 changed two lines of this page; it waits for her yes
-    assert '<p class="made-by">Drafted with AI from our own records. Not yet approved.</p>' in html
-    assert "Checked and approved" not in html
+    assert '<p class="made-by">Drafted with AI from our own records. Checked and approved by Surabhi Pradhan on 11 Oct 2026.</p>' in html
+    assert "Not yet approved" not in html
 
 
 def test_the_page_names_no_share_image_of_its_own_so_it_carries_the_sites_default(dist, html):

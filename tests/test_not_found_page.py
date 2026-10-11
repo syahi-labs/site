@@ -91,11 +91,11 @@ def test_it_has_the_shared_chrome(html):
     assert '<header class="site-header">' in html and '<footer class="site-footer">' in html
 
 
-def test_it_is_a_draft_and_the_made_by_line_claims_no_approval(html, page):
+def test_it_is_approved_and_the_made_by_line_says_so(html, page):
     # New copy that she has not reviewed: the page says so, and a release build refuses it until she has.
-    assert page.draft is True and page.approved is None
-    assert '<p class="made-by">Drafted with AI from our own records. Not yet approved.</p>' in html
-    assert "Checked and approved" not in html
+    assert page.draft is False and page.approved == datetime.date(2026, 10, 11)
+    assert '<p class="made-by">Drafted with AI from our own records. Checked and approved by Surabhi Pradhan on 11 Oct 2026.</p>' in html
+    assert "Not yet approved" not in html
 
 
 def test_front_matter_update_date_is_the_day_the_final_copy_was_written(page):

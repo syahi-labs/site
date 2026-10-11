@@ -107,12 +107,13 @@ def test_each_page_has_exactly_one_h1(dist, slug):
 
 
 @pytest.mark.parametrize("slug", PAGES)
-def test_each_page_is_a_draft_awaiting_her_approval(dist, slug):
+def test_each_page_is_approved_by_her_on_11_oct(dist, slug):
     page = source(slug)
-    assert page.draft is True and page.approved is None
+    assert page.draft is False and page.approved == datetime.date(2026, 10, 11)
     assert page.updated == (PM_UPDATED if slug in ("/paper-machine", "/media") else DRAFTED)   # /media: YouTube link 2026-10-11
     assert page.layout == "page"
-    assert "Not yet approved" in built(dist, slug)
+    assert "Checked and approved by Surabhi Pradhan on 11 Oct 2026." in built(dist, slug)
+    assert "Not yet approved" not in built(dist, slug)
 
 
 @pytest.mark.parametrize("slug", PAGES)
