@@ -30,6 +30,11 @@ SOURCES = {
     "img/gramophone.webp": "3399fe4b0a7cac0ed6665909353cd49823760d729a8bef1e23015c1bc318610c",
     "img/inkpot.webp": "7bb96075ceecc09832429db74a698445bb594a10ff18a72cff111f94b9cdc462",
     "img/loom.webp": "c2c29ae93b14a4b8dbd33929a367039c888a8601ea88f9264041bd66104788bc",
+    # her decision 2026-10-11: the three playlist covers (oEmbed thumbnails, fetched once) and the click-to-play script
+    "img/pm-playlist-control-room.jpg": "87f952fb58e66ddab40dfbd92fc8b5624d345474895453e7696cc640a0969612",
+    "img/pm-playlist-core-ai.jpg": "633e920eb4bc38cd6957aece057b736639f24d3568edd6faed0ef7e07cb1ebfd",
+    "img/pm-playlist-field-guide.jpg": "5388cea139ef92c7f3ade5897e879df12ff82c041adf6a4076254bf9a94cb4df",
+    "js/pm-player.js": "865dc49687ff341bc14d3786cd84b113854c4e39acb9e33fed78ab02d6026a24",
     "brand/og-default.png": "b311976aa3ae4df979e23bb30562ff7c39b6686ba985cd196c9e9d23c8df1999",       # og-image.png
     "brand/mark-512.png": "0c37a0bd6c89199623c52fca6b571363e0ddb79fe12730d62b65eb54b4a41922",         # icon-512.png
     "brand/og-signet.png": "7a6e6b0c7e64bfd602d858ea6bdf49bd216a77f00294dcb6ba82e8bd3cf785ed",         # og.png, signet-landing a0bb211

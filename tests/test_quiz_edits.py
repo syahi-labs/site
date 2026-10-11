@@ -57,10 +57,9 @@ def test_the_publisher_page_has_the_clip_near_the_pitch(dist, register):
     assert register.get("katha-sample-length").text in visible(main)
 
 
-def test_paper_machine_links_both_playlists_after_the_plates(dist, register):
+def test_paper_machine_names_the_three_playlists_from_the_register(dist, register):
     main = main_of(built(dist, "paper-machine.html"))
-    a, b = register.get("pm-playlist-agents-url").text, register.get("pm-playlist-core-url").text
-    assert (a, b) == ("https://www.youtube.com/playlist?list=PLAxWjMEpGWxI", "https://www.youtube.com/playlist?list=PLE-Rl7inR4Z4")
-    assert f'<a href="{a}">' in main and f'<a href="{b}">' in main
-    assert ("More on the channel: The Control Room: AI Agents and Core AI Concepts, Simply Explained.") in visible(main).replace(" .", ".")
-    assert main.index("</ol>") < main.index("More on the channel") < main.index("New plates land")
+    urls = [register.get(f"pm-playlist-{slug}-url").text for slug in ("field-guide", "agents", "core")]
+    assert urls == [f"https://www.youtube.com/playlist?list={pid}" for pid in ("PLPSVTjIA3O0c", "PLAxWjMEpGWxI", "PLE-Rl7inR4Z4")]
+    assert [main.index(f'<a class="pm-watch" href="{url}">') for url in urls] == sorted(main.index(f'<a class="pm-watch" href="{url}">') for url in urls)
+    assert main.index("</ul>") < main.index("New plates land")

@@ -23,6 +23,7 @@ from sitebuild.site import load_site
 REPO = Path(__file__).resolve().parents[1]
 EM_DASH, EN_DASH = chr(0x2014), chr(0x2013)
 DRAFTED = datetime.date(2026, 10, 10)
+PM_UPDATED = datetime.date(2026, 10, 11)    # /paper-machine was reworked into three playlist cards on 2026-10-11
 
 # slug -> (built file, audience). Home and /services are for an owner, so "agent" and "AI" stay out of their first line.
 PAGES = {
@@ -109,7 +110,7 @@ def test_each_page_has_exactly_one_h1(dist, slug):
 def test_each_page_is_a_draft_awaiting_her_approval(dist, slug):
     page = source(slug)
     assert page.draft is True and page.approved is None
-    assert page.updated == DRAFTED
+    assert page.updated == (PM_UPDATED if slug == "/paper-machine" else DRAFTED)
     assert page.layout == "page"
     assert "Not yet approved" in built(dist, slug)
 
@@ -137,9 +138,9 @@ def test_every_claim_the_page_renders_is_in_its_front_matter(dist, slug):
     page = source(slug)
     spans = set(re.findall(r'data-claim="([^"]+)"', main_of(built(dist, slug))))   # the footer's legal line is the layout's
     assert spans <= set(page.claims)
-    # a claim in front matter that shows no span is used in an attribute (a link), which only the plate URLs do
-    # (and the Dahshat Spotify link on /media, quiz item 2)
-    assert all((id.startswith("pm-") and id.endswith("-url")) or id == "katha-show-spotify-url"
+    # a claim in front matter that shows no span is used in an attribute (a link, a data attribute), which only the
+    # playlist URLs and cover sources do (and the Dahshat Spotify link on /media, quiz item 2)
+    assert all((id.startswith("pm-") and id.endswith(("-url", "-cover"))) or id == "katha-show-spotify-url"
                for id in set(page.claims) - spans)
 
 
@@ -283,22 +284,96 @@ def test_media_is_three_cards(dist):
     assert [text_of(h) for h in re.findall(r'<h3>(.*?)</h3>', main)] == ["Paper Machine", "Dahshat", "The Katha store"]
 
 
-def test_paper_machine_lists_only_the_published_plates_each_linked_to_its_video(dist):
+PM_PLAYLISTS = {   # slug -> (name, playlist id, videos, cover file); names and ids from the 2026-10-10 receipt, counts from catalogue.md
+    "field-guide": ("A Field Guide to the Language Machine", "PLPSVTjIA3O0c", "5", "pm-playlist-field-guide"),
+    "agents": ("The Control Room: AI Agents", "PLAxWjMEpGWxI", "5", "pm-playlist-control-room"),
+    "core": ("Core AI Concepts, Simply Explained", "PLE-Rl7inR4Z4", "3", "pm-playlist-core-ai"),
+}
+
+
+def pm_cards(main):
+    return re.findall(r'<li class="pm-card".*?</li>', main, re.S)
+
+
+def test_paper_machine_shows_the_three_playlists_plate_series_first_and_not_the_plates(dist):
     main = main_of(built(dist, "/paper-machine"))
-    plates = re.findall(r'<li><a href="(https://www\.youtube\.com/watch\?v=[^"]+)">', main)
-    assert plates == [f"https://www.youtube.com/watch?v={id}" for id in PUBLISHED_VIDEOS]
-    assert len(re.findall(r"<li>", main)) == 5
+    cards = pm_cards(main)
+    assert len(cards) == 3
+    for card, (name, pid, count, _cover) in zip(cards, PM_PLAYLISTS.values()):
+        assert f">{name}</span></h3>" in card
+        assert f'<p class="pm-count"><span data-claim="pm-playlist-' in card and f">{count}</span> videos</p>" in card
+        assert f'<a class="pm-watch" href="https://www.youtube.com/playlist?list={pid}">Watch on YouTube</a>' in card
+        assert f'data-list="{pid}"' in card
+        assert card.count("<button") == 1 and '<button type="button" class="pm-play" hidden' in card
+        assert card.count("<picture>") == 1 and 'width="480" height="360"' in card and 'loading="lazy"' in card
+        assert '<source type="image/avif"' in card and '<source type="image/webp"' in card
+    assert "<ol" not in main and "watch?v=" not in main and "More on the channel" not in main
+
+
+def test_paper_machine_loads_nothing_from_youtube_before_a_click(dist):
+    html = built(dist, "/paper-machine")
+    assert "<iframe" not in html and "<embed" not in html and "<object" not in html
+    hosts = re.findall(r'\b(?:src|href|srcset|poster|data)="([^"]*(?:youtube|ytimg|youtu\.be|googlevideo)[^"]*)"', html)
+    allowed = [f"https://www.youtube.com/playlist?list={pid}" for _n, pid, _c, _i in PM_PLAYLISTS.values()] + ["https://www.youtube.com/@papermachine07"]
+    assert sorted(hosts) == sorted(allowed)       # only the plain links: three playlists and the channel button
+    assert not re.search(r"<(?:link|script|img|source)[^>]+(?:youtube|ytimg)", html)
+
+
+def test_the_player_script_is_hashed_deferred_tiny_and_only_on_paper_machine(dist, real_site):
+    tags = re.findall(r'<script defer src="(/assets/js/pm-player\.[0-9a-f]{10}\.js)"></script>', built(dist, "/paper-machine"))
+    assert len(tags) == 1
+    script = (dist / tags[0].lstrip("/")).read_text(encoding="utf-8")
+    assert len(script.encode("utf-8")) < 2048
+    assert "youtube-nocookie.com/embed/videoseries" in script and "autoplay=1" in script and "allowFullscreen" in script
+    assert "encrypted-media" in script and "picture-in-picture" in script and "frame.title" in script
+    assert re.search(r"\bon[a-z]+\s*=", script) is None and "eval(" not in script and "document.write" not in script
+    for host in ("syahi.sh", "katha.syahi.sh"):
+        for path in sorted((real_site.out / host).rglob("*.html")):
+            html = path.read_text(encoding="utf-8")
+            has = "pm-player" in html
+            assert has == (host == "syahi.sh" and path.name == "paper-machine.html"), path
+            if path.name != "paper-machine.html":
+                assert "<script" not in html.replace('<script type="application/ld+json">', "")
+    assert not re.search(r"\son[a-z]+=", main_of(built(dist, "/paper-machine")))
+
+
+def test_the_play_button_is_hidden_until_the_script_runs(dist):
+    script = (REPO / "assets" / "js" / "pm-player.js").read_text(encoding="utf-8")
+    assert "button.hidden = false" in script
+    assert all('class="pm-play" hidden' in card for card in pm_cards(main_of(built(dist, "/paper-machine"))))
+
+
+def test_the_playlist_covers_are_each_playlists_own_thumbnail_saved_once_and_sized(dist, register):
+    for slug, (_name, _pid, _count, image) in PM_PLAYLISTS.items():
+        source = REPO / "assets" / "img" / f"{image}.jpg"
+        assert source.is_file()
+        assert re.fullmatch(r"https://i\.ytimg\.com/vi/[A-Za-z0-9_-]{11}/hqdefault\.jpg", register.get(f"pm-playlist-{slug}-cover").text)
+        assert f"{image}-480w." in built(dist, "/paper-machine")
+
+
+def test_the_privacy_page_says_what_pressing_play_does(dist):
+    privacy = (dist / "privacy.html").read_text(encoding="utf-8")
+    assert ("take you to those services. Their policies apply once you're there. "
+            "If you press play on a video, YouTube's own policy applies.</p>") in privacy.replace("&#39;", "'")
+
+
+def test_the_reworked_pages_have_no_em_or_en_dash(dist):
+    for name in ("paper-machine.html", "privacy.html"):
+        html = (dist / name).read_text(encoding="utf-8")
+        assert EM_DASH not in html and EN_DASH not in html
+    for path in (REPO / "content" / "paper-machine.html", REPO / "content" / "privacy.html", REPO / "assets" / "js" / "pm-player.js"):
+        assert EM_DASH not in path.read_text(encoding="utf-8") and EN_DASH not in path.read_text(encoding="utf-8")
 
 
 def test_the_launch_claims_are_in_the_register_with_a_public_source(register):
     wanted = ["call-is-free", "assessment-length", "build-live-time", "build-running-period", "build-scope-in-writing",
               "qtm-name", "keep-running-name", "agent-os-name", "agent-os-runs-syahi", "founder-name", "founder-line",
               "org-one-person", "org-founded-month", "signet-d10-first", "media-dahshat-name", "media-dahshat-line",
-              "media-adhoore-name", "media-store-sample", "pm-series-name"]
-    wanted += [f"pm-plate-{n}-{part}" for n in range(1, 6) for part in ("title", "url")]
+              "media-adhoore-name", "media-store-sample"]
+    wanted += [f"pm-playlist-{slug}-{part}" for slug in PM_PLAYLISTS for part in ("name", "url", "count", "cover")]
     for id in wanted:
         claim = register.get(id)
-        assert claim.source and claim.status == "live" and claim.updated == DRAFTED
+        assert claim.source and claim.status == "live" and claim.updated == (PM_UPDATED if id.startswith("pm-") else DRAFTED)
         assert EM_DASH not in claim.text and EN_DASH not in claim.text
 
 

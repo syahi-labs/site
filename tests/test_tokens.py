@@ -244,10 +244,13 @@ def test_no_em_dash_in_tokens_base_or_templates():
         assert EM_DASH not in path.read_text(encoding="utf-8"), path
 
 
-def test_no_scripts_in_templates_except_jsonld():
+PAGE_SCRIPT = '<script defer src="/assets/js/{{ page.js }}.js">'    # the one a page asks for by name (front matter `js`)
+
+
+def test_no_scripts_in_templates_except_jsonld_and_the_pages_named_one():
     for path in TEMPLATES:
         for tag in re.findall(r"<script[^>]*>", path.read_text(encoding="utf-8")):
-            assert 'type="application/ld+json"' in tag, (path, tag)
+            assert 'type="application/ld+json"' in tag or tag == PAGE_SCRIPT, (path, tag)
 
 
 # ---- page-scoped CSS: colours and type families come from tokens.css; sizes and spacing are not policed ----

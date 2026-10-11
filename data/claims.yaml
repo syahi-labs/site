@@ -421,83 +421,72 @@
   updated: 2026-10-10
   status: live
 
-# ---- /paper-machine: the published plates of the Field Guide, from the channel's own playlist ----
+# ---- /paper-machine: the channel's three playlists, each a click-to-play card ----
+# Names and URLs: 10-SYAHI/receipts/2026-10-10-paper-machine-playlist-urls.md (the Control Room name is written with no
+# space before the colon). Video counts: 10-SYAHI/org/published/catalogue.md, last checked 2026-10-11. Cover images:
+# each playlist's thumbnail_url from YouTube's oEmbed, fetched once 2026-10-11 and saved under assets/img/.
 
-- id: pm-series-name
+- id: pm-playlist-field-guide-name
   text: "A Field Guide to the Language Machine"
-  source: "YouTube, @papermachine07, 2026-10-10"
-  updated: 2026-10-10
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
   status: live
-- id: pm-plate-1-title
-  text: "What happens in the 0.2 seconds after you press Enter? (AI Explainer)"
-  source: "YouTube, @papermachine07, 2026-10-10"
-  updated: 2026-10-10
+- id: pm-playlist-field-guide-url
+  text: "https://www.youtube.com/playlist?list=PLPSVTjIA3O0c"
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
   status: live
-- id: pm-plate-1-url
-  text: "https://www.youtube.com/watch?v=JsBHFsB8WlA"
-  source: "YouTube, @papermachine07, 2026-10-10"
-  updated: 2026-10-10
+- id: pm-playlist-field-guide-count
+  text: "5"
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
   status: live
-- id: pm-plate-2-title
-  text: "AI cannot lie. What it does instead is worse. (AI Hallucination)"
-  source: "YouTube, @papermachine07, 2026-10-10"
-  updated: 2026-10-10
-  status: live
-- id: pm-plate-2-url
-  text: "https://www.youtube.com/watch?v=VwmYaB2SweM"
-  source: "YouTube, @papermachine07, 2026-10-10"
-  updated: 2026-10-10
-  status: live
-- id: pm-plate-3-title
-  text: "How the feed learns you (Recommender Systems)"
-  source: "YouTube, @papermachine07, 2026-10-10"
-  updated: 2026-10-10
-  status: live
-- id: pm-plate-3-url
-  text: "https://www.youtube.com/watch?v=WFLsJqOxOnE"
-  source: "YouTube, @papermachine07, 2026-10-10"
-  updated: 2026-10-10
-  status: live
-- id: pm-plate-4-title
-  text: "How Do AI Models Learn?"
-  source: "YouTube, @papermachine07, 2026-10-10"
-  updated: 2026-10-10
-  status: live
-- id: pm-plate-4-url
-  text: "https://www.youtube.com/watch?v=sI27VV4OR3A"
-  source: "YouTube, @papermachine07, 2026-10-10"
-  updated: 2026-10-10
-  status: live
-- id: pm-plate-5-title
-  text: "Why Does ChatGPT Agree With You? (RLHF Explained)"
-  source: "YouTube, @papermachine07, 2026-10-10"
-  updated: 2026-10-10
-  status: live
-- id: pm-plate-5-url
-  text: "https://www.youtube.com/watch?v=PlgCc5JFUHw"
-  source: "YouTube, @papermachine07, 2026-10-10"
-  updated: 2026-10-10
+- id: pm-playlist-field-guide-cover
+  text: "https://i.ytimg.com/vi/JsBHFsB8WlA/hqdefault.jpg"
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
   status: live
 
 - id: pm-playlist-agents-name
   text: "The Control Room: AI Agents"
-  source: "YouTube, @papermachine07 playlists, 2026-10-10"
-  updated: 2026-10-10
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
   status: live
 - id: pm-playlist-agents-url
   text: "https://www.youtube.com/playlist?list=PLAxWjMEpGWxI"
-  source: "YouTube, @papermachine07 playlists, 2026-10-10"
-  updated: 2026-10-10
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
   status: live
+- id: pm-playlist-agents-count
+  text: "5"
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+- id: pm-playlist-agents-cover
+  text: "https://i.ytimg.com/vi/4ftU7qMinP0/hqdefault.jpg"
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+
 - id: pm-playlist-core-name
   text: "Core AI Concepts, Simply Explained"
-  source: "YouTube, @papermachine07 playlists, 2026-10-10"
-  updated: 2026-10-10
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
   status: live
 - id: pm-playlist-core-url
   text: "https://www.youtube.com/playlist?list=PLE-Rl7inR4Z4"
-  source: "YouTube, @papermachine07 playlists, 2026-10-10"
-  updated: 2026-10-10
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+- id: pm-playlist-core-count
+  text: "3"
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+- id: pm-playlist-core-cover
+  text: "https://i.ytimg.com/vi/DKVGtFqFMkc/hqdefault.jpg"
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
   status: live
 
 # ---- katha.syahi.sh, the listener page (B2) ----
