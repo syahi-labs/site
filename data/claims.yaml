@@ -1,0 +1,658 @@
+# The public claims register: every public fact, once, by id. Both hosts read this one file.
+# Each `source` is a short public label. Private evidence lives in the corpus, never here.
+# A fact two pages state is one claim, so the pages can never disagree. A fact that only happens to share
+# a value with another (two different 30-day windows) is its own claim.
+
+# ---- the organisation: the footer, structured data and llms.txt, on both hosts ----
+
+# The footer's legal line: "<name>, <llpin>, Bengaluru". The LLPIN claim carries its own label; its short
+# form is the bare number, for a table that supplies the label itself.
+- id: org-legal-name
+  text: "SYAHI TECHNOLOGIES LLP"
+  source: "MCA record"
+  updated: 2026-10-06
+  status: live
+- id: org-llpin
+  text: "LLPIN ADB-1993"
+  short: "ADB-1993"
+  source: "MCA record"
+  updated: 2026-10-06
+  status: live
+- id: org-name
+  text: "Syahi"
+  source: "syahi.sh, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+- id: org-alternate-name
+  text: "स्याही"
+  source: "syahi.sh, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+- id: org-founding-date
+  text: "2026-08-13"
+  source: "MCA record"
+  updated: 2026-10-06
+  status: live
+- id: org-locality
+  text: "Bengaluru"
+  source: "MCA record"
+  updated: 2026-10-06
+  status: live
+# llms.txt only: today's summary line from the live llms.txt, word for word.
+- id: org-summary
+  text: "Syahi (स्याही, ink) is an AI venture studio in Bengaluru for businesses and institutions, to help them operate efficiently, analyze deeply and grow immensely. Agents do the work, a person approves what goes out, and every decision leaves a receipt."
+  source: "syahi.sh llms.txt, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+# The registered street address is shown on /contact and nowhere else. Structured data carries the
+# locality only, and tests/test_parity.py fails the build output if this text reaches any other file.
+- id: org-registered-address
+  text: "E-313, Nandi Meraki, Phase 1 Yelenahalli, Reliable Residency Phase 2, Off Bannerghatta Road, Bangalore 560076"
+  source: "MCA record"
+  updated: 2026-10-06
+  status: live
+
+# ---- /contact ----
+
+- id: whatsapp-number
+  text: "+91 89514 49537"
+  source: "Contact page, 2026-09-10"
+  updated: 2026-10-06
+  status: live
+# How long the booked call is. The short form is the adjective a button label needs ("Book a 30-minute demo").
+- id: booking-call-length
+  text: "30 minutes"
+  short: "30-minute"
+  source: "Booking page, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+# How fast a complaint is acknowledged: the contact page's grievance officer line and the refund page's
+# won't-play route both promise it.
+- id: grievance-ack-window
+  text: "48 hours"
+  source: "Contact page, 2026-09-10"
+  updated: 2026-10-06
+  status: live
+- id: reply-window
+  text: "three working days"
+  source: "Contact page, 2026-09-10"
+  updated: 2026-10-06
+  status: live
+- id: grievance-resolve-window
+  text: "one month"
+  source: "Contact page, 2026-09-10"
+  updated: 2026-10-06
+  status: live
+- id: law-ecommerce-rules
+  text: "Consumer Protection (E-Commerce) Rules, 2020"
+  source: "Gazette of India"
+  updated: 2026-10-06
+  status: live
+
+# ---- /privacy ----
+
+- id: law-dpdp-act
+  text: "Digital Personal Data Protection Act, 2023"
+  source: "Gazette of India"
+  updated: 2026-10-06
+  status: live
+- id: signet-deletion-window
+  text: "30 days"
+  source: "Privacy policy, 2026-09-10"
+  updated: 2026-10-06
+  status: live
+- id: privacy-request-window
+  text: "seven working days"
+  source: "Privacy policy, 2026-09-10"
+  updated: 2026-10-06
+  status: live
+- id: minor-age-limit
+  text: "under 18"
+  source: "Privacy policy, 2026-09-10"
+  updated: 2026-10-06
+  status: live
+
+# ---- /terms ----
+
+# The two founding prices as the pricing plate prints them. The Signet page ties its structured-data
+# amount to its own price line; both must say the same rupees.
+- id: signet-price-monthly
+  text: "₹1,499 a month"
+  source: "Terms of service, 2026-09-12"
+  updated: 2026-10-06
+  status: live
+- id: signet-price-yearly
+  text: "₹14,999 a year"
+  source: "Terms of service, 2026-09-12"
+  updated: 2026-10-06
+  status: live
+- id: signet-yearly-ratio
+  text: "ten months for twelve"
+  source: "Terms of service, 2026-09-12"
+  updated: 2026-10-06
+  status: live
+- id: retainer-hours
+  text: "four hours a month"
+  source: "Terms of service, 2026-09-12"
+  updated: 2026-10-06
+  status: live
+# The day the Quote in Ten Minutes guarantee is measured. Terms and refund both state it.
+- id: qtm-guarantee-day
+  text: "day 30"
+  source: "Terms of service, 2026-09-12"
+  updated: 2026-10-06
+  status: live
+
+# ---- /refund ----
+
+- id: signet-annual-refund-window
+  text: "14 days"
+  source: "Refund policy, 2026-09-12"
+  updated: 2026-10-06
+  status: live
+- id: katha-gst-treatment
+  text: "18% under SAC 998432"
+  source: "Refund policy, 2026-09-12"
+  updated: 2026-10-06
+  status: live
+- id: katha-refund-resolve-window
+  text: "30 days"
+  source: "Refund policy, 2026-09-12"
+  updated: 2026-10-06
+  status: live
+- id: refund-initiate-window
+  text: "seven working days"
+  source: "Refund policy, 2026-09-12"
+  updated: 2026-10-06
+  status: live
+- id: razorpay-refund-timing
+  text: "5 to 7 working days"
+  source: "Refund policy, 2026-09-12"
+  updated: 2026-10-06
+  status: live
+
+# ---- the home page ----
+
+# How many ventures the home page shows. One fact in two forms: the hero line says it in words, the
+# ventures section head shows the digit (the `short` form).
+# RETIRED 2026-10-10: Syahi has six ventures, so a head that shows "4" and "Ventures" implied a total that is not
+# true. The home page counts its cards instead (home-card-count).
+- id: venture-count
+  text: "four"
+  short: "4"
+  source: "syahi.sh home page, 2026-10-06"
+  updated: 2026-10-10
+  status: retired
+# How many venture cards the home page shows, said as a count of cards and never as a count of ventures. One fact in
+# two forms: the section head shows the digit (the `short` form).
+- id: home-card-count
+  text: "four"
+  short: "4"
+  source: "syahi.sh home page, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+# The Quote in Ten Minutes promises, as the home card says them. The offer page states the same two, so
+# it reuses these ids. The install time has the adjective form the offer line opens a sentence with
+# ("Two-week install."), so its short form carries the capital.
+- id: qtm-quote-time
+  text: "ten minutes"
+  source: "Services page, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+- id: qtm-live-time
+  text: "two weeks"
+  short: "Two-week"
+  source: "Services page, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+# The founder's experience, as the colophon says it. The About page reuses it.
+- id: founder-years
+  text: "eleven years"
+  source: "syahi.sh home page, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+
+# ---- the Signet page ----
+
+# The product's name, for the SoftwareApplication structured data on /signet.
+- id: signet-name
+  text: "Signet by Syahi"
+  source: "syahi.sh, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+# Ruling D10: the one public sentence about what Signet runs today. Wherever Signet is offered it appears once,
+# in these words. It holds the founding monthly price, so a test keeps it equal to signet-price-monthly.
+- id: signet-d10
+  text: "Live today: every post, outreach email and desk draft our agents make waits for Surabhi's yes in Signet. Next: the same loop for your business's drafts. No outside customers yet. Founding users start at ₹1,499 a month, after a demo."
+  source: "Ruling D10, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+# The founding price. The amount is the plain number structured data carries; the line is what the page shows,
+# and the build refuses a line that does not show the amount. The line holds both terms prices
+# (signet-price-monthly and signet-price-yearly), so a test keeps all three the same.
+- id: signet-price-amount
+  text: "1499"
+  source: "Decision 2026-09-10, Signet INR price"
+  updated: 2026-10-06
+  status: live
+- id: signet-price-line
+  text: "₹1,499 a month or ₹14,999 a year, GST included."
+  source: "Decision 2026-09-10, Signet INR price"
+  updated: 2026-10-06
+  status: live
+- id: signet-founding-lock
+  text: "Founding price, locked for life while you stay subscribed."
+  source: "Decision 2026-09-10, Signet INR price"
+  updated: 2026-10-06
+  status: live
+- id: signet-pay-after-demo
+  text: "Nothing to pay until after the demo."
+  source: "Ruling D10, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+# Two dates that happen to be the same day and are two facts: when the release pipe went live, and when the
+# live battery ran. Each can move on its own, so each is its own claim.
+- id: signet-live-since
+  text: "August 31, 2026"
+  source: "Ruling D10, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+- id: signet-battery-date
+  text: "August 31, 2026"
+  source: "Signet live battery, 2026-08-31"
+  updated: 2026-10-06
+  status: live
+# The battery's counted results. The other results the page tells (a changed draft caught, a veto that beat
+# the clock, a freeze from a phone) carry no figure and stay as copy.
+- id: signet-battery-sent
+  text: "One real email went out"
+  source: "Signet live battery, 2026-08-31"
+  updated: 2026-10-06
+  status: live
+- id: signet-battery-refused
+  text: "Two other drafts got past her phone and were still refused at send."
+  source: "Signet live battery, 2026-08-31"
+  updated: 2026-10-07
+  status: live
+- id: signet-battery-refused-why
+  text: "the recipient wasn't on an approved lead list"
+  source: "Signet live battery, 2026-08-31"
+  updated: 2026-10-07
+  status: live
+
+# ---- the Quote in Ten Minutes page ----
+
+# Who the offer is for, as the offer page says it ("roughly 5 to 50 people"; the word "roughly" is the page's).
+- id: qtm-firm-size
+  text: "5 to 50 people"
+  source: "Services page, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+# The included running period: how long we run the install, weekly receipts included, before the retainer starts.
+# The offer page's FAQ says it. It is a fact of its own, not the guarantee day (qtm-guarantee-day): both are
+# 30 today, and either can move without the other.
+- id: qtm-running-period
+  text: "30 days"
+  source: "Offer doc, 2026-08-24"
+  updated: 2026-10-06
+  status: live
+# RETIRED 2026-10-10: the FAQ's "ten seconds" had no proof in the corpus. Her pick for the line is "a quick look"
+# (launch B3), which states no number, so nothing replaces this claim.
+- id: qtm-check-time
+  text: "ten seconds"
+  source: "Services page, 2026-10-06"
+  updated: 2026-10-10
+  status: retired
+
+# ---- katha.syahi.sh ----
+
+# The length of the chapter-one sample, as the page says it.
+- id: katha-sample-length
+  text: "Forty-five seconds"
+  source: "katha.syahi.sh sample page, 2026-10-06"
+  updated: 2026-10-06
+  status: live
+
+# ---- the launch pages (B1): home, /services, /about, /media, /paper-machine ----
+# Drafts: she edits the words on Sunday. Each claim below is one fact the new pages state.
+
+# The front door. D15: one free 30-minute call. The length is booking-call-length; "free" is its own fact.
+- id: call-is-free
+  text: "free"
+  source: "Site decision D15, 2026-10-06"
+  updated: 2026-10-10
+  status: live
+# The paid assessment (D15). Two weeks; priced on the call, so no amount is a claim.
+- id: assessment-length
+  text: "two weeks"
+  source: "Site decision D15, 2026-10-06"
+  updated: 2026-10-10
+  status: live
+# A named build, any problem area. Not the Quote in Ten Minutes promises (qtm-live-time, qtm-running-period):
+# those are that offer's, and either side can move on its own.
+- id: build-live-time
+  text: "two weeks"
+  source: "Offer doc, 2026-08-24"
+  updated: 2026-10-10
+  status: live
+- id: build-running-period
+  text: "30 days"
+  source: "Offer doc, 2026-08-24"
+  updated: 2026-10-10
+  status: live
+- id: build-scope-in-writing
+  text: "The definition of done is in writing before we start."
+  source: "Offer doc, 2026-08-24"
+  updated: 2026-10-10
+  status: live
+- id: qtm-name
+  text: "Quote in Ten Minutes"
+  source: "Services page, 2026-10-06"
+  updated: 2026-10-10
+  status: live
+- id: keep-running-name
+  text: "Keep It Running"
+  source: "Offer doc, 2026-08-24"
+  updated: 2026-10-10
+  status: live
+# The full Agent OS rung. WORKING NAME, her pick pending (options in the B1 report). Change the text here and
+# every page that names the rung follows.
+- id: agent-os-name
+  text: "The Whole Office"
+  source: "Services page, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: agent-os-runs-syahi
+  text: "It's the setup Syahi runs on itself."
+  source: "Agent OS runbook, 2026-07-19"
+  updated: 2026-10-10
+  status: live
+
+# ---- /about ----
+
+- id: founder-name
+  text: "Surabhi Pradhan"
+  source: "MCA record"
+  updated: 2026-10-10
+  status: live
+# The Person node's description on /about. It must appear on the page word for word.
+- id: founder-line
+  text: "Founder of Syahi, an AI venture studio."
+  source: "syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: org-one-person
+  text: "a one-person AI venture studio"
+  source: "syahi.sh home page, 2026-10-06"
+  updated: 2026-10-10
+  status: live
+- id: org-founded-month
+  text: "August 2026"
+  source: "MCA record"
+  updated: 2026-10-10
+  status: live
+# Ruling D10, first beat alone: the only thing a page that does not offer Signet may say about it.
+- id: signet-d10-first
+  text: "Live today: every post, outreach email and desk draft our agents make waits for Surabhi's yes in Signet."
+  source: "Ruling D10, 2026-10-06"
+  updated: 2026-10-10
+  status: live
+
+# ---- /media ----
+
+- id: media-dahshat-name
+  text: "Dahshat"
+  source: "katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: media-dahshat-line
+  text: "A free Hinglish horror fiction podcast with an AI cast."
+  source: "katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: media-adhoore-name
+  text: "अधूरे हिसाब"
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: media-store-sample
+  text: "Every title has a free sample chapter."
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+
+# ---- /paper-machine: the channel's three playlists, each a click-to-play card ----
+# Names and URLs: 10-SYAHI/receipts/2026-10-10-paper-machine-playlist-urls.md (the Control Room name is written with no
+# space before the colon). Video counts: 10-SYAHI/org/published/catalogue.md, last checked 2026-10-11. Cover images:
+# each playlist's thumbnail_url from YouTube's oEmbed, fetched once 2026-10-11 and saved under assets/img/.
+
+- id: pm-playlist-field-guide-name
+  text: "A Field Guide to the Language Machine"
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+- id: pm-playlist-field-guide-url
+  text: "https://www.youtube.com/playlist?list=PLPSVTjIA3O0c"
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+- id: pm-playlist-field-guide-count
+  text: "5"
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+- id: pm-playlist-field-guide-cover
+  text: "https://i.ytimg.com/vi/JsBHFsB8WlA/hqdefault.jpg"
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+
+- id: pm-playlist-agents-name
+  text: "The Control Room: AI Agents"
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+- id: pm-playlist-agents-url
+  text: "https://www.youtube.com/playlist?list=PLAxWjMEpGWxI"
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+- id: pm-playlist-agents-count
+  text: "5"
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+- id: pm-playlist-agents-cover
+  text: "https://i.ytimg.com/vi/4ftU7qMinP0/hqdefault.jpg"
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+
+- id: pm-playlist-core-name
+  text: "Core AI Concepts, Simply Explained"
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+- id: pm-playlist-core-url
+  text: "https://www.youtube.com/playlist?list=PLE-Rl7inR4Z4"
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+- id: pm-playlist-core-count
+  text: "3"
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+- id: pm-playlist-core-cover
+  text: "https://i.ytimg.com/vi/DKVGtFqFMkc/hqdefault.jpg"
+  source: "Paper Machine playlists, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+
+# ---- katha.syahi.sh, the listener page (B2) ----
+# Dahshat, the free show, and the one title in the store. Structured data (PodcastSeries, Audiobook) reads
+# katha-show-name, katha-show-url, katha-title-name, katha-title-url, katha-title-price-amount and katha-title-price.
+
+- id: katha-show-name
+  text: "Dahshat"
+  source: "katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-show-url
+  text: "https://listen.katha.syahi.sh/shows/dahshat"
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-show-spotify-url
+  text: "https://open.spotify.com/show/5oquXvtv05QJeBgsftB2mN"
+  source: "Spotify, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-show-disclosure
+  text: "All voices in this show are synthetic (AI). Written with AI assistance, edited and approved by a human."
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-title-name
+  text: "अधूरे हिसाब"
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-title-url
+  text: "https://listen.katha.syahi.sh/t/adhoore-hisab"
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-title-blurb
+  text: "Kabir Mehra's startup is sinking. His great-grandfather left him a ledger with one account still open, from 1947."
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-title-shape
+  text: "Ten chapters, about two hours."
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-title-price
+  text: "₹99 + 18% GST = ₹116.82"
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-title-price-amount
+  text: "116.82"
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-title-disclosure
+  text: "The voice in this recording is synthetic."
+  source: "listen.katha.syahi.sh, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+
+# ---- /katha, Our voices: five synthetic narrator voices reading one passage (run receipt 10-SYAHI/katha/runs/2026-10-10-voice-samples.md) ----
+# The clips are staged, not uploaded; the urls go live only after her per-clip yes.
+- id: katha-voice-neha-name
+  text: "Neha"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-neha-name-hi
+  text: "नेहा"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-neha-url
+  text: "https://media.katha.syahi.sh/samples/voices/neha-01.mp3"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-neha-role
+  text: "suspense"
+  source: "Katha voice samples v2, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+- id: katha-voice-kabir-name
+  text: "Kabir"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-kabir-name-hi
+  text: "कबीर"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-kabir-url
+  text: "https://media.katha.syahi.sh/samples/voices/kabir-01.mp3"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-kabir-role
+  text: "non-fiction"
+  source: "Katha voice samples v2, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+- id: katha-voice-aarav-name
+  text: "Aarav"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-aarav-name-hi
+  text: "आरव"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-aarav-url
+  text: "https://media.katha.syahi.sh/samples/voices/aarav-01.mp3"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-sameer-name
+  text: "Sameer"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-sameer-name-hi
+  text: "समीर"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-sameer-url
+  text: "https://media.katha.syahi.sh/samples/voices/sameer-01.mp3"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-sarla-name
+  text: "Sarla"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-sarla-name-hi
+  text: "सरला"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-sarla-url
+  text: "https://media.katha.syahi.sh/samples/voices/sarla-01.mp3"
+  source: "Katha voice samples, 2026-10-10"
+  updated: 2026-10-10
+  status: live
+- id: katha-voice-sarla-role
+  text: "bedtime story"
+  source: "Katha voice samples v2, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+- id: katha-voice-sameer-role
+  text: "audiobook"
+  source: "Katha voice samples v2, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+- id: katha-voice-aarav-role
+  text: "podcast"
+  source: "Katha voice samples v2, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+- id: katha-show-youtube-url
+  text: "https://www.youtube.com/@Dahshat_KathaAudio"
+  source: "YouTube, 2026-10-11"
+  updated: 2026-10-11
+  status: live

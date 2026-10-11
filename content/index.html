@@ -1,0 +1,132 @@
+---
+title: Syahi · AI and automation for owner-run businesses in India
+description: "Syahi takes the repeat work off an owner's desk: quotations in minutes, a brief every morning, follow-ups that go out on time. Start with a free call."
+updated: 2026-10-10
+approved: 2026-10-11
+layout: page
+audience: owner
+preload_fonts: [fraunces-italic]
+css: home
+claims: [home-card-count, qtm-quote-time, qtm-live-time, founder-years, call-is-free, booking-call-length]
+og_title: "Syahi · the repeat work off your desk"
+og_description: "Quotations in minutes, a brief every morning, follow-ups on time. For owner-run businesses. You check everything before it goes out."
+---
+{# DRAFT for her Sunday edit (D2, D16). The top sells to an owner-run business: the benefit, her triad as three beats,
+   one action (Book a call). The house mark and the four cards below it are today's, word for word. The old
+   hero-ventures line ("4 ventures · signet · ...") went with the old thesis; the ventures section head still says it. #}
+<section class="hero">
+  <div class="hero-grid">
+    <div>
+      <p class="devanagari"><span lang="hi">स्याही</span> &nbsp;·&nbsp; ink</p>
+      <h1>Syahi<svg class="drop" viewBox="20 8 60 84" aria-hidden="true"><path d="M 66 8 C 65.02 21.97 67.12 34.14 74.57 44.79 A 30 30 0 1 1 22.81 49.32 C 32.11 29.38 57.23 25.98 66 8 Z"/></svg></h1>
+      <p class="thesis">We take the repeat work off your desk, so your business can <em>operate efficiently, analyze deeply and grow&nbsp;immensely.</em></p>
+      <p class="sub">Made for owner-run businesses in India. Everything that reaches your customers waits for your yes.</p>
+      <p class="hero-cta">
+        <a class="cta" href="https://cal.com/surabhipradhan/30-mins-discussion-about-syahi">Book a call</a>
+        <span class="note">A {{ claim("call-is-free") }} {{ claim("booking-call-length", "short") }} call. Tell us what eats your week.</span>
+      </p>
+    </div>
+    <figure class="hero-side">
+      <div class="torn torn-a">{{ picture("img/inkpot.webp", "Engraving of an Indian brass inkpot with a reed pen, the Syahi house mark", sizes="18.75rem", media="(min-width: 40em)", loading="eager", fetchpriority="high", css_class="hero-mark") }}</div>
+      <figcaption class="hero-mark-cap">the house mark · dawat &amp; qalam</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <div class="beats">
+    <div class="beat">
+      <h2>Operate efficiently</h2>
+      <p>An enquiry lands on WhatsApp. A draft quotation goes back in {{ claim("qtm-quote-time") }}, priced off your own rate card. You check it and send it.</p>
+    </div>
+    <div class="beat">
+      <h2>Analyze deeply</h2>
+      <p>A brief reaches you every morning: what is overdue and what is stuck. You see the business without digging through chats and ledgers.</p>
+    </div>
+    <div class="beat">
+      <h2>Grow immensely</h2>
+      <p>Buyers often go with whoever answers first. Answer first, then hand us the next problem area.</p>
+    </div>
+  </div>
+  <p class="beats-more"><a href="/services">See what we build &rarr;</a></p>
+</section>
+
+<section>
+  <div class="section-head">
+    <span class="roman">{{ claim("home-card-count", "short") }}</span>
+    <span class="label">Where to start</span>
+    <span class="lede">Pick the one you came for.</span>
+  </div>
+
+  <div class="cards">
+
+    <a class="card" id="signet" href="/signet">
+      <div class="card-top"><span class="roman">I</span><span class="label">Product</span></div>
+      <div class="card-main">
+        <div class="card-fig">
+          {% include "partials/signet-seal.html" %}
+        </div>
+        <div>
+          <h2>Signet by Syahi</h2>
+          <p class="prose"><b>An approval layer with a decision ledger.</b> The agent drafts. You see the actual words on your phone, and one tap says yes or no. Nothing sends that you didn't verifiably see.</p>
+        </div>
+      </div>
+      <p class="for"><b>For</b> anyone whose agents touch the outside world</p>
+      <p class="act">see Signet &rarr;</p>
+    </a>
+
+    <a class="card" id="studio" href="/services/quote">
+      <div class="card-top"><span class="roman">II</span><span class="label">Services</span></div>
+      <div class="card-main">
+        <div class="card-fig">
+          <div class="torn torn-b">{{ picture("img/loom.webp", "Copperplate engraving of a wooden handloom", sizes="6rem") }}</div>
+        </div>
+        <div>
+          <h2>Quote in Ten Minutes</h2>
+          <p class="prose"><b>The flagship install.</b> An enquiry lands on WhatsApp. A draft quote goes back in {{ claim("qtm-quote-time") }}, priced off your own rate card. You check it. You send it. Live on your number in {{ claim("qtm-live-time") }}.</p>
+        </div>
+      </div>
+      <p class="for"><b>For</b> owner-run firms quoting custom work</p>
+      <p class="act">see the offer &rarr;</p>
+    </a>
+
+    <a class="card" id="katha" href="/katha">
+      <div class="card-top"><span class="roman">III</span><span class="label">Audio</span></div>
+      <div class="card-main">
+        <div class="card-fig">
+          <div class="torn torn-c">{{ picture("img/gramophone.webp", "Copperplate engraving of a vintage gramophone", sizes="6rem") }}</div>
+        </div>
+        <div>
+          <h2>Katha Audio</h2>
+          <p class="prose"><b>Audiobooks in Indian languages, built for publishers.</b> Manuscript in, retail-ready audio out. Every sentence verified against the source. First title out now on Spotify, Google Play and our own store.</p>
+        </div>
+      </div>
+      <p class="for"><b>For</b> publishers, ed-techs, rights holders</p>
+      <p class="act">see Katha &rarr;</p>
+    </a>
+
+    <a class="card" id="papermachine" href="/paper-machine">
+      <div class="card-top"><span class="roman">IV</span><span class="label">Media</span></div>
+      <div class="card-main">
+        <div class="card-fig">
+          <div class="torn torn-d">{{ picture("img/cube.webp", "Engraving of a paper cube pinned like a specimen, its front face washed in teal", sizes="6rem") }}</div>
+        </div>
+        <div>
+          <h2>Paper Machine</h2>
+          <p class="prose"><b>AI and ML explained like a naturalist's field guide.</b> Plates, not thumbnails. Every episode is a specimen: pinned, labelled, and drawn until the mechanism is visible.</p>
+        </div>
+      </div>
+      <p class="for"><b>For</b> the ones who want to see inside</p>
+      <p class="act">see the plates &rarr;</p>
+    </a>
+
+  </div>
+
+  {# machine-counted strip lands here once she picks the public numbers #}
+</section>
+
+<section class="colophon">
+  <span class="label">Colophon</span>
+  <p>Ink is how intent becomes record. Every piece of work that reaches you has a person's yes behind it, and a dated record that shows it.</p>
+  <p>Surabhi Pradhan signs everything that leaves here, {{ claim("founder-years") }} into AI, ML and analytics.</p>
+</section>

@@ -1,0 +1,27 @@
+{# The Signet seal: an S-curve carved through an ink core, sealed with a copper wax dot. Drawn by classes, so
+   its colours come from tokens (.seal-ring, .seal-core and .seal-dot in tokens/base.css; the dot is the one
+   brand-mark token, --mark-signet-dot). The mask keeps its own black and white: there colour is luminance.
+   The mask has an id, and an id is unique in a page, so a page that shows the seal more than once names each
+   one: {% with seal_id = "cta" %}{% include "partials/signet-seal.html" %}{% endwith %}. The name becomes
+   part of the mask id (signet-seal-carve-cta); with no name the id is signet-seal-carve, so a page's one
+   seal needs none. At most one seal on a page may go unnamed.
+   A seal that sits beside a heading is decoration: bind seal_decorative = true and it is hidden from assistive
+   technology instead of read out as a labelled image. #}
+{% set mask_id = "signet-seal-carve" ~ ("-" ~ seal_id if seal_id is defined else "") %}
+<svg class="signet-mark" viewBox="0 0 512 512"{% if seal_decorative is defined and seal_decorative %} aria-hidden="true"{% else %} role="img" aria-label="The Signet brand seal: an S-curve carved through an ink core, sealed with a copper wax dot"{% endif %}>
+  <defs>
+    <mask id="{{ mask_id }}">
+      <rect x="0" y="0" width="512" height="512" style="fill:#fff"></rect>
+      <g transform="rotate(-26 256 256)">
+        <path d="M 256,166 A 45,45 0 0 0 256,256 A 45,45 0 0 1 256,346" style="fill:none;stroke:#000;stroke-width:26;stroke-linecap:round"></path>
+        <circle cx="256" cy="346" r="20" style="fill:#000;stroke:none"></circle>
+      </g>
+    </mask>
+  </defs>
+  <rect class="seal-ring" x="46" y="46" width="420" height="420" rx="145" stroke-width="24"></rect>
+  <rect class="seal-ring" x="116" y="116" width="280" height="280" rx="96" stroke-width="20"></rect>
+  <circle class="seal-core" cx="256" cy="256" r="106" mask="url(#{{ mask_id }})"></circle>
+  <g transform="rotate(-26 256 256)">
+    <circle class="seal-dot" cx="256" cy="346" r="14"></circle>
+  </g>
+</svg>

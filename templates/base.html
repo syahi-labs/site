@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ page.title }}</title>
+<meta name="description" content="{{ page.description }}">
+<link rel="canonical" href="{{ canonical }}">
+<meta property="og:title" content="{{ page.og_title or page.title }}">
+<meta property="og:description" content="{{ page.og_description or page.description }}">
+<meta property="og:url" content="{{ canonical }}">
+<meta property="og:type" content="website">
+<meta property="og:image" content="{{ og_image }}">
+{% if og_image_size %}
+<meta property="og:image:width" content="{{ og_image_size[0] }}">
+<meta property="og:image:height" content="{{ og_image_size[1] }}">
+{% endif %}
+{% if page.og_image_alt %}
+<meta property="og:image:alt" content="{{ page.og_image_alt }}">
+{% endif %}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ page.og_title or page.title }}">
+<meta name="twitter:description" content="{{ page.og_description or page.description }}">
+<meta name="twitter:image" content="{{ og_image }}">
+{% if page.og_image_alt %}
+<meta name="twitter:image:alt" content="{{ page.og_image_alt }}">
+{% endif %}
+<meta name="theme-color" content="#F0E8D2">
+<link rel="icon" href="/assets/brand/favicon.ico" sizes="48x48">
+<link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/brand/apple-touch-icon.png">
+<link rel="preload" href="/assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
+{% for key in page.preload_fonts %}
+<link rel="preload" href="/assets/fonts/{{ key }}.woff2" as="font" type="font/woff2" crossorigin>
+{% endfor %}
+<link rel="stylesheet" href="/assets/tokens.css">
+<link rel="stylesheet" href="/assets/base.css">
+{% if page.css %}
+<link rel="stylesheet" href="/assets/pages/{{ page.css }}.css">
+{% endif %}
+{% if page.js %}
+<script defer src="/assets/js/{{ page.js }}.js"></script>
+{% endif %}
+{% for block in jsonld %}
+<script type="application/ld+json">{{ block }}</script>
+{% endfor %}
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    {% if site.header == "katha" %}
+    <a class="wordmark wordmark-katha" href="/">Katha Audio</a>
+    {% else %}
+    <a class="wordmark" href="/">{{ site.name }}</a>
+    {% endif %}
+    <nav aria-label="Main">
+      <details class="nav-menu">
+        <summary>Menu</summary>
+        <ul>
+          {% for tab in tabs %}
+          <li><a href="{{ tab.href }}"{% if tab.current %} aria-current="{{ tab.current }}"{% endif %}>{{ tab.label }}</a></li>
+          {% endfor %}
+        </ul>
+      </details>
+      <a class="cta" href="{{ site.cta.href }}">{{ site.cta.label }}</a>
+    </nav>
+  </div>
+</header>
+<main id="main">
+{% block main %}{% endblock %}
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-stack">
+    <nav aria-label="Company profiles">
+      <ul class="link-row">
+        {% for link in site.profiles %}
+        <li><a href="{{ link.href }}">{{ link.label }}</a></li>
+        {% endfor %}
+      </ul>
+    </nav>
+    <p class="legal">{{ claim("org-legal-name") }}, {{ claim("org-llpin") }}, Bengaluru</p>
+    <nav aria-label="Policies">
+      <ul class="link-row">
+        {% for link in site.policies %}
+        <li><a href="{{ link.href }}">{{ link.label }}</a></li>
+        {% endfor %}
+      </ul>
+    </nav>
+    {% if page.draft %}
+    <p class="made-by">Drafted with AI from our own records. Not yet approved.</p>
+    {% else %}
+    <p class="made-by">Drafted with AI from our own records. Checked and approved by Surabhi Pradhan on {{ page.approved|date }}.</p>
+    {% endif %}
+  </div>
+</footer>
+</body>
+</html>

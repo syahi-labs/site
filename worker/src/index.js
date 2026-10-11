@@ -1,0 +1,40 @@
+// Redirects, then the static site, then (only with a valid ?src=) a campaign stamp on the booking links.
+// The logic lives in lib.js. This file reads the request URL and the asset response, nothing else.
+import { isSiteHost, redirectFor, cleanUrlFor, httpsUpgradeFor, sanitizeSrc, stampWhatsApp, stampCal } from "./lib.js";
+
+const isHtml = (response) => (response.headers.get("content-type") || "").toLowerCase().startsWith("text/html");
+
+const stamper = (stamp) => ({
+  element(anchor) {
+    const href = anchor.getAttribute("href");
+    if (href) anchor.setAttribute("href", stamp(href));
+  },
+});
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const target = redirectFor(url);
+    if (target) return Response.redirect(target, 301);
+
+    // A broad route must never shadow another service's host: anything but syahi.sh goes on to its own origin.
+    if (!isSiteHost(url)) return fetch(request);
+
+    // Plain http is upgraded here, so the zone-wide Always Use HTTPS switch need not be touched.
+    const secure = httpsUpgradeFor(url);
+    if (secure) return Response.redirect(secure, 301);
+
+    // One URL per page: /x.html, /x/ and /index.html get a real 301 here, because the assets layer would answer 307.
+    const clean = cleanUrlFor(url);
+    if (clean) return Response.redirect(clean, 301);
+
+    const response = await env.ASSETS.fetch(request);
+    const src = sanitizeSrc(url.searchParams.get("src"));
+    if (src === null || response.body === null || !isHtml(response)) return response;
+
+    return new HTMLRewriter()
+      .on('a[href^="https://wa.me/"]', stamper((href) => stampWhatsApp(href, src)))
+      .on('a[href^="https://cal.com/"]', stamper((href) => stampCal(href, src)))
+      .transform(response);
+  },
+};

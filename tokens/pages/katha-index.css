@@ -1,0 +1,145 @@
+/* katha.syahi.sh index. Layout and type roles only. Every colour and every font family comes from
+   tokens.css: a role is asked for by token (var(--font-serif), var(--font-mono)), and tests/test_tokens.py
+   fails this folder on a raw colour or a literal family. The guard does NOT check lengths, so raw
+   sizes and spacing are allowed in a page sheet. This one uses the type scale (--fs-*) for every font
+   size and the spacing scale (--space-*) for most gaps; widths, borders, letter-spacing and line
+   heights are raw values.
+   Text pairs used, all in test_tokens TEXT_PAIRS: ink on ground, muted on ground, act on ground,
+   ground on ink, ground on act. */
+
+/* The sections are spaced here because the layout's .flow only separates its direct children a little. */
+.page > section + section{margin-top:var(--space-8)}
+
+/* Hero */
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,16rem);gap:var(--space-7);align-items:center}
+.devanagari{
+  font-family:var(--font-serif);
+  margin-bottom:var(--space-3);
+  font-size:var(--fs-ui);
+  letter-spacing:.4em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.sub{margin-top:var(--space-4);max-width:32rem;font-family:var(--font-serif);font-size:var(--fs-lead);color:var(--muted)}
+.hero-side{padding:var(--space-4);background:var(--ground-deep);border:1px solid var(--rule)}
+.hero-fig{width:100%;height:auto;mix-blend-mode:multiply}
+.figcap{
+  font-family:var(--font-mono);
+  margin-top:var(--space-2);
+  text-align:center;
+  font-size:var(--fs-micro);
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.listen-line{margin-top:var(--space-6);max-width:var(--measure)}
+.listen-line a{color:var(--act)}
+.listen-line a:hover{color:var(--ink)}
+
+/* Section heads: a roman numeral and a label over a rule */
+.section-head{
+  display:flex;
+  align-items:baseline;
+  gap:var(--space-5);
+  margin-bottom:var(--space-5);
+  padding-bottom:var(--space-3);
+  border-bottom:1px solid var(--ink);
+}
+.roman{font-family:var(--font-serif);font-size:var(--fs-h2);font-weight:600;line-height:var(--lh-tight)}
+.label{font-family:var(--font-mono);font-size:var(--fs-small);letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+
+/* The three beats: an ordered list, numbered 01 to 03 by the browser's own list marker */
+@counter-style zero-padded{system:extends decimal;pad:2 "0";suffix:""}
+.beats{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:var(--space-5);
+  margin:0;
+  padding:0;
+  list-style:zero-padded inside;
+}
+.beat{padding:var(--space-5);border:1px solid var(--ink)}
+.beat::marker{font-family:var(--font-mono);font-size:var(--fs-small);color:var(--muted)}
+.beat strong{display:block;margin-block:var(--space-2);font-family:var(--font-serif);font-size:var(--fs-lead);font-weight:600}
+.beat p{font-size:var(--fs-ui);line-height:1.6;color:var(--muted)}
+.spine{
+  font-family:var(--font-serif);
+  max-width:var(--measure);
+  margin-top:var(--space-5);
+  padding:var(--space-4) var(--space-5);
+  border-left:3px solid var(--act);
+  font-size:var(--fs-lead);
+  line-height:1.5;
+}
+
+/* The listener page: one card each for the free show and the title in the store */
+.pick{padding:var(--space-6);border:1px solid var(--ink)}
+.pick h2{font-family:var(--font-serif);font-size:var(--fs-h2);font-weight:600;line-height:var(--lh-tight);margin-bottom:var(--space-3)}
+.pick p{max-width:var(--measure)}
+.pick p + p{margin-top:var(--space-3)}
+.pick .fine{font-size:var(--fs-small);color:var(--muted)}
+
+/* Who it's for */
+.fit{max-width:29rem}
+.fit-card{padding:var(--space-5);border:1px solid var(--ink)}
+.fit-card h2{
+  font-family:var(--font-mono);
+  margin-bottom:var(--space-3);
+  font-size:var(--fs-small);
+  font-weight:500;
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.fit-card ul{margin:0;padding:0;list-style:none}
+.fit-card li{padding-block:var(--space-2);border-bottom:1px solid var(--rule);font-size:var(--fs-ui)}
+.fit-card li:last-child{border-bottom:0}
+
+/* The sample */
+.slot{padding:var(--space-6);border:1px solid var(--ink);text-align:center}
+.slot-tag{
+  font-family:var(--font-mono);
+  display:block;
+  margin-bottom:var(--space-3);
+  font-size:var(--fs-micro);
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.slot p{max-width:32rem;margin-inline:auto;font-size:var(--fs-ui);color:var(--muted)}
+.slot audio{display:block;width:100%;max-width:26rem;margin:var(--space-5) auto 0}
+
+/* Our voices: one row per voice, name over player; the player is full width, so rows never overflow at 320 px */
+.voices-intro{max-width:var(--measure);margin-bottom:var(--space-5);color:var(--muted)}
+.voices{margin:0;padding:0;list-style:none;display:grid;gap:var(--space-4)}
+.voice{display:grid;grid-template-columns:minmax(0,14rem) minmax(0,1fr);gap:var(--space-4);align-items:center;padding:var(--space-4) var(--space-5);border:1px solid var(--ink)}
+.voice-name{margin:0;font-family:var(--font-serif);font-size:var(--fs-lead);font-weight:600}
+.voice-role{display:block;font-family:var(--font-mono);font-size:var(--fs-micro);font-weight:400;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+.voice audio{display:block;width:100%;min-width:0}
+
+/* The ask */
+.ask p{max-width:var(--measure);color:var(--muted)}
+.cta-row{display:flex;flex-wrap:wrap;gap:var(--space-4);margin-top:var(--space-5)}
+/* inline-block, not inline-flex: a flex box drops the spaces around a claim's span ("Listen toDahshat"). */
+.btn{
+  display:inline-block;
+  text-align:center;
+  min-height:var(--tap);
+  padding:var(--space-3) var(--space-5);
+  line-height:1.25;
+  border:1px solid var(--ink);
+  border-radius:var(--radius);
+  color:var(--ink);
+  font-weight:500;
+  text-decoration:none;
+}
+.btn.primary{background:var(--ink);color:var(--ground)}
+.btn:hover,.btn.primary:hover{background:var(--act);border-color:var(--act);color:var(--ground)}
+.ask .fine{margin-top:var(--space-3);font-size:var(--fs-small)}
+
+@media (max-width:47.5em){
+  .hero-grid{grid-template-columns:minmax(0,1fr)}
+  .hero-side{display:none}
+  .beats{grid-template-columns:minmax(0,1fr)}
+  .voice{grid-template-columns:minmax(0,1fr)}
+}

@@ -1,0 +1,316 @@
+/* Quote in Ten Minutes (/services/quote). Layout and type roles only. Every colour, every font family and every
+   font size comes from tokens.css, and tests/css_guard.py fails this folder on a raw colour, a literal family, a
+   raw font size or a redefined token. Text pairs used, all in test_tokens TEXT_PAIRS: ink, muted and act on
+   ground, and on ground-deep; ground on act (the call buttons, which are the base's .cta).
+
+   Today's page (studioservices-landing c66925f) was ink-dark with a brass accent and a WhatsApp-green button, and
+   had a palette of its own. Where each colour went (D19, one colour set):
+     --ink as the dark ground          --ground          the page
+     --ink-raised (cards)              --ground-deep     the chat bubble and the sample quote card
+     --paper (text)                    --ink             text
+     --paper-dim (secondary text)      --muted           the plate mark, step labels, notes, FAQ answers, the fact strip
+     --brass (the accent)              --act             the section labels, the sentence rule under the thesis, the
+                                                         arrow's label, the DRAFT stamp, the approve check, the offer's
+                                                         shape, the FAQ plus
+     --brass-deep (rules and dots)     --muted, --rule   the arrow's line, the dots, the hatched amounts (muted); the
+                                                         dashes and the quote card's lines (rule)
+     --hairline (brass at 22%)         --rule            the hairlines between sections and under the FAQ rows
+     --wa (WhatsApp green)             --act             the three call buttons, which are the base's shared .cta
+                                                         (white text became --ground, as the base has it)
+     the plate grain (body::before)    none              a fixed, full-viewport texture on a parchment page is paint
+                                                         cost for nothing, as the home's was
+   Sizes: each of today's rem sizes is the nearest step of the scale. The headline tops out at --fs-display
+   (52 px), where today's reached 96 px: the one visible size change, as Signet's was. Fraunces came from Google
+   Fonts; the serif is the shared --font-serif now.
+
+   The sticky thumb button stays. It is hidden on wide screens, fixed at the bottom on narrow ones, and the footer
+   gets the room it covers. Today's script hid it while the closing button was on screen; a CSS scroll-driven
+   animation does the same where the browser has them, and without them the button simply stays. No script. */
+
+/* The page: the sections sit in the shared wrap, each over a hairline */
+.page > * + *{margin-top:0}
+.page > .hero,.page > section{border-bottom:1px solid var(--rule)}
+.page > section{padding-block:var(--space-8)}
+.page > .hero{padding-block:var(--space-5) var(--space-8)}
+.page > .rules,.page > .coda,.page > .facts{padding-block:var(--space-7)}
+
+.section-label{
+  margin-bottom:var(--space-5);
+  font-family:var(--font-sans);
+  font-size:var(--fs-micro);
+  font-weight:600;
+  letter-spacing:.28em;
+  text-transform:uppercase;
+  color:var(--act);
+}
+.dot{margin:0 .55em;color:var(--muted)}
+
+/* Hero */
+.plate-mark{
+  margin-bottom:var(--space-7);
+  font-size:var(--fs-micro);
+  letter-spacing:.28em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.hero h1{
+  margin-bottom:var(--space-5);
+  font-size:clamp(var(--fs-h1),8vw,var(--fs-display));
+  line-height:1.02;
+  letter-spacing:-.015em;
+}
+.hero-thesis{
+  max-width:30em;
+  margin-bottom:var(--space-6);
+  font-size:clamp(var(--fs-body),2.6vw,var(--fs-h3));
+  line-height:1.5;
+}
+.hero-thesis::after{
+  content:"";
+  display:block;
+  width:3.2rem;
+  height:2px;
+  margin-top:var(--space-5);
+  background:var(--act);
+}
+.quiet-link{
+  display:block;
+  width:fit-content;
+  margin-top:var(--space-4);
+  font-size:var(--fs-ui);
+  color:var(--muted);
+}
+.quiet-link:hover{color:var(--ink)}
+.wide-only{display:none}
+@media (min-width:40em){
+  .wide-only{display:inline}
+}
+
+/* The drawn scene: an enquiry, ten minutes, a draft (all data-sample) */
+.scene-grid{
+  display:grid;
+  grid-template-columns:1fr auto 1.2fr;
+  gap:var(--space-6);
+  align-items:start;
+}
+.scene-step{
+  margin-bottom:var(--space-3);
+  font-size:var(--fs-micro);
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.scene-col:first-child{align-self:center}
+.bubble{
+  max-width:24em;
+  padding:var(--space-4) 1.1rem var(--space-3);
+  background:var(--ground-deep);
+  border:1px solid var(--rule);
+  border-radius:14px 14px 14px 4px;
+}
+.bubble p{font-size:var(--fs-body)}
+.bubble-meta{
+  display:block;
+  margin-top:var(--space-2);
+  text-align:right;
+  font-size:var(--fs-micro);
+  color:var(--muted);
+}
+.scene-arrow{
+  align-self:center;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:var(--space-2);
+}
+.arrow-line{width:1px;height:2.2rem;background:var(--muted)}
+.arrow-label{
+  font-family:var(--font-mono);
+  font-size:var(--fs-small);
+  color:var(--act);
+  white-space:nowrap;
+}
+.quote-card{
+  padding:1.2rem 1.3rem var(--space-4);
+  background:var(--ground-deep);
+  border:1px solid var(--rule);
+  border-radius:var(--radius);
+}
+.quote-card-head{
+  display:flex;
+  align-items:center;
+  gap:var(--space-3);
+  margin-bottom:var(--space-4);
+  padding-bottom:var(--space-3);
+  border-bottom:1px dashed var(--rule);
+}
+.draft-stamp{
+  padding:.2rem .55rem;
+  border:1.5px solid var(--act);
+  border-radius:3px;
+  font-size:var(--fs-micro);
+  font-weight:700;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--act);
+  transform:rotate(-3deg);
+}
+.quote-card-title{font-size:var(--fs-small);color:var(--muted)}
+.quote-lines{width:100%;border-collapse:collapse;font-size:var(--fs-ui)}
+.quote-lines td{padding:.42rem 0}
+.quote-lines .amt{text-align:right}
+.quote-lines .total td{padding-top:.7rem;border-top:1px solid var(--rule);font-weight:600}
+
+/* redacted amounts: hatched blocks, no real numbers */
+.redact{
+  display:inline-block;
+  width:3.6em;
+  height:.85em;
+  border-radius:2px;
+  background:repeating-linear-gradient(45deg,var(--muted) 0 3px,transparent 3px 6px);
+  opacity:.75;
+  vertical-align:middle;
+}
+.redact.wide{width:4.6em;opacity:1}
+.quote-card-note{
+  display:flex;
+  justify-content:space-between;
+  gap:var(--space-4);
+  margin-top:.9rem;
+  font-size:var(--fs-small);
+  color:var(--muted);
+}
+.quote-card-time{flex:none;font-size:var(--fs-micro);white-space:nowrap}
+.approve-step{
+  display:flex;
+  align-items:center;
+  gap:.8rem;
+  margin-top:1.3rem;
+  padding:.9rem 1.1rem;
+  border:1px solid var(--act);
+  border-radius:var(--radius);
+  background:color-mix(in srgb,var(--act) 6%,transparent);
+}
+.approve-check{
+  flex:none;
+  display:grid;
+  place-items:center;
+  width:1.7rem;
+  height:1.7rem;
+  border:1.5px solid var(--act);
+  border-radius:50%;
+  font-size:var(--fs-ui);
+  color:var(--act);
+}
+.approve-step p{font-family:var(--font-serif);font-size:var(--fs-body)}
+.scene-close{margin-top:var(--space-6);font-size:var(--fs-ui);color:var(--muted)}
+@media (max-width:47.5em){
+  .scene-grid{grid-template-columns:1fr;gap:var(--space-5)}
+  .scene-arrow{flex-direction:row}
+  .arrow-line{width:2.2rem;height:1px}
+}
+
+/* The offer */
+.offer-field{max-width:38em;margin-bottom:var(--space-6)}
+.offer-shape{
+  max-width:30em;
+  margin-top:var(--space-7);
+  padding-left:var(--space-5);
+  border-left:2px solid var(--act);
+}
+.offer-shape p{
+  font-family:var(--font-serif);
+  font-size:clamp(var(--fs-lead),2.4vw,var(--fs-h3));
+  line-height:1.5;
+  color:var(--act);
+}
+.offer-shape p.offer-shape-note{
+  margin-top:var(--space-2);
+  font-size:clamp(var(--fs-body),2vw,var(--fs-lead));
+  color:var(--muted);
+}
+
+/* The rules, and what comes after */
+.rule,.coda-line{
+  max-width:26em;
+  font-family:var(--font-serif);
+  font-size:clamp(var(--fs-lead),3vw,var(--fs-h2));
+  line-height:1.4;
+}
+.rule + .rule{margin-top:var(--space-5)}
+.coda-line{margin-bottom:var(--space-6)}
+.coda-body{max-width:36em;color:var(--muted)}
+
+/* Who runs it */
+.fact-strip{
+  font-size:var(--fs-small);
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  line-height:2.1;
+  color:var(--muted);
+}
+
+/* Asked before you ask */
+.faq details{max-width:40em;border-bottom:1px solid var(--rule)}
+.faq details:first-of-type{border-top:1px solid var(--rule)}
+.faq summary{
+  position:relative;
+  padding:var(--space-4) var(--space-6) var(--space-4) 0;
+  font-size:var(--fs-body);
+  font-weight:600;
+  list-style:none;
+  cursor:pointer;
+}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{
+  content:"+";
+  position:absolute;
+  right:.2rem;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:var(--fs-lead);
+  font-weight:400;
+  color:var(--act);
+}
+.faq details[open] summary::after{content:"\2212"}
+.faq details p{max-width:36em;padding:0 0 var(--space-4);color:var(--muted)}
+
+/* The closing call */
+.closing{text-align:center}
+.closing-line{
+  margin-bottom:var(--space-6);
+  font-family:var(--font-serif);
+  font-size:clamp(var(--fs-h3),4vw,var(--fs-h1));
+  line-height:1.35;
+}
+
+/* The sticky thumb button: narrow screens only */
+.cta-sticky{display:none}
+@media (max-width:39.99em){
+  .cta-sticky{
+    display:flex;
+    position:fixed;
+    left:var(--space-4);
+    right:var(--space-4);
+    bottom:var(--space-4);
+    z-index:5;
+    box-shadow:0 8px 24px color-mix(in srgb,var(--ink) 35%,transparent);
+  }
+  /* the button takes 60px at the bottom of the viewport, so the footer's last line sits above it */
+  .site-footer{padding-bottom:calc(var(--space-7) + var(--tap))}
+  /* and a control the browser scrolls into view stops above the button, its gap and one more, so the button
+     never covers focus (WCAG 2.2 SC 2.4.11) */
+  html{scroll-padding-bottom:calc(var(--space-4) + var(--tap) + var(--space-4))}
+}
+@supports (animation-timeline:view()){
+  @media (max-width:39.99em){
+    .page{timeline-scope:--closing}
+    .closing{view-timeline:--closing block}
+    .cta-sticky{
+      animation:hide-sticky linear;
+      animation-timeline:--closing;
+      animation-range:cover;
+    }
+  }
+}
+@keyframes hide-sticky{from,to{opacity:0;visibility:hidden}}

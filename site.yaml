@@ -1,0 +1,30 @@
+# One host's chrome: base URL, header tabs, the one action, footer links.
+# Read by sitebuild.site.load_site. katha/site.yaml is the same shape.
+base_url: https://syahi.sh
+name: Syahi
+header: syahi
+
+tabs:
+  - {label: Services, href: /services}
+  - {label: Products, href: /signet}
+  - {label: Media, href: /media}
+  - {label: About, href: /about}
+
+cta: {label: Book a call, href: "https://cal.com/surabhipradhan/30-mins-discussion-about-syahi"}
+
+# Company profiles only (D5). Her personal ones stay out of the footer.
+profiles:
+  - {label: LinkedIn, href: "https://www.linkedin.com/company/syahi-sh"}
+  - {label: Instagram, href: "https://www.instagram.com/syahitech"}
+  - {label: Threads, href: "https://www.threads.com/@syahitech"}
+  - {label: GitHub, href: "https://github.com/syahi-labs"}
+
+policies:
+  - {label: Contact, href: /contact}
+  - {label: Privacy, href: /privacy}
+  - {label: Terms, href: /terms}
+  - {label: Refunds, href: /refund}
+
+# Pages the nav or content points at before they are built. A release build
+# fails while this list is not empty.
+pending_pages: []

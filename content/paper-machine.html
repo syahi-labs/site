@@ -1,0 +1,46 @@
+---
+title: Paper Machine · the channel's playlists
+description: "Paper Machine explains AI and ML like a naturalist's field guide. Three playlists, each plays here when you press play."
+updated: 2026-10-11
+approved: 2026-10-11
+layout: page
+css: story
+js: pm-player
+claims: [pm-playlist-field-guide-name, pm-playlist-field-guide-url, pm-playlist-field-guide-count, pm-playlist-field-guide-cover, pm-playlist-agents-name, pm-playlist-agents-url, pm-playlist-agents-count, pm-playlist-agents-cover, pm-playlist-core-name, pm-playlist-core-url, pm-playlist-core-count, pm-playlist-core-cover]
+og_title: "Paper Machine: the playlists"
+og_description: "AI and ML explained like a naturalist's field guide. Three playlists, each one press of play away."
+---
+{# DRAFT for her Sunday edit. Her decision 2026-10-11: the page shows the channel's three playlists, not the plates.
+   Each card is a cover image until the visitor presses play; only then does a youtube-nocookie player load
+   (assets/js/pm-player.js). With no script the play button stays hidden and "Watch on YouTube" is the way in.
+   Names and URLs: receipts/2026-10-10-paper-machine-playlist-urls.md. Counts: org/published/catalogue.md. #}
+<div class="page-head">
+  <p class="devanagari"><span lang="hi">स्याही</span> &nbsp;·&nbsp; ink</p>
+  <h1>Paper Machine</h1>
+  <p class="thesis">AI and ML explained like a naturalist's field guide. Plates, not thumbnails. Every episode is a specimen: pinned, labelled, and drawn until the mechanism is visible.</p>
+</div>
+
+<section aria-labelledby="playlists-head">
+  <div class="section-head">
+    <h2 class="label" id="playlists-head">Playlists</h2>
+    <span class="lede">Press play to watch one here.</span>
+  </div>
+  <ul class="pm-cards">
+    {% for slug, image in [("field-guide", "pm-playlist-field-guide"), ("agents", "pm-playlist-control-room"), ("core", "pm-playlist-core-ai")] %}
+    <li class="pm-card" data-list="{{ claim_text('pm-playlist-' ~ slug ~ '-url')|replace('https://www.youtube.com/playlist?list=', '') }}" data-title="{{ claim_text('pm-playlist-' ~ slug ~ '-name') }}" data-cover-source="{{ claim_text('pm-playlist-' ~ slug ~ '-cover') }}">
+      <div class="pm-media">
+        {{ picture("img/" ~ image ~ ".jpg", "", sizes="(min-width: 48em) 20rem, 100vw") }}
+        <button type="button" class="pm-play" hidden aria-label="Play {{ claim_text('pm-playlist-' ~ slug ~ '-name') }}"></button>
+      </div>
+      <h3>{{ claim("pm-playlist-" ~ slug ~ "-name") }}</h3>
+      <p class="pm-count">{{ claim("pm-playlist-" ~ slug ~ "-count") }} videos</p>
+      <p><a class="pm-watch" href="{{ claim_text('pm-playlist-' ~ slug ~ '-url') }}">Watch on YouTube</a></p>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="closing">
+  <p class="closing-line">New plates land on the channel.</p>
+  <p class="cta-row"><a class="cta" href="https://www.youtube.com/@papermachine07">Watch on YouTube</a></p>
+</section>

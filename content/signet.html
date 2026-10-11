@@ -1,0 +1,273 @@
+---
+title: "Signet by Syahi: nothing sends that you didn't verifiably see"
+description: "Signet by Syahi is the decision ledger for AI that talks to your customers. Your agent drafts, you approve on your phone, and that's exactly what goes out."
+updated: 2026-10-10
+approved: 2026-10-11
+layout: page
+css: signet
+schema: [SoftwareApplication]
+og_image: /assets/brand/og-signet.png
+claims: [signet-live-since, signet-battery-date, signet-battery-sent, signet-battery-refused, signet-battery-refused-why, signet-d10, booking-call-length, signet-price-line, signet-founding-lock, signet-pay-after-demo]
+og_title: "Signet by Syahi: the decision ledger for AI that talks to your customers"
+og_description: "The decision ledger for AI that talks to your customers. Your agent drafts, you see the exact words, one tap approves. Veto always wins. Every decision leaves a receipt."
+og_image_alt: "The Signet seal above the words: Agents do the work. You keep the say-so. Signet by Syahi, a decision ledger."
+---
+{# Ported word for word from signet-landing a0bb211 (tests/parity/signet.html). Markup-only changes, none of
+   them copy: the page's own wrappers (.wrap) are the shared layout's; the header and footer are the shared ones;
+   the CSS is tokens/pages/signet.css; the three step numbers are a CSS counter; the scenes carry data-sample;
+   the seal is the shared partial, named; the figures and the D10 sentence are claims (the button's aria-label too, through claim_text); the call to action's
+   class is .request, because the base owns .cta. #}
+<div class="hero">
+  <div class="product-mark">
+    {% with seal_id = "hero", seal_decorative = true %}{% include "partials/signet-seal.html" %}{% endwith %}
+    <p class="product-name">Signet <span>by Syahi</span></p>
+  </div>
+  <p class="eyebrow">Running Syahi's own approvals since {{ claim("signet-live-since") }}</p>
+  <h1>What you approved is <em>what goes out.</em></h1>
+  <p class="lede">
+    Your agent drafts the reply. You see every word on your phone. Then it
+    sends. Signet sits between your agents and your customers: anything
+    client-facing waits until you've verifiably seen it. <strong>Nothing
+    sends that you didn't verifiably see.</strong> Veto is one tap and it
+    always wins. A freeze button stops everything, from your phone, in one
+    motion.
+  </p>
+
+  <div class="ledger" data-sample role="img" aria-label="A Signet ledger: an agent drafts a quote reply to a customer named Meena, the exact wording shows on the owner's phone, she approves from her phone, the agent sends it, and the decision is sealed on the record.">
+    <div class="ledger-head">
+      <span>Decision ledger</span>
+      <span>today</span>
+    </div>
+    <ol>
+      <li>
+        <span class="t">09:14</span>
+        <span><span class="who">reply-drafter</span> asks to send: <span class="quoted">&ldquo;Hi Meena, quote attached, valid till Friday&hellip;&rdquo;</span></span>
+        <span class="status">awaiting your seal</span>
+      </li>
+      <li>
+        <span class="t">09:15</span>
+        <span><span class="who">you</span> read the exact words and approve from your phone</span>
+        <span class="status sealed">sealed</span>
+      </li>
+      <li>
+        <span class="t">09:15</span>
+        <span><span class="who">reply-drafter</span> sends it to Meena, nothing changed after your seal</span>
+        <span class="status">on the record</span>
+      </li>
+    </ol>
+    <div class="stamp" aria-hidden="true">Sealed<br />by you</div>
+  </div>
+</div>
+
+<section aria-labelledby="how-heading">
+  <p class="section-eyebrow">How it works</p>
+  <h2 id="how-heading">Three beats, in order</h2>
+  <ol class="steps">
+    <li>
+      <span class="step-glyph" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="10" /><line x1="9.6" y1="8" x2="9.6" y2="16" /><line x1="14.4" y1="8" x2="14.4" y2="16" /></svg>
+      </span>
+      <div>
+        <strong>Agent drafts</strong>
+        <p>Your agent finishes the words itself: the email, the quote reply, the reminder. It doesn't send it. It shows you the exact text, not a summary of what it plans to do.</p>
+      </div>
+    </li>
+    <li>
+      <span class="step-glyph" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 6-2.5 8-2.5 8h17S18 14 18 8" /><path d="M10 20a2.2 2.2 0 0 0 4 0" /></svg>
+      </span>
+      <div>
+        <strong>You see and tap</strong>
+        <p>The draft lands on your phone, word for word. Approve it. Veto it, and veto always wins. Or let the hold clock run: it releases only once you've verifiably seen it.</p>
+      </div>
+    </li>
+    <li>
+      <span class="step-glyph" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="1.5" /><line x1="8" y1="8" x2="16" y2="8" /><line x1="8" y1="12" x2="16" y2="12" /><line x1="8" y1="16" x2="12.5" y2="16" /></svg>
+      </span>
+      <div>
+        <strong>Receipt lands</strong>
+        <p>What was sent, who approved it, when. A permanent line in the ledger. Yours to point to, months later, without asking anyone to remember.</p>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<section aria-labelledby="pair-heading">
+  <p class="section-eyebrow">How it's different</p>
+  <h2 id="pair-heading">One of these is a decision. The other is a reflex.</h2>
+  <div class="pair-grid">
+    <div class="pair-card dim">
+      <span class="pair-tag">Every other approval tool</span>
+      <div class="notif" data-sample role="img" aria-label="A generic phone notification that says an agent wants to send one email, with approve and deny buttons and no way to see the email itself.">
+        <div class="n-head"><span class="n-dot"></span><span>Agent · now</span></div>
+        <strong>Agent wants to send 1 email</strong>
+        <div class="n-btns"><span>Approve</span><span>Deny</span></div>
+      </div>
+      <p class="pair-caption">You approved a sentence about the draft.
+      The draft itself? Never saw it. That tap is a reflex, and a ledger
+      full of reflexes proves nothing.</p>
+    </div>
+    <div class="pair-card">
+      <span class="pair-tag">Signet</span>
+      <div class="detail" data-sample role="img" aria-label="Signet's detail view: the recipient, the subject, the full draft text, the content hash it will be sealed over, and an approve button.">
+        <div class="d-row"><span class="d-k">To</span><span>meena@sharma-furnishings.example</span></div>
+        <div class="d-row"><span class="d-k">Subject</span><span>Re: quote for the 3BHK</span></div>
+        <div class="d-draft">"Hi Meena, quote attached, valid till Friday.
+        The laminate option came in lower than we discussed&hellip;"</div>
+        <div class="d-hash">seals over these exact bytes · a1b2c3d4e5f60718</div>
+        <span class="d-approve">Approve</span>
+      </div>
+      <p class="pair-caption">You read the words that will actually leave.
+      Your approval is sealed over those bytes, and changing one byte kills
+      it. That tap is a decision.</p>
+    </div>
+  </div>
+</section>
+
+<section class="proof" aria-labelledby="proof-heading">
+  <p class="section-eyebrow">Not a demo film. A real run.</p>
+  <h2 id="proof-heading">We ran the battery on ourselves first</h2>
+  <p class="section-lead">
+    Signet runs Syahi's own approvals. On {{ claim("signet-battery-date") }}, we put it
+    through a live battery against our own production releases, on the
+    phone, with real clocks. Here's what happened, told straight.
+  </p>
+
+  <ul class="receipts">
+    <li>
+      <div class="receipt-head">
+        <span class="receipt-title">Hash mutation, caught</span>
+        <span class="receipt-tag">item B</span>
+      </div>
+      <p class="receipt-body">
+        A draft's content changed after the founder had already looked at it.
+        The old approval died on the spot; the system didn't let the changed
+        text ride on a stale seal. It re-flagged the item as new and made her look
+        again. She vetoed it. This is what content-pinning means in practice:
+        you approve the exact bytes, not a label that says "email sent."
+      </p>
+    </li>
+    <li>
+      <div class="receipt-head">
+        <span class="receipt-title">Veto won the race</span>
+        <span class="receipt-tag">item C</span>
+      </div>
+      <p class="receipt-body">
+        An item was already counting down on its hold clock, seconds from
+        release. The veto beat the clock. It never went out, and the veto is
+        on the record.
+      </p>
+    </li>
+    <li>
+      <div class="receipt-head">
+        <span class="receipt-title">Freeze, from a phone</span>
+        <span class="receipt-tag">item A</span>
+      </div>
+      <p class="receipt-body">
+        One tap, from her phone, froze every pending release at once,
+        mid-clock. No agent could lift it. Only she could authorize the lift.
+        That's the rule now: any agent may freeze, no agent may unfreeze.
+      </p>
+    </li>
+    <li>
+      <div class="receipt-head">
+        <span class="receipt-title">One send, only after her seal</span>
+        <span class="receipt-tag">item E</span>
+      </div>
+      <p class="receipt-body">
+        {{ claim("signet-battery-sent") }}: checked against the approved recipient and
+        the signed template, sent only after she approved it, sealed in the
+        record.
+      </p>
+    </li>
+  </ul>
+
+  <p class="proof-note">
+    <strong>{{ claim("signet-battery-refused") }}</strong>
+    The system's own checks found {{ claim("signet-battery-refused-why") }}. Caught before anyone got mail.
+  </p>
+</section>
+
+<section aria-labelledby="outward-heading">
+  <p class="section-eyebrow">Sealed by Signet</p>
+  <h2 id="outward-heading">The seal can travel with the message</h2>
+  <p class="section-lead">
+    Every approved send already mints a signed certificate. Opt a draft
+    class in, and the send carries it outward: one footer line whose link
+    opens a public verification page. The recipient sees who approved
+    this exact message and when, checked against the signature in their
+    own browser. No account, no trust-us.
+  </p>
+  <div
+    class="outward-sample"
+      data-sample
+    role="img"
+    aria-label="The tail of a received email. After the sign-off, a footer reads: Reviewed and approved by you on 2026-09-03. Verify: approve.syahi.sh/s/cmd_9f2…"
+  >
+    <p class="outward-msg">…so the three overdue invoices are attached
+    again for convenience. Best regards, invoice-chaser</p>
+    <p class="outward-footer">Reviewed and approved by you on 2026-09-03.
+    Verify: approve.syahi.sh/s/cmd_9f2…</p>
+  </div>
+  <p class="outward-note">
+    Off by default, opted in per draft class. And the guarantee runs the
+    other way too: a rejected or unverified send can never carry the
+    footer. It's appended only after the certificate verifies.
+  </p>
+</section>
+
+<section aria-labelledby="slots-heading">
+  <p class="section-eyebrow">Promised only when true</p>
+  <h2 id="slots-heading">Two things this page refuses to fake</h2>
+  <div class="slots">
+    <div class="slot">
+      <span class="slot-tag">The demo</span>
+      Syahi's own approvals run on Signet now. A screen capture of a real
+      one lands here next. Not a mock, not a film.
+    </div>
+    <div class="slot">
+      <span class="slot-tag">The ledger, counted</span>
+      Decisions held, approved and vetoed will be counted here from the
+      live ledger once real decisions flow through it.
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="fit-heading">
+  <p class="section-eyebrow">Who it's for</p>
+  <h2 id="fit-heading">Built for the owner who already does this by hand</h2>
+  <p class="section-lead">
+    You already read every quote before it reaches a client. Every reminder
+    before it lands in someone's inbox. Signet does the same job when the
+    hand doing the drafting is an agent's.
+  </p>
+  <div class="fit">
+    <div class="fit-card yes">
+      <h3>This is for you if</h3>
+      <ul>
+        <li>You run agents that talk to your customers</li>
+        <li>You want to see the exact draft, not a summary</li>
+        <li>One owner should hold the seal, not a queue</li>
+        <li>You want a receipt you can point to later</li>
+      </ul>
+    </div>
+    <div class="fit-card no">
+      <h3>Not what this is</h3>
+      <ul>
+        <li>A shared review inbox for a dev team</li>
+        <li>A compliance audit log nobody reads</li>
+        <li>A self-serve app you start on your own today</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="request" aria-labelledby="cta-heading">
+  {% with seal_id = "cta", seal_decorative = true %}{% include "partials/signet-seal.html" %}{% endwith %}
+  <p class="section-eyebrow">Request a demo</p>
+  <h2 id="cta-heading">See it happen on your own draft</h2>
+  <p class="lead">{{ claim("signet-d10") }} Book {{ claim("booking-call-length") }}, bring a real email or quote you'd hand an agent, and we'll show you the actual ledger, not a slide.</p>
+  <a class="button" href="https://cal.com/surabhipradhan/30-mins-discussion-about-syahi?overlayCalendar=true" target="_blank" rel="noopener" aria-label="Book a {{ claim_text('booking-call-length', 'short') }} demo (opens in a new tab)" data-claims="booking-call-length">Book a {{ claim("booking-call-length", "short") }} demo</a>
+  <p class="fine">{{ claim("signet-price-line") }} {{ claim("signet-founding-lock") }} {{ claim("signet-pay-after-demo") }}</p>
+</section>

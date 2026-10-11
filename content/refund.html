@@ -1,0 +1,72 @@
+---
+title: Cancellation and refunds · Syahi
+description: "How to cancel Signet, how the Studio Services guarantee pays out, and how Razorpay refunds reach you. SYAHI TECHNOLOGIES LLP, Bengaluru."
+updated: 2026-09-12
+approved: 2026-10-11
+layout: page
+css: policy
+claims: [signet-annual-refund-window, qtm-guarantee-day, katha-gst-treatment, grievance-ack-window, katha-refund-resolve-window, razorpay-refund-timing, whatsapp-number, reply-window, refund-initiate-window]
+---
+<div class="page-head">
+  <p class="devanagari"><span lang="hi">स्याही</span> &nbsp;·&nbsp; ink</p>
+  <h1>Cancellation and refunds</h1>
+  <p class="thesis">Nothing ships in a box. Software you can cancel any time. Services carry a guarantee that's written down before the build.</p>
+  <p class="updated">Last updated <time datetime="{{ page.updated }}">{{ page.updated|long_date }}</time></p>
+</div>
+
+<section>
+  <div class="section-head"><span class="roman">I</span><span class="label">Nothing ships</span></div>
+  <div class="doc">
+    <p>Syahi sells software subscriptions and services. Nothing physical is shipped, so there's no shipping policy beyond this line. What you buy is delivered online, or built on your own systems.</p>
+  </div>
+</section>
+
+<section>
+  <div class="section-head"><span class="roman">II</span><span class="label">Signet</span><span class="lede">Cancel any time.</span></div>
+  <div class="doc">
+    <p><b>How to cancel.</b> From the dashboard, or by emailing <a href="mailto:hello@syahi.sh">hello@syahi.sh</a> from the address on the account. Cancelling stops the next charge. Access runs to the end of the period you've paid for.</p>
+    <p><b>Monthly.</b> No refund for the month already started.</p>
+    <p><b>Annual.</b> Refundable pro rata within <b>{{ claim("signet-annual-refund-window") }} of the first payment</b>. Ask by email and we refund the unused part, counted from the day you ask. After {{ claim("signet-annual-refund-window") }} there's no refund; your access runs to the end of the year you paid for. Renewals follow the same rule from the renewal date.</p>
+    <p><b>Founding price.</b> Cancelling ends the lock. If you come back later, the price is whatever it is that day.</p>
+    <p><b>If we shut Signet down.</b> You get your ledger export first, then a refund of the unused part of any prepaid period.</p>
+  </div>
+</section>
+
+<section>
+  <div class="section-head"><span class="roman">III</span><span class="label">Studio Services</span><span class="lede">The guarantee is written before the build.</span></div>
+  <div class="doc">
+    <p><b>The guarantee.</b> Every build carries one, written into the scope before work starts. For Quote in Ten Minutes it reads: if your average quote turnaround isn't under an hour by {{ claim("qtm-guarantee-day") }} of running, <b>you don't pay for the build</b>. "Quote turnaround" and how it's counted are defined in the scope, so there's nothing to argue about on {{ claim("qtm-guarantee-day") }}.</p>
+    <p><b>How it's paid out.</b> The build fee is paid upfront, when the scope is signed. If the guarantee isn't met by {{ claim("qtm-guarantee-day") }}, we refund the full build fee to the payment method you used, through Razorpay. No forms, no argument: the scope defines the measure, the receipts show the number.</p>
+    <p><b>Stopping a build early.</b> Before the scope is signed, nothing is owed. If you stop after the build has started but before it goes live, we bill the hours spent at the rate in your scope, capped at the build fee. Once it's live, the guarantee runs and decides it.</p>
+    <p><b>The retainer.</b> Monthly: cancel any time by email, the next charge stops, the month you're in runs out. No refund for a month already started. Annual prepaid: cancel any time, and unused full months are refunded pro rata. The retainer isn't covered by the build guarantee.</p>
+    <p><b>Separately quoted work</b> follows the terms in that quote.</p>
+    <p>Katha Audio work is agreed per title, in writing. Its terms live in that agreement.</p>
+  </div>
+</section>
+
+<section>
+  <div class="section-head"><span class="roman">IV</span><span class="label">Katha Audio audiobooks</span><span class="lede">Digital, delivered on purchase.</span></div>
+  <div class="doc">
+    <p>Katha Audio sells audiobooks. Each one is digital content, delivered the moment you buy it. There's no refund once you've bought a title, with one exception: a purchase that won't play. That's a defect on our side, and we refund it in full.</p>
+    <p>Before you buy, you hear a free sample chapter. You tick a box that says exactly this: <b>"I've listened to the sample and I understand there are no refunds on audiobooks, except a purchase that won't play."</b> That's the deal, in writing, before you pay.</p>
+    <p>The price shown is the total, GST included: {{ claim("katha-gst-treatment") }}, on-line audio content. Payments run through Razorpay.</p>
+    <h2>If your purchase won't play</h2>
+    <p>Email <a href="mailto:hello@syahi.sh">hello@syahi.sh</a> with the order id from your receipt. We acknowledge within {{ claim("grievance-ack-window") }} and resolve within {{ claim("katha-refund-resolve-window") }}. A confirmed refund goes back to the payment method you used.</p>
+    <p><b>Grievance officer.</b> Surabhi Pradhan, <a href="mailto:hello@syahi.sh">hello@syahi.sh</a>.</p>
+  </div>
+</section>
+
+<section>
+  <div class="section-head"><span class="roman">V</span><span class="label">How a refund is issued</span></div>
+  <div class="doc">
+    <p>Every refund goes back to the payment method you paid with, through Razorpay. We don't refund to a different card or account. The amount refunded is the amount you paid, GST included.</p>
+    <p>Once we initiate a refund, Razorpay typically shows it in your account within <b>{{ claim("razorpay-refund-timing") }}</b>. That figure is approximate. The exact timing depends on your bank or card issuer, and can be longer. We email you the Razorpay refund reference the day we initiate it, so you can track it.</p>
+  </div>
+</section>
+
+<section>
+  <div class="section-head"><span class="roman">VI</span><span class="label">How to ask</span></div>
+  <div class="doc">
+    <p>Email <a href="mailto:hello@syahi.sh">hello@syahi.sh</a> from the address on the account or the invoice, or WhatsApp <a href="https://wa.me/918951449537">{{ claim("whatsapp-number") }}</a>. Include the invoice number or payment reference. We reply within {{ claim("reply-window") }}, and initiate an approved refund within {{ claim("refund-initiate-window") }} of that reply.</p>
+  </div>
+</section>
