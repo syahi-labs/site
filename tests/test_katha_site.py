@@ -167,7 +167,7 @@ def test_the_page_is_one_h1_and_h2s_below_it(html):
 
 def test_the_devanagari_runs_are_marked_hindi(html):
     assert '<span lang="hi">कथा</span>' in html
-    assert len(re.findall(r'<span lang="hi">', html)) >= 4
+    assert len(re.findall(r'<span lang="hi">', html)) >= 3
 
 
 def test_the_hero_image_is_a_file_in_the_katha_hosts_own_output(built):

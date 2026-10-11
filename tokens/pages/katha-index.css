@@ -120,12 +120,13 @@
 /* The ask */
 .ask p{max-width:var(--measure);color:var(--muted)}
 .cta-row{display:flex;flex-wrap:wrap;gap:var(--space-4);margin-top:var(--space-5)}
+/* inline-block, not inline-flex: a flex box drops the spaces around a claim's span ("Listen toDahshat"). */
 .btn{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
+  display:inline-block;
+  text-align:center;
   min-height:var(--tap);
-  padding:0 var(--space-5);
+  padding:var(--space-3) var(--space-5);
+  line-height:1.25;
   border:1px solid var(--ink);
   border-radius:var(--radius);
   color:var(--ink);

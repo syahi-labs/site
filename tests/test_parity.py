@@ -569,7 +569,7 @@ def test_the_two_katha_pages_share_no_body_and_the_shared_partial_is_gone():
     assert not (REPO / "templates" / "partials" / "katha-publishers.html").exists()
     for phrase in KATHA_SIGNATURE:
         assert phrase in publisher and phrase not in listener, phrase
-    assert "<audio" in listener and "<audio" in publisher      # the clip is on both pages (quiz item 9)
+    assert "<audio" not in listener and "<audio" in publisher  # the clip lives on /katha only (her call 2026-10-11)
 
 
 def test_the_two_hosts_render_different_mains(real_site, dist):
