@@ -206,7 +206,8 @@ def test_no_page_in_the_build_repeats_an_id(dist):
 # Launch B3 (2026-10-10): the two "Not what this is" lines the D10 check flagged, replaced so that nothing outside the D10
 # sentence speaks about customers or sign-ups.
 B3_EDITS = [("A public app you can sign up for today", "A self-serve app you start on your own today"),
-            ("A system with customers running it besides us, yet ", "")]    # quiz item 11: her answer deletes this line
+            ("A system with customers running it besides us, yet ", ""),    # quiz item 11: her answer deletes this line
+            ("Running Syahi's own approvals since", "Signet by Syahi Running Syahi's own approvals since")]  # her call 2026-10-11: the product named beside its seal
 
 
 def test_main_text_is_the_old_pages_text_but_for_the_two_b3_lines(main):
@@ -523,7 +524,7 @@ def test_the_hero_shows_the_solid_seal_not_a_watermark(main):
     # her call 2026-10-11: the pale outline became the app icon's seal, solid ink and the copper dot
     assert "hero-watermark" not in main
     hero = main.split('<p class="eyebrow">', 1)[0]
-    assert 'class="signet-mark"' in hero and 'class="seal-core"' in hero and 'class="seal-dot"' in hero
+    assert ">Signet <span>by Syahi</span><" in hero and 'class="signet-mark"' in hero and 'class="seal-core"' in hero and 'class="seal-dot"' in hero
 
 
 # ---- the page's stylesheet ----

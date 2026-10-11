@@ -19,7 +19,10 @@ og_image_alt: "The Signet seal above the words: Agents do the work. You keep the
    the seal is the shared partial, named; the figures and the D10 sentence are claims (the button's aria-label too, through claim_text); the call to action's
    class is .request, because the base owns .cta. #}
 <div class="hero">
-  {% with seal_id = "hero", seal_decorative = true %}{% include "partials/signet-seal.html" %}{% endwith %}
+  <div class="product-mark">
+    {% with seal_id = "hero", seal_decorative = true %}{% include "partials/signet-seal.html" %}{% endwith %}
+    <p class="product-name">Signet <span>by Syahi</span></p>
+  </div>
   <p class="eyebrow">Running Syahi's own approvals since {{ claim("signet-live-since") }}</p>
   <h1>What you approved is <em>what goes out.</em></h1>
   <p class="lede">
