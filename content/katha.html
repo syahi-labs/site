@@ -1,13 +1,13 @@
 ---
 title: Katha Audio · every sentence verified against the source
 description: Katha Audio builds Indian Language audiobooks for rights-holders whose catalog has no audio. Agents produce, every sentence is checked against the printed text, a human signs off.
-updated: 2026-10-10
+updated: 2026-10-11
 approved:
 draft: true
 layout: page
 css: katha-index
 schema: [Service]
-claims: [katha-sample-length, media-store-sample, katha-title-name, katha-voice-neha-name, katha-voice-neha-name-hi, katha-voice-neha-url, katha-voice-neha-role, katha-voice-kabir-name, katha-voice-kabir-name-hi, katha-voice-kabir-url, katha-voice-kabir-role, katha-voice-aarav-name, katha-voice-aarav-name-hi, katha-voice-aarav-url, katha-voice-sameer-name, katha-voice-sameer-name-hi, katha-voice-sameer-url, katha-voice-sarla-name, katha-voice-sarla-name-hi, katha-voice-sarla-url, katha-voice-sarla-role]
+claims: [katha-sample-length, media-store-sample, katha-title-name, katha-voice-neha-name, katha-voice-neha-name-hi, katha-voice-neha-url, katha-voice-neha-role, katha-voice-kabir-name, katha-voice-kabir-name-hi, katha-voice-kabir-url, katha-voice-kabir-role, katha-voice-aarav-name, katha-voice-aarav-name-hi, katha-voice-aarav-url, katha-voice-aarav-role, katha-voice-sameer-name, katha-voice-sameer-name-hi, katha-voice-sameer-url, katha-voice-sameer-role, katha-voice-sarla-name, katha-voice-sarla-name-hi, katha-voice-sarla-url, katha-voice-sarla-role]
 og_title: "Katha Audio · every sentence verified"
 og_description: "Indian Language audiobooks for rights-holders whose catalog has no audio. Manuscript in, retail-ready audio out."
 ---
@@ -88,13 +88,13 @@ og_description: "Indian Language audiobooks for rights-holders whose catalog has
     <span class="roman">IV</span>
     <span class="label">Our voices</span>
   </div>
-  <p class="voices-intro">Every voice reads the same opening of <span lang="hi">{{ claim("katha-title-name") }}</span>, chapter one, so you can compare. Every voice is synthetic, invented rather than cloned from a real person, and watermarked.</p>
+  <p class="voices-intro">Each voice reads a short original piece in the style it suits best, Hindi with the everyday English words a Hinglish listener expects. Every voice is synthetic, invented rather than cloned from a real person, and watermarked.</p>
   <ul class="voices">
     <li class="voice">
-      <p class="voice-name">{{ claim("katha-voice-neha-name") }} <span lang="hi">{{ claim("katha-voice-neha-name-hi") }}</span>
-        <span class="voice-role">{{ claim("katha-voice-neha-role") }}</span></p>
+      <p class="voice-name">{{ claim("katha-voice-sameer-name") }} <span lang="hi">{{ claim("katha-voice-sameer-name-hi") }}</span>
+        <span class="voice-role">{{ claim("katha-voice-sameer-role") }}</span></p>
       <audio controls controlsList="nodownload" preload="none">
-        <source src="{{ claim_text('katha-voice-neha-url') }}" type="audio/mpeg">
+        <source src="{{ claim_text('katha-voice-sameer-url') }}" type="audio/mpeg">
       </audio>
     </li>
     <li class="voice">
@@ -105,15 +105,17 @@ og_description: "Indian Language audiobooks for rights-holders whose catalog has
       </audio>
     </li>
     <li class="voice">
-      <p class="voice-name">{{ claim("katha-voice-aarav-name") }} <span lang="hi">{{ claim("katha-voice-aarav-name-hi") }}</span></p>
+      <p class="voice-name">{{ claim("katha-voice-aarav-name") }} <span lang="hi">{{ claim("katha-voice-aarav-name-hi") }}</span>
+        <span class="voice-role">{{ claim("katha-voice-aarav-role") }}</span></p>
       <audio controls controlsList="nodownload" preload="none">
         <source src="{{ claim_text('katha-voice-aarav-url') }}" type="audio/mpeg">
       </audio>
     </li>
     <li class="voice">
-      <p class="voice-name">{{ claim("katha-voice-sameer-name") }} <span lang="hi">{{ claim("katha-voice-sameer-name-hi") }}</span></p>
+      <p class="voice-name">{{ claim("katha-voice-neha-name") }} <span lang="hi">{{ claim("katha-voice-neha-name-hi") }}</span>
+        <span class="voice-role">{{ claim("katha-voice-neha-role") }}</span></p>
       <audio controls controlsList="nodownload" preload="none">
-        <source src="{{ claim_text('katha-voice-sameer-url') }}" type="audio/mpeg">
+        <source src="{{ claim_text('katha-voice-neha-url') }}" type="audio/mpeg">
       </audio>
     </li>
     <li class="voice">

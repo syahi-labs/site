@@ -529,10 +529,10 @@ KATHA_B2_EDITS = [
      "Every title has a free sample chapter. IV The ask",
      "quiz item 9: the sample clip is back on the pitch, worded from the claims katha-sample-length and media-store-sample"),
     ("IV The ask",
-     "IV Our voices Every voice reads the same opening of अधूरे हिसाब, chapter one, so you can compare. Every voice is synthetic, "
-     "invented rather than cloned from a real person, and watermarked. "
-     "Neha नेहा narrator Kabir कबीर podcast host Aarav आरव Sameer समीर Sarla सरला character voice V The ask",
-     "Our voices: five synthetic narrator voices on one passage, worded from the katha-voice-* claims (Katha voice samples, 2026-10-10)"),
+     "IV Our voices Each voice reads a short original piece in the style it suits best, Hindi with the everyday English words "
+     "a Hinglish listener expects. Every voice is synthetic, invented rather than cloned from a real person, and watermarked. "
+     "Sameer समीर audiobook Kabir कबीर non-fiction Aarav आरव podcast Neha नेहा suspense Sarla सरला bedtime story V The ask",
+     "Our voices: five synthetic voices, each on its own piece (her v2 call 2026-10-11), worded from the katha-voice-* claims"),
 ]
 
 
@@ -555,7 +555,7 @@ def test_the_katha_page_front_matter_is_the_publisher_pitch_draft():
     page = next(p for p in load_pages(REPO / "content") if p.slug == "/katha")
     assert page.layout == "page" and page.css == "katha-index"     # the one sheet both pages share
     assert page.schema == ("Service",) and page.audience is None
-    assert page.draft is True and page.approved is None and page.updated == datetime.date(2026, 10, 10)
+    assert page.draft is True and page.approved is None and page.updated == datetime.date(2026, 10, 11)
     assert page.claims[:3] == ("katha-sample-length", "media-store-sample", "katha-title-name")   # the sample clip is back (quiz item 9)
     assert page.claims[3:] and all(c.startswith("katha-voice-") for c in page.claims[3:])         # Our voices
 
@@ -601,7 +601,7 @@ def test_the_katha_links_are_the_old_pages_with_each_move_applied_in_order_less_
     expected = apply_link_moves(moved)
     expected.insert(1, "https://katha.syahi.sh/")      # inserted after the moves: the helper's own move table would rewrite it
     # Our voices: five mp3 sources (narrator first) sit between the sample section and the ask, so before the ask's two links
-    voices = [f"https://media.katha.syahi.sh/samples/voices/{v}-01.mp3" for v in ("neha", "kabir", "aarav", "sameer", "sarla")]
+    voices = [f"https://media.katha.syahi.sh/samples/voices/{v}-01.mp3" for v in ("sameer", "kabir", "aarav", "neha", "sarla")]
     expected[-2:-2] = voices
     assert new == expected
     assert len(old) == 6                                # the comparison cannot pass by both sides being empty

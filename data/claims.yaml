@@ -578,9 +578,9 @@
   updated: 2026-10-10
   status: live
 - id: katha-voice-neha-role
-  text: "narrator"
-  source: "Katha voice samples, 2026-10-10"
-  updated: 2026-10-10
+  text: "suspense"
+  source: "Katha voice samples v2, 2026-10-11"
+  updated: 2026-10-11
   status: live
 - id: katha-voice-kabir-name
   text: "Kabir"
@@ -598,9 +598,9 @@
   updated: 2026-10-10
   status: live
 - id: katha-voice-kabir-role
-  text: "podcast host"
-  source: "Katha voice samples, 2026-10-10"
-  updated: 2026-10-10
+  text: "non-fiction"
+  source: "Katha voice samples v2, 2026-10-11"
+  updated: 2026-10-11
   status: live
 - id: katha-voice-aarav-name
   text: "Aarav"
@@ -648,7 +648,17 @@
   updated: 2026-10-10
   status: live
 - id: katha-voice-sarla-role
-  text: "character voice"
-  source: "Katha voice samples, 2026-10-10"
-  updated: 2026-10-10
+  text: "bedtime story"
+  source: "Katha voice samples v2, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+- id: katha-voice-sameer-role
+  text: "audiobook"
+  source: "Katha voice samples v2, 2026-10-11"
+  updated: 2026-10-11
+  status: live
+- id: katha-voice-aarav-role
+  text: "podcast"
+  source: "Katha voice samples v2, 2026-10-11"
+  updated: 2026-10-11
   status: live
