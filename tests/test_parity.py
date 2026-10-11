@@ -30,7 +30,7 @@ APPROVED = datetime.date(2026, 10, 6)
 # (10 October); the other three keep the dates they had. All four stay drafts: the build says "re-approve" for the three
 # whose Last updated line now renders from `updated`.
 POLICY_UPDATED = {"contact.html": datetime.date(2026, 9, 10), "terms.html": datetime.date(2026, 9, 12),
-                  "refund.html": datetime.date(2026, 9, 12), "privacy.html": datetime.date(2026, 10, 10)}
+                  "refund.html": datetime.date(2026, 9, 12), "privacy.html": datetime.date(2026, 10, 11)}
 MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
           "November", "December")
 
@@ -153,7 +153,7 @@ B3_TEXT_EDITS = {
     "site-terms.html": [],       # likewise 12 September 2026
     "site-refund.html": [],      # likewise 12 September 2026
     "site-privacy.html": [
-        ("Last updated 10 September 2026", "Last updated 10 October 2026"),
+        ("Last updated 10 September 2026", "Last updated 11 October 2026"),
         ("syahi.sh sets no cookies. It runs no analytics. It has no contact form, so the site itself collects nothing you type. "
          "The moving ink is drawn inside your browser and sends nothing anywhere. Two things do leave your browser when the page loads:",
          "syahi.sh sets no cookies and runs no tracking scripts. Our host counts visits in aggregate (which pages, which countries, "
@@ -164,6 +164,8 @@ B3_TEXT_EDITS = {
          "Fonts. The typefaces are served from syahi.sh itself. No third-party font host receives a request from your browser."),
         ("Links to WhatsApp, Cal.com, X, GitHub and YouTube take you to those services.",
          "Links to WhatsApp, Cal.com, YouTube, GitHub, LinkedIn, Instagram and Threads take you to those services."),   # X dropped 2026-10-10 (quiz item 1): no personal profile is linked
+        ("Their policies apply once you're there.",
+         "Their policies apply once you're there. If you press play on a video, YouTube's own policy applies."),   # 2026-10-11: /paper-machine plays a playlist in the page, after a click
         ("Hosting. The site is served by GitHub Pages. GitHub keeps ordinary server logs: IP address, page requested, time. "
          "We don't see visitor-level logs.",
          "Hosting. syahi.sh is served by Cloudflare, and katha.syahi.sh by GitHub Pages. Each keeps ordinary server logs to "

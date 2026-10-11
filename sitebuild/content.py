@@ -18,7 +18,7 @@ REQUIRED_KEYS = ("title", "description", "updated", "layout")
 # `approved` is required too, unless the page is a draft (`draft: true`): new or changed copy that no one
 # has approved yet. A draft says so in its made-by line and a release build refuses it.
 OPTIONAL_KEYS = ("approved", "draft", "claims", "schema", "audience", "og_image", "css",
-                 "og_title", "og_description", "og_image_alt", "preload_fonts")
+                 "og_title", "og_description", "og_image_alt", "preload_fonts", "js")
 FENCE = "---"
 EM_DASH = chr(0x2014)
 # A page stylesheet is named, never pathed: tokens/pages/<name>.css, published as assets/pages/<name>.css.
@@ -53,6 +53,9 @@ class Page:
     # Faces this page draws above the fold beyond the two every page preloads (body and headline), by published
     # key, e.g. ("fraunces-italic"). A face that swaps in after first paint reflows the hero; a preload stops it.
     preload_fonts: tuple[str, ...] = ()
+    # The name of this page's own script in assets/js/ (deferred, linked from the head), or None. Only a page that
+    # needs behaviour asks for one; every other page ships no script.
+    js: str | None = None
 
 
 def load_pages(content_dir: Path) -> list[Page]:
@@ -97,6 +100,7 @@ def _load_page(path: Path, content_dir: Path) -> Page:
         og_image_alt=_preview_text(meta, "og_image_alt", path),
         draft=draft,
         preload_fonts=_font_keys(meta, path),
+        js=_js_name(meta, path),
     )
 
 
@@ -166,6 +170,16 @@ def _css_name(meta: dict, path: Path) -> str | None:
     if name is not None and not CSS_NAME.fullmatch(name):
         raise ContentError(
             f"{path}: 'css' must be the plain name of a stylesheet in tokens/pages/ "
+            f"(lowercase letters, digits and hyphens, no path or extension), got {name!r}"
+        )
+    return name
+
+
+def _js_name(meta: dict, path: Path) -> str | None:
+    name = _optional_text(meta, "js", path)
+    if name is not None and not CSS_NAME.fullmatch(name):
+        raise ContentError(
+            f"{path}: 'js' must be the plain name of a script in assets/js/ "
             f"(lowercase letters, digits and hyphens, no path or extension), got {name!r}"
         )
     return name

@@ -39,6 +39,9 @@
 {% if page.css %}
 <link rel="stylesheet" href="/assets/pages/{{ page.css }}.css">
 {% endif %}
+{% if page.js %}
+<script defer src="/assets/js/{{ page.js }}.js"></script>
+{% endif %}
 {% for block in jsonld %}
 <script type="application/ld+json">{{ block }}</script>
 {% endfor %}

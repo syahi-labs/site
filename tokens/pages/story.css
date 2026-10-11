@@ -130,31 +130,43 @@
 .media-card-multi .card-main-link::after{content:"";position:absolute;inset:0}
 .media-card-multi .card-second-link{position:relative;z-index:1;margin-left:var(--space-3);color:var(--act);text-decoration:underline;text-underline-offset:3px}
 
-/* /paper-machine: the plate index. The numeral is a counter, so no digit sits in the markup. */
-.more{margin:var(--space-5) 0 0}
-.plates{margin:var(--space-5) 0 0;padding:0;list-style:none;counter-reset:plate}
-.plates li{
-  display:grid;
-  grid-template-columns:var(--space-8) minmax(0,1fr);
-  gap:var(--space-4);
-  align-items:baseline;
-  padding-block:var(--space-4);
-  border-bottom:1px solid var(--rule);
-  counter-increment:plate;
+/* /paper-machine: three playlist cards. A cover until the visitor presses play, then the player takes its place. */
+.pm-cards{margin:var(--space-5) 0 0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr));gap:var(--space-6) var(--space-5)}
+.pm-card h3{margin-top:var(--space-3);font-size:var(--fs-lead)}
+.pm-count{margin:var(--space-1) 0 0;font-family:var(--font-mono);font-size:var(--fs-small);color:var(--muted)}
+.pm-card p + p{margin-top:var(--space-2)}
+.pm-media{position:relative;aspect-ratio:16/9;overflow:hidden;border:1px solid var(--rule);border-radius:var(--radius);background:var(--ground-deep)}
+.pm-media picture,.pm-media img,.pm-media iframe{display:block;width:100%;height:100%;border:0}
+.pm-media img{object-fit:cover}   /* the source is 4:3 with bars above and below: cover crops them */
+.pm-play{
+  position:absolute;
+  inset:0;
+  margin:auto;
+  width:var(--space-8);
+  height:var(--space-8);
+  padding:0;
+  border:0;
+  border-radius:50%;
+  background:var(--act);
+  cursor:pointer;
+  transition:background-color var(--dur-fast) var(--ease);
 }
-.plates li::before{
-  content:counter(plate, upper-roman);
-  font-family:var(--font-serif);
-  font-size:var(--fs-h2);
-  font-weight:600;
-  line-height:var(--lh-tight);
+.pm-play[hidden]{display:none}
+.pm-play::before{
+  content:"";
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-30%,-50%);
+  border-style:solid;
+  border-width:var(--space-3) 0 var(--space-3) var(--space-5);
+  border-color:transparent transparent transparent var(--ground);
 }
-.plates a{font-family:var(--font-serif);font-size:var(--fs-lead)}
+.pm-play:hover{background:var(--ink)}
 
 @media (max-width:47.5em){
   .lede{margin-left:0;width:100%}
   .media-cards{grid-template-columns:minmax(0,1fr)}
   .item{padding-left:var(--space-7)}
   .fy > div{grid-template-columns:minmax(0,1fr);gap:var(--space-1)}
-  .plates li{grid-template-columns:var(--space-7) minmax(0,1fr)}
 }
