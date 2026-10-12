@@ -63,11 +63,12 @@ def test_every_changed_page_is_approved_by_her_on_11_oct(host, slug):
     found = page(host, slug)
     # Quiz item 8: contact, terms and refund have no text change, so they keep their earlier dates (now approved too).
     expected = {"/contact": datetime.date(2026, 9, 10), "/terms": datetime.date(2026, 9, 12), "/refund": datetime.date(2026, 9, 12),
-                "/katha": datetime.date(2026, 10, 11),   # voices v2, her call 2026-10-11
+                "/katha": datetime.date(2026, 10, 12),   # voices v2 on 11 Oct; shorter description, her A 2026-10-12
                 "/privacy": datetime.date(2026, 10, 11)}   # the play-on-a-video line, her call 2026-10-11
     if (host, slug) == ("katha", "/"):
         expected["/"] = datetime.date(2026, 10, 11)                    # "Hear it first" removed, her call 2026-10-11
-    assert found.draft is False and found.approved == datetime.date(2026, 10, 11) and found.updated == expected.get(slug, DAY)
+    approved = datetime.date(2026, 10, 12) if (host, slug) == ("main", "/katha") else datetime.date(2026, 10, 11)
+    assert found.draft is False and found.approved == approved and found.updated == expected.get(slug, DAY)
 
 
 # ---- B2: the listener page ----

@@ -558,7 +558,7 @@ def test_the_katha_page_front_matter_is_the_approved_publisher_pitch():
     page = next(p for p in load_pages(REPO / "content") if p.slug == "/katha")
     assert page.layout == "page" and page.css == "katha-index"     # the one sheet both pages share
     assert page.schema == ("Service",) and page.audience is None
-    assert page.draft is False and page.approved == datetime.date(2026, 10, 11) and page.updated == datetime.date(2026, 10, 11)
+    assert page.draft is False and page.approved == datetime.date(2026, 10, 12) and page.updated == datetime.date(2026, 10, 12)
     assert page.claims[:3] == ("katha-sample-length", "media-store-sample", "katha-title-name")   # the sample clip is back (quiz item 9)
     assert page.claims[3:] and all(c.startswith("katha-voice-") for c in page.claims[3:])         # Our voices
 
@@ -589,11 +589,18 @@ def test_the_katha_main_text_is_the_old_pages_text_but_for_the_two_b2_edits(dist
         assert phrase in new
 
 
-def test_the_katha_title_and_description_are_the_old_pages_exactly(dist):
+# Her A, 2026-10-12: the old description ran 179 characters and Google cut it; this is the approved replacement.
+KATHA_DESCRIPTION = ("Indian-language audiobooks for rights-holders whose catalog has no audio. "
+                     "Every sentence checked against the printed text, and a human signs off.")
+
+
+def test_the_katha_title_is_the_old_pages_and_the_description_is_her_shorter_one(dist):
     old = (PARITY / KATHA).read_text(encoding="utf-8")
     html = built(dist, "katha.html")
-    for pattern in (r"<title>(.*?)</title>", r'<meta name="description" content="(.*?)">'):
-        assert unescape(re.search(pattern, html).group(1)) == unescape(re.search(pattern, old).group(1))
+    pattern = r"<title>(.*?)</title>"
+    assert unescape(re.search(pattern, html).group(1)) == unescape(re.search(pattern, old).group(1))
+    description = unescape(re.search(r'<meta name="description" content="(.*?)">', html).group(1))
+    assert description == KATHA_DESCRIPTION and len(description) <= 155
 
 
 def test_the_katha_links_are_the_old_pages_with_each_move_applied_in_order_less_the_listener_links(dist):

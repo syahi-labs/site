@@ -74,10 +74,18 @@ def test_the_twitter_title_description_and_alt_are_todays_or_the_open_graph_ones
     assert new.get("twitter:image:alt") == old.get("twitter:image:alt", old.get("og:image:alt"))
 
 
+# Descriptions she changed on purpose after the snapshot, page by page, with her words in the site's tests.
+CHANGED_DESCRIPTIONS = {
+    # her A, 2026-10-12: the old one ran 179 characters and Google cut it
+    "katha.html": "Indian-language audiobooks for rights-holders whose catalog has no audio. "
+                  "Every sentence checked against the printed text, and a human signs off.",
+}
+
+
 @pytest.mark.parametrize("snap, host, name, source", PAGES, ids=IDS)
 def test_the_title_and_the_description_are_still_the_pages_own(real_site, snap, host, name, source):
     old, new = snapshot(snap), built(real_site, host, name)
-    assert new["description"] == old["description"]
+    assert new["description"] == CHANGED_DESCRIPTIONS.get(name if host == "syahi.sh" else None, old["description"])
     html = (real_site.out / host / name).read_text(encoding="utf-8")
     assert unescape(re.search(r"<title>(.*?)</title>", html).group(1)) == unescape(
         re.search(r"<title>(.*?)</title>", (PARITY / snap).read_text(encoding="utf-8"), re.S).group(1).strip())
