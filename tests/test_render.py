@@ -100,9 +100,9 @@ def test_footer_profiles_are_company_only(env):
     html = render_page(env, page(), [])
     foot = parse(html[html.index("<footer"):])
     for href in ["https://www.linkedin.com/company/syahi-sh", "https://www.instagram.com/syahitech",
-                 "https://www.threads.com/@syahitech", "https://github.com/syahi-labs"]:
+                 "https://www.threads.com/@syahitech", "https://x.com/Syahi_Tech", "https://github.com/syahi-labs"]:
         assert href in foot.links
-    assert not any("x.com" in (h or "") or "github.com/surpradhan" in (h or "") for h in foot.links)
+    assert not any("x.com/surabhipradhan" in (h or "") or "github.com/surpradhan" in (h or "") for h in foot.links)   # the company X account is in; her personal one is not
 
 
 # ---- beyond the brief: head, header, footer, JSON-LD, errors ----

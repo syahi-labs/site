@@ -38,7 +38,7 @@ def test_real_site_yaml_holds_the_fixed_values():
     assert [(t.label, t.href) for t in site.tabs] == [
         ("Services", "/services"), ("Products", "/signet"), ("Media", "/media"), ("About", "/about")]
     assert site.cta == Link("Book a call", "https://cal.com/surabhipradhan/30-mins-discussion-about-syahi")
-    assert [p.label for p in site.profiles] == ["LinkedIn", "Instagram", "Threads", "GitHub"]
+    assert [p.label for p in site.profiles] == ["LinkedIn", "Instagram", "Threads", "X", "GitHub"]
     assert [(p.label, p.href) for p in site.policies] == [
         ("Contact", "/contact"), ("Privacy", "/privacy"), ("Terms", "/terms"), ("Refunds", "/refund")]
     assert site.founder_profiles == ()      # her call 2026-10-10: no personal profiles on the site

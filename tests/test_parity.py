@@ -30,7 +30,7 @@ APPROVED = datetime.date(2026, 10, 6)
 # (10 October); the other three keep the dates they had. All four stay drafts: the build says "re-approve" for the three
 # whose Last updated line now renders from `updated`.
 POLICY_UPDATED = {"contact.html": datetime.date(2026, 9, 10), "terms.html": datetime.date(2026, 9, 12),
-                  "refund.html": datetime.date(2026, 9, 12), "privacy.html": datetime.date(2026, 10, 11)}
+                  "refund.html": datetime.date(2026, 9, 12), "privacy.html": datetime.date(2026, 11, 15)}   # privacy: the X link in the links line, her C 2026-11-15
 MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
           "November", "December")
 
@@ -118,7 +118,7 @@ def test_front_matter_is_the_ports_contract(snapshot, name, slug, updated, level
     assert page.audience is None and page.schema == ()
     assert page.claims and len(set(page.claims)) == len(page.claims)
     if name in DRAFTS:
-        assert page.draft is False and page.approved == datetime.date(2026, 10, 11)   # she approved the launch B3 version on 11 Oct 2026
+        assert page.draft is False and page.approved == (datetime.date(2026, 11, 15) if name == "privacy.html" else datetime.date(2026, 10, 11))   # she approved the launch B3 version on 11 Oct 2026; privacy again on 15 Nov 2026 for the X link (her C)
         assert page.updated == POLICY_UPDATED[name]
     else:
         assert page.draft is False and page.approved == APPROVED   # the live page was last approved and shipped on 6 Oct 2026
@@ -128,7 +128,8 @@ def test_front_matter_is_the_ports_contract(snapshot, name, slug, updated, level
 def test_the_made_by_line_says_what_is_true_of_the_page(dist, snapshot, name, slug, updated, levels):
     html = built(dist, name)
     if name in DRAFTS:
-        assert f'<p class="made-by">{APPROVED_LINE}</p>' in html and DRAFT_LINE not in html
+        line = APPROVED_LINE.replace("11 Oct 2026", "15 Nov 2026") if name == "privacy.html" else APPROVED_LINE
+        assert f'<p class="made-by">{line}</p>' in html and DRAFT_LINE not in html
     else:
         assert f"Checked and approved by Surabhi Pradhan on {format_date(APPROVED)}." in html
 
@@ -154,7 +155,7 @@ B3_TEXT_EDITS = {
     "site-terms.html": [],       # likewise 12 September 2026
     "site-refund.html": [],      # likewise 12 September 2026
     "site-privacy.html": [
-        ("Last updated 10 September 2026", "Last updated 11 October 2026"),
+        ("Last updated 10 September 2026", "Last updated 15 November 2026"),
         ("syahi.sh sets no cookies. It runs no analytics. It has no contact form, so the site itself collects nothing you type. "
          "The moving ink is drawn inside your browser and sends nothing anywhere. Two things do leave your browser when the page loads:",
          "syahi.sh sets no cookies and runs no tracking scripts. Our host counts visits in aggregate (which pages, which countries, "
@@ -164,7 +165,7 @@ B3_TEXT_EDITS = {
          "browser details. Google's privacy policy covers what they do with it.",
          "Fonts. The typefaces are served from syahi.sh itself. No third-party font host receives a request from your browser."),
         ("Links to WhatsApp, Cal.com, X, GitHub and YouTube take you to those services.",
-         "Links to WhatsApp, Cal.com, YouTube, GitHub, LinkedIn, Instagram and Threads take you to those services."),   # X dropped 2026-10-10 (quiz item 1): no personal profile is linked
+         "Links to WhatsApp, Cal.com, YouTube, GitHub, LinkedIn, Instagram, Threads and X take you to those services."),   # X dropped 2026-10-10 (quiz item 1, no personal profile), the company X account added 2026-11-15 (her C)
         ("Their policies apply once you're there.",
          "Their policies apply once you're there. If you press play on a video, YouTube's own policy applies."),   # 2026-10-11: /paper-machine plays a playlist in the page, after a click
         ("Hosting. The site is served by GitHub Pages. GitHub keeps ordinary server logs: IP address, page requested, time. "

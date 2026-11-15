@@ -17,6 +17,7 @@ profiles:
   - {label: LinkedIn, href: "https://www.linkedin.com/company/syahi-sh"}
   - {label: Instagram, href: "https://www.instagram.com/syahitech"}
   - {label: Threads, href: "https://www.threads.com/@syahitech"}
+  - {label: X, href: "https://x.com/Syahi_Tech"}
   - {label: GitHub, href: "https://github.com/syahi-labs"}
 
 policies:

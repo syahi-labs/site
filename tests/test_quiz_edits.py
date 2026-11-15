@@ -12,7 +12,7 @@ from tests.test_b23_pages import REPO, built, dist, main_of, register, visible  
 
 def test_about_has_no_find_her_on_line(dist):
     text = visible(main_of(built(dist, "about.html")))
-    assert "Find her on" not in text and "x.com" not in built(dist, "about.html")
+    assert "Find her on" not in text and "x.com/surabhipradhan" not in built(dist, "about.html")
 
 
 def test_services_whole_office_starts_with_a_free_call_then_the_assessment(dist):

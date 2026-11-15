@@ -64,10 +64,10 @@ def test_every_changed_page_is_approved_by_her_on_11_oct(host, slug):
     # Quiz item 8: contact, terms and refund have no text change, so they keep their earlier dates (now approved too).
     expected = {"/contact": datetime.date(2026, 9, 10), "/terms": datetime.date(2026, 9, 12), "/refund": datetime.date(2026, 9, 12),
                 "/katha": datetime.date(2026, 10, 12),   # voices v2 on 11 Oct; shorter description, her A 2026-10-12
-                "/privacy": datetime.date(2026, 10, 11)}   # the play-on-a-video line, her call 2026-10-11
+                "/privacy": datetime.date(2026, 11, 15)}   # the play-on-a-video line (her call 2026-10-11), then the X link in the links line (her C 2026-11-15)
     if (host, slug) == ("katha", "/"):
         expected["/"] = datetime.date(2026, 10, 11)                    # "Hear it first" removed, her call 2026-10-11
-    approved = datetime.date(2026, 10, 12) if (host, slug) == ("main", "/katha") else datetime.date(2026, 10, 11)
+    approved = {("main", "/katha"): datetime.date(2026, 10, 12), ("main", "/privacy"): datetime.date(2026, 11, 15)}.get((host, slug), datetime.date(2026, 10, 11))
     assert found.draft is False and found.approved == approved and found.updated == expected.get(slug, DAY)
 
 
@@ -151,7 +151,8 @@ def test_privacy_links_line_names_only_services_the_built_site_links_to(dist):
     text = visible(main_of(built(dist, "privacy.html")))
     line = re.search(r"Links to (.*?) take you to those services", text).group(1)
     named = {"WhatsApp": "wa.me", "Cal.com": "cal.com", "YouTube": "youtube.com", "GitHub": "github.com",
-             "LinkedIn": "linkedin.com", "Instagram": "instagram.com", "Threads": "threads.com"}   # no X: her personal profiles are off the site (quiz item 1)
+             "LinkedIn": "linkedin.com", "Instagram": "instagram.com", "Threads": "threads.com",
+             "X": "x.com"}   # the company X account only (her C, 2026-11-15); her personal profiles stay off the site (quiz item 1)
     assert set(re.split(r", | and ", line)) == set(named)
     every_link = "".join(p.read_text(encoding="utf-8") for p in dist.glob("*.html"))
     for host in named.values():
