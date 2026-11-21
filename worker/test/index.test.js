@@ -42,7 +42,7 @@ const run = (url, response, init) => {
 test("a redirect answers 301 with Location and never touches the assets", async () => {
   const { res, seen } = await run("https://signet.syahi.sh/deep/path?x=1", html());
   assert.equal(res.status, 301);
-  assert.equal(res.headers.get("location"), "https://syahi.sh/signet?x=1");
+  assert.equal(res.headers.get("location"), "https://syahi.sh/?x=1");
   assert.equal(seen.length, 0);
   assert.equal(FakeRewriter.made.length, 0);
 });
@@ -227,7 +227,7 @@ test("http on the four hosts answers one 301 to https, query kept, assets untouc
     ["http://syahi.sh/", "https://syahi.sh/"],
     ["http://syahi.sh/signet.html?src=x", "https://syahi.sh/signet?src=x"],
     ["http://www.syahi.sh/signet?src=x", "https://syahi.sh/signet?src=x"],
-    ["http://signet.syahi.sh/a?src=x", "https://syahi.sh/signet?src=x"],
+    ["http://signet.syahi.sh/a?src=x", "https://syahi.sh/?src=x"],
     ["http://services.syahi.sh/?src=x", "https://syahi.sh/services/quote?src=x"],
   ]) {
     const { res, seen } = await run(from, html());

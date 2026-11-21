@@ -24,6 +24,7 @@ REPO = Path(__file__).resolve().parents[1]
 EM_DASH, EN_DASH = chr(0x2014), chr(0x2013)
 DRAFTED = datetime.date(2026, 10, 10)
 PM_UPDATED = datetime.date(2026, 10, 11)    # /paper-machine was reworked into three playlist cards on 2026-10-11
+D10_REWORDED = datetime.date(2026, 11, 21)  # her A: the D10 first beat no longer names Signet or the founder
 
 # slug -> (built file, audience). Home and /services are for an owner, so "agent" and "AI" stay out of their first line.
 PAGES = {
@@ -192,12 +193,13 @@ def test_chhavi_films_never_appears(dist):
 
 
 def test_signets_customers_are_only_in_the_d10_sentence(dist):
-    full = "Next: the same loop for your business's drafts."
-    first_beat = "Live today: every post, outreach email and desk draft our agents make waits for Surabhi's yes in Signet."
+    full = "Your HQ works the same way: your team approves, and the record is yours."
+    first_beat = "Live today: every post, email and draft our own AI office makes waits for a person's yes before it goes out, and every decision leaves a record you can check."   # her A 2026-11-21
     for slug in PAGES:
         html = built(dist, slug)
         text = text_of(main_of(html))
-        assert full not in text and "No outside customers yet" not in text and "Founding users" not in text, slug
+        assert full not in text and "No outside clients yet" not in text and "founding clients" not in text, slug
+        assert "Next: the same loop for your business's drafts." not in text and "Live today: every post, outreach email and desk draft our agents make waits for Surabhi's yes in Signet." not in text, slug
         assert text.count(first_beat) == (1 if slug == "/about" else 0), slug
         assert 'data-claim="signet-d10"' not in html, slug
 
@@ -375,7 +377,8 @@ def test_the_launch_claims_are_in_the_register_with_a_public_source(register):
     wanted += [f"pm-playlist-{slug}-{part}" for slug in PM_PLAYLISTS for part in ("name", "url", "count", "cover")]
     for id in wanted:
         claim = register.get(id)
-        assert claim.source and claim.status == "live" and claim.updated == (PM_UPDATED if id.startswith("pm-") else DRAFTED)
+        expected = PM_UPDATED if id.startswith("pm-") else D10_REWORDED if id == "signet-d10-first" else DRAFTED
+        assert claim.source and claim.status == "live" and claim.updated == expected
         assert EM_DASH not in claim.text and EN_DASH not in claim.text
 
 

@@ -220,12 +220,13 @@
   source: "syahi.sh, 2026-10-06"
   updated: 2026-10-06
   status: live
-# Ruling D10: the one public sentence about what Signet runs today. Wherever Signet is offered it appears once,
-# in these words. It holds the founding monthly price, so a test keeps it equal to signet-price-monthly.
+# Ruling D10: the one public sentence about what runs today. Wherever Signet is offered it appears once,
+# in these words. Her A, 2026-11-21 (retiring the Signet name): the sentence no longer names Signet, the founder
+# or a price; the founding price stays in signet-price-line only.
 - id: signet-d10
-  text: "Live today: every post, outreach email and desk draft our agents make waits for Surabhi's yes in Signet. Next: the same loop for your business's drafts. No outside customers yet. Founding users start at ₹1,499 a month, after a demo."
-  source: "Ruling D10, 2026-10-06"
-  updated: 2026-10-06
+  text: "Live today: every post, email and draft our own AI office makes waits for a person's yes before it goes out, and every decision leaves a record you can check. Your HQ works the same way: your team approves, and the record is yours. No outside clients yet; founding clients start after a demo."
+  source: "Ruling D10, 2026-10-06; words replaced on her A, 2026-11-21"
+  updated: 2026-11-21
   status: live
 # The founding price. The amount is the plain number structured data carries; the line is what the page shows,
 # and the build refuses a line that does not show the amount. The line holds both terms prices
@@ -392,10 +393,11 @@
   updated: 2026-10-10
   status: live
 # Ruling D10, first beat alone: the only thing a page that does not offer Signet may say about it.
+# Kept equal to the first sentence of signet-d10 (her A, 2026-11-21).
 - id: signet-d10-first
-  text: "Live today: every post, outreach email and desk draft our agents make waits for Surabhi's yes in Signet."
-  source: "Ruling D10, 2026-10-06"
-  updated: 2026-10-10
+  text: "Live today: every post, email and draft our own AI office makes waits for a person's yes before it goes out, and every decision leaves a record you can check."
+  source: "Ruling D10, 2026-10-06; words replaced on her A, 2026-11-21"
+  updated: 2026-11-21
   status: live
 
 # ---- /media ----

@@ -34,10 +34,15 @@ EM_DASH = chr(0x2014)
 APPROVED = datetime.date(2026, 10, 6)
 SNAPSHOT = "signet.html"
 
-# The D10 sentence, word for word as 07-SYSTEM/RULINGS.md (2026-10-06) words it.
-D10 = ("Live today: every post, outreach email and desk draft our agents make waits for Surabhi's yes in Signet. "
-       "Next: the same loop for your business's drafts. No outside customers yet. "
-       "Founding users start at ₹1,499 a month, after a demo.")
+# The D10 sentence, word for word as her A of 2026-11-21 words it (retiring the Signet name). It replaced the
+# 07-SYSTEM/RULINGS.md (2026-10-06) words, kept as OLD_D10 because the old landing page snapshot still says them.
+D10 = ("Live today: every post, email and draft our own AI office makes waits for a person's yes before it goes out, "
+       "and every decision leaves a record you can check. Your HQ works the same way: your team approves, and the "
+       "record is yours. No outside clients yet; founding clients start after a demo.")
+OLD_D10 = ("Live today: every post, outreach email and desk draft our agents make waits for Surabhi's yes in Signet. "
+           "Next: the same loop for your business's drafts. No outside customers yet. "
+           "Founding users start at ₹1,499 a month, after a demo.")
+D10_DAY = datetime.date(2026, 11, 21)
 PRICE_LINE = "₹1,499 a month or ₹14,999 a year, GST included."
 
 
@@ -207,7 +212,8 @@ def test_no_page_in_the_build_repeats_an_id(dist):
 # sentence speaks about customers or sign-ups.
 B3_EDITS = [("A public app you can sign up for today", "A self-serve app you start on your own today"),
             ("A system with customers running it besides us, yet ", ""),    # quiz item 11: her answer deletes this line
-            ("Running Syahi's own approvals since", "Signet by Syahi Running Syahi's own approvals since")]  # her call 2026-10-11: the product named beside its seal
+            ("Running Syahi's own approvals since", "Signet by Syahi Running Syahi's own approvals since"),  # her call 2026-10-11: the product named beside its seal
+            (OLD_D10, D10)]    # her A 2026-11-21: the D10 sentence no longer names Signet, the founder or a price
 
 
 def test_main_text_is_the_old_pages_text_but_for_the_two_b3_lines(main):
@@ -350,7 +356,7 @@ def test_the_demo_button_keeps_its_new_tab_and_its_label(main):
 
 CLAIMS = {
     "signet-name": ("Signet by Syahi", "syahi.sh, 2026-10-06"),
-    "signet-d10": (D10, "Ruling D10, 2026-10-06"),
+    "signet-d10": (D10, "Ruling D10, 2026-10-06; words replaced on her A, 2026-11-21"),
     "signet-price-amount": ("1499", "Decision 2026-09-10, Signet INR price"),
     "signet-price-line": (PRICE_LINE, "Decision 2026-09-10, Signet INR price"),
     "signet-founding-lock": ("Founding price, locked for life while you stay subscribed.", "Decision 2026-09-10, Signet INR price"),
@@ -369,7 +375,9 @@ def test_each_new_claim_has_its_text_and_a_short_public_source(register, id):
     text, source = CLAIMS[id]
     claim = register.get(id)
     assert claim.text == text and claim.source == source
-    assert claim.status == "live" and claim.updated == (datetime.date(2026, 10, 7) if id in ("signet-battery-refused", "signet-battery-refused-why") else APPROVED) and len(claim.source) <= 60
+    updated = {"signet-battery-refused": datetime.date(2026, 10, 7), "signet-battery-refused-why": datetime.date(2026, 10, 7),
+               "signet-d10": D10_DAY}.get(id, APPROVED)
+    assert claim.status == "live" and claim.updated == updated and len(claim.source) <= 60
 
 
 def test_the_call_length_claim_has_the_adjective_form_for_the_button(register):
@@ -387,16 +395,18 @@ def test_the_ids_this_page_reuses_exist_once_and_no_id_repeats():
 def test_the_d10_sentence_is_on_the_page_exactly_once(html, main):
     assert html.count('data-claim="signet-d10"') == 1
     shown = words(html, "main")
-    assert shown.count("Live today: every post, outreach email and desk draft") == 1
+    assert shown.count("Live today: every post, email and draft our own AI office") == 1
     assert shown.count(D10) == 1
-    assert shown.count("No outside customers yet") == 1 and shown.count("Founding users start at") == 1
+    assert shown.count("No outside clients yet") == 1 and shown.count("founding clients start after a demo") == 1
+    assert "outreach email and desk draft" not in shown and "Founding users start at" not in shown
     assert main.count('<p class="lead"><span data-claim="signet-d10">') == 1
 
 
 def test_d10_is_the_rulings_sentence_word_for_word(register):
-    # D10 above is copied from 07-SYSTEM/RULINGS.md (2026-10-06). The corpus is private, so the site's tests never read it.
+    # D10 above is copied from her A of 2026-11-21. The corpus is private, so the site's tests never read it.
     assert register.get("signet-d10").text == D10
-    assert D10.count("\u20b91,499 a month") == 1 and D10.endswith("after a demo.")
+    assert D10.endswith("after a demo.") and "\u20b9" not in D10
+    assert "Signet" not in D10 and "Surabhi" not in D10
 
 
 def test_the_price_line_holds_both_founding_prices_the_terms_page_states(register):
@@ -406,8 +416,10 @@ def test_the_price_line_holds_both_founding_prices_the_terms_page_states(registe
     assert line.endswith("GST included.")
 
 
-def test_the_d10_sentence_holds_the_monthly_price_the_terms_page_states(register):
-    assert register.get("signet-price-monthly").text in register.get("signet-d10").text
+def test_the_d10_sentence_carries_no_price_and_the_price_line_still_does(register):
+    # her A 2026-11-21: the price left the D10 sentence; the line under the demo button is where it stays
+    assert "\u20b9" not in register.get("signet-d10").text
+    assert register.get("signet-price-monthly").text in register.get("signet-price-line").text
 
 
 def test_the_structured_amount_is_the_monthly_price(register):
@@ -425,7 +437,7 @@ def test_the_fine_line_under_the_button_is_three_claims_and_nothing_else(main):
 
 # (figure as the page prints it, the claim that must be the only way it gets there)
 FIGURES = [("30-minute", "booking-call-length"), ("30 minutes", "booking-call-length"),
-           ("₹1,499", "signet-d10"), ("₹14,999", "signet-price-line"), ("August 31, 2026", "signet-live-since"),
+           ("₹1,499", "signet-price-line"), ("₹14,999", "signet-price-line"), ("August 31, 2026", "signet-live-since"),
            ("August 31, 2026", "signet-battery-date"), ("One real email went out", "signet-battery-sent"),
            ("Two other drafts got past her phone", "signet-battery-refused"), ("the recipient wasn't on an approved lead list", "signet-battery-refused-why"),
            ("Founding price, locked for life", "signet-founding-lock"), ("Nothing to pay until after", "signet-pay-after-demo")]
@@ -492,7 +504,7 @@ def test_the_made_up_recipient_is_on_a_reserved_domain_and_stays_as_it_is(main):
 
 def test_the_real_facts_are_not_inside_a_sample(main):
     inside, outside = scenes(main)
-    for fact in ("August 31, 2026", "One real email went out", "Two other drafts", "Founding users start at"):
+    for fact in ("August 31, 2026", "One real email went out", "Two other drafts", "founding clients start after a demo"):
         assert fact in outside and fact not in inside, fact
 
 

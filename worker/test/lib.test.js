@@ -5,7 +5,7 @@ import { isSiteHost, redirectFor, cleanUrlFor, httpsUpgradeFor, sanitizeSrc, sta
 // ---- the brief's own tests, verbatim ----
 
 test("subdomain redirects", () => {
-  assert.equal(redirectFor(new URL("https://signet.syahi.sh/anything?x=1")), "https://syahi.sh/signet?x=1");
+  assert.equal(redirectFor(new URL("https://signet.syahi.sh/anything?x=1")), "https://syahi.sh/?x=1");
   assert.equal(redirectFor(new URL("https://services.syahi.sh/")), "https://syahi.sh/services/quote");
   assert.equal(redirectFor(new URL("https://www.syahi.sh/terms?a=b")), "https://syahi.sh/terms?a=b");
   assert.equal(redirectFor(new URL("https://syahi.sh/signet")), null);
@@ -34,15 +34,15 @@ test("cal stamp adds metadata", () => {
 
 // ---- redirectFor ----
 
-test("signet and services collapse every path and keep the query", () => {
+test("signet (to the home page) and services collapse every path and keep the query", () => {
   for (const [path, query] of [["/", ""], ["/a", ""], ["/a/b/c", ""], ["/a", "?x=1"], ["/", "?utm=1"], ["/a/b", "?x=1&y=2"]]) {
-    assert.equal(redirectFor(new URL("https://signet.syahi.sh" + path + query)), "https://syahi.sh/signet" + query, path + query);
+    assert.equal(redirectFor(new URL("https://signet.syahi.sh" + path + query)), "https://syahi.sh/" + query, path + query);
     assert.equal(redirectFor(new URL("https://services.syahi.sh" + path + query)), "https://syahi.sh/services/quote" + query, path + query);
   }
 });
 
 test("a campaign stamp survives the signet and services redirects", () => {
-  assert.equal(redirectFor(new URL("https://signet.syahi.sh/?src=oct-interiors")), "https://syahi.sh/signet?src=oct-interiors");
+  assert.equal(redirectFor(new URL("https://signet.syahi.sh/?src=oct-interiors")), "https://syahi.sh/?src=oct-interiors");
   assert.equal(redirectFor(new URL("https://services.syahi.sh/x?src=oct-interiors")), "https://syahi.sh/services/quote?src=oct-interiors");
 });
 
@@ -71,13 +71,13 @@ test("a www path can never point the redirect off syahi.sh", () => {
 });
 
 test("host matching ignores case and a trailing dot", () => {
-  assert.equal(redirectFor(new URL("https://SIGNET.Syahi.SH/x")), "https://syahi.sh/signet");
-  assert.equal(redirectFor(new URL("https://signet.syahi.sh./x")), "https://syahi.sh/signet");
+  assert.equal(redirectFor(new URL("https://SIGNET.Syahi.SH/x")), "https://syahi.sh/");
+  assert.equal(redirectFor(new URL("https://signet.syahi.sh./x")), "https://syahi.sh/");
   assert.equal(redirectFor(new URL("https://www.syahi.sh./a?b=c")), "https://syahi.sh/a?b=c");
 });
 
 test("the port does not change which host it is", () => {
-  assert.equal(redirectFor(new URL("https://signet.syahi.sh:8443/x")), "https://syahi.sh/signet");
+  assert.equal(redirectFor(new URL("https://signet.syahi.sh:8443/x")), "https://syahi.sh/");
 });
 
 test("every other host is left alone", () => {

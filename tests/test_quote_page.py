@@ -202,6 +202,9 @@ B3_EDITS = [
     ("A wrong draft costs you ten seconds, not a customer.", "A wrong draft costs you a quick look, not a customer."),
     ("Every draft our agents make waits for her yes in Signet",
      "Live today: every post, outreach email and desk draft our agents make waits for Surabhi's yes in Signet."),
+    # her A 2026-11-21 (retiring the Signet name): the first beat's new words, applied on top of the B3 edit
+    ("Live today: every post, outreach email and desk draft our agents make waits for Surabhi's yes in Signet.",
+     "Live today: every post, email and draft our own AI office makes waits for a person's yes before it goes out, and every decision leaves a record you can check."),
 ]
 
 
@@ -223,7 +226,7 @@ SIGNATURE = ("Quote in Ten Minutes.",
              "The system drafts. You send. Every quote, every time.",
              "The quote is the first desk we take over.",
              "Agents draft, she signs",
-             "Live today: every post, outreach email and desk draft our agents make waits for Surabhi's yes in Signet.",
+             "Live today: every post, email and draft our own AI office makes waits for a person's yes before it goes out, and every decision leaves a record you can check.",
              "A wrong draft costs you a quick look, not a customer.",
              "What if it quotes wrong?", "Do I need new software?", "Hindi or English enquiries?",
              "The next enquiry decides in hours. Answer it in ten minutes.")
@@ -414,7 +417,8 @@ def test_the_check_time_claim_is_retired_and_the_faq_states_no_number(main, regi
 
 
 def test_the_only_signet_sentence_is_the_d10_first_beat(main):
-    assert '<span data-claim="signet-d10-first">Live today: every post, outreach email and desk draft our agents make waits for Surabhi\'s yes in Signet.</span>' in main.replace("&#39;", "'")
+    assert '<span data-claim="signet-d10-first">Live today: every post, email and draft our own AI office makes waits for a person\'s yes before it goes out, and every decision leaves a record you can check.</span>' in main.replace("&#39;", "'")
+    assert "yes in Signet" not in main
     assert "Every draft our agents make" not in main
 
 

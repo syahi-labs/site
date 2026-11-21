@@ -11,7 +11,8 @@ export function isSiteHost(url) {
 /** Where a request should be sent with a 301, or null when the Worker should serve it. */
 export function redirectFor(url) {
   const host = url.hostname.toLowerCase().replace(/\.$/, "");
-  if (host === "signet.syahi.sh") return `https://syahi.sh/signet${url.search}`;
+  // signet.syahi.sh is retired (her A, 2026-11-21): every path lands on the home page, query kept.
+  if (host === "signet.syahi.sh") return `https://syahi.sh/${url.search}`;
   if (host === "services.syahi.sh") return `https://syahi.sh/services/quote${url.search}`;
   if (host === "www.syahi.sh") return `https://syahi.sh${url.pathname}${url.search}`;
   return null;
