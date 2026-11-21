@@ -18,7 +18,8 @@ REQUIRED_KEYS = ("title", "description", "updated", "layout")
 # `approved` is required too, unless the page is a draft (`draft: true`): new or changed copy that no one
 # has approved yet. A draft says so in its made-by line and a release build refuses it.
 OPTIONAL_KEYS = ("approved", "draft", "claims", "schema", "audience", "og_image", "css",
-                 "og_title", "og_description", "og_image_alt", "preload_fonts", "js")
+                 "og_title", "og_description", "og_image_alt", "preload_fonts", "js",
+                 "llms_title", "llms_description", "omit_profiles")
 FENCE = "---"
 EM_DASH = chr(0x2014)
 # A page stylesheet is named, never pathed: tokens/pages/<name>.css, published as assets/pages/<name>.css.
@@ -56,6 +57,12 @@ class Page:
     # The name of this page's own script in assets/js/ (deferred, linked from the head), or None. Only a page that
     # needs behaviour asks for one; every other page ships no script.
     js: str | None = None
+    # The words this page's line in llms.txt carries, when they are not the page's title and description
+    # (the voice products page lists its headline and the line under it). None means the title or the description.
+    llms_title: str | None = None
+    llms_description: str | None = None
+    # Footer profile labels this page leaves out (e.g. ("GitHub",)), and its Organization node's sameAs with them.
+    omit_profiles: tuple[str, ...] = ()
 
 
 def load_pages(content_dir: Path) -> list[Page]:
@@ -101,6 +108,9 @@ def _load_page(path: Path, content_dir: Path) -> Page:
         draft=draft,
         preload_fonts=_font_keys(meta, path),
         js=_js_name(meta, path),
+        llms_title=_preview_text(meta, "llms_title", path),
+        llms_description=_preview_text(meta, "llms_description", path),
+        omit_profiles=_text_list(meta, "omit_profiles", path),
     )
 
 

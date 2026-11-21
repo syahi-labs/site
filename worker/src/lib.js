@@ -43,6 +43,23 @@ export function cleanUrlFor(url) {
   return `https://syahi.sh${clean}${url.search}`;
 }
 
+// The paths that answer 410 Gone, by their clean form. /signet was retired on 2026-11-21 (her ruling): its page is
+// gone for good, so it says so, where a 404 would say "maybe later".
+const GONE = new Set(["/signet"]);
+
+/** Whether a site-host request is for a page that has been retired, and so answers 410. Run after the clean-URL redirect. */
+export function isGone(url) {
+  return isSiteHost(url) && GONE.has(url.pathname);
+}
+
+/** The 410 reply: a short plain body, kept out of search indexes, and never a cookie. */
+export function goneResponse() {
+  return new Response("Gone. This page has been removed.\n", {
+    status: 410,
+    headers: { "content-type": "text/plain; charset=utf-8", "x-robots-tag": "noindex" },
+  });
+}
+
 /**
  * Plain http on the site host goes to https in one hop (an unclean path is cleaned in the same hop).
  * Only syahi.sh: signet., services. and www. already redirect to https targets, and every other host is

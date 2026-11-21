@@ -70,7 +70,7 @@ def test_tabs_and_cta_in_order(env):
     html = render_page(env, page(), [])
     start = html.index('aria-label="Main"'); end = html.index("</nav>", start)
     nav = parse(html[start - 5:end])
-    assert nav.links[:5] == ["/services", "/signet", "/media", "/about",
+    assert nav.links[:5] == ["/services", "/products", "/media", "/about",
                              "https://cal.com/surabhipradhan/30-mins-discussion-about-syahi"]
 
 def test_made_by_line_exact(env):
@@ -175,7 +175,7 @@ def test_current_tab_is_marked(env):
         html = render_page(env, page(slug), [])
         nav = html[html.index('aria-label="Main"'):html.index("</nav>")]
         return re.findall(r'<a href="([^"]+)"[^>]*aria-current="([^"]+)"', nav)
-    assert current("/signet") == [("/signet", "page")]
+    assert current("/products") == [("/products", "page")]
     assert current("/services/quote") == [("/services", "true")]
     assert current("/servicesx") == []
     assert current("/") == []

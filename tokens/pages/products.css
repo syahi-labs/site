@@ -1,0 +1,92 @@
+/* /products: the voice products page. Layout and type roles only; every colour, family and size comes from
+   tokens.css and tests/css_guard.py fails this folder on a raw one. Text pairs used, all in test_tokens
+   TEXT_PAIRS: ink on ground, muted on ground, ground on act (the button).
+   The head and the section head are the story sheet's, restated here because a page names one sheet (the debt
+   story.css already names). Mobile first: one column, then three from 48em. */
+
+.page > section + section{margin-top:var(--space-8)}
+.page-head + section{margin-top:var(--space-7)}
+
+.page-head > * + *{margin-top:var(--space-4)}
+.devanagari{
+  font-family:var(--font-serif);
+  font-size:var(--fs-ui);
+  letter-spacing:.4em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.thesis{
+  max-width:38rem;
+  margin-top:var(--space-5);
+  font-family:var(--font-serif);
+  font-size:var(--fs-lead);
+  line-height:1.45;
+  text-wrap:balance;
+}
+.section-head{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:baseline;
+  gap:var(--space-2) var(--space-5);
+  margin-bottom:var(--space-3);
+  padding-bottom:var(--space-3);
+  border-bottom:1px solid var(--ink);
+}
+.label{
+  font-family:var(--font-mono);
+  font-size:var(--fs-small);
+  font-weight:400;
+  letter-spacing:.3em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+/* The three product blocks */
+.products{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:var(--space-5);
+  margin:var(--space-6) 0 0;
+  padding:0;
+  list-style:none;
+}
+.product{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  padding:1.75rem 1.625rem 1.5rem;
+  border:1.5px solid var(--ink);
+}
+.product .category{
+  font-family:var(--font-mono);
+  font-size:var(--fs-micro);
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.product h3{margin-top:var(--space-3);font-size:var(--fs-h3);letter-spacing:-.015em}
+.chip{
+  display:inline-block;
+  margin-top:var(--space-3);
+  padding:var(--space-1) var(--space-3);
+  border:1px solid var(--muted);
+  border-radius:var(--radius);
+  font-family:var(--font-mono);
+  font-size:var(--fs-micro);
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.product .line{margin-top:var(--space-4);margin-bottom:var(--space-5);font-size:var(--fs-ui);line-height:1.6;color:var(--muted)}
+.product .cta{margin-top:auto}
+.request-note{margin-top:var(--space-5);font-family:var(--font-serif);font-size:var(--fs-ui);font-style:italic;color:var(--muted)}
+
+/* The questions */
+.faq{max-width:var(--measure)}
+.faq > div + div{margin-top:var(--space-5)}
+.faq h3{font-size:var(--fs-lead)}
+.faq p{margin-top:var(--space-2)}
+
+@media (min-width:48em){
+  .products{grid-template-columns:repeat(3,minmax(0,1fr));gap:1.625rem}
+}

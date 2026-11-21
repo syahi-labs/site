@@ -26,7 +26,6 @@ PAGES = [
     ("site-privacy.html", "syahi.sh", "privacy.html", "content/privacy.html"),
     ("site-terms.html", "syahi.sh", "terms.html", "content/terms.html"),
     ("site-refund.html", "syahi.sh", "refund.html", "content/refund.html"),
-    ("signet.html", "syahi.sh", "signet.html", "content/signet.html"),
     ("katha-index.html", "syahi.sh", "katha.html", "content/katha.html"),
     ("services.html", "syahi.sh", "services/quote.html", "content/services/quote.html"),
     # katha.syahi.sh `/` is not here: launch B2 made it the listener page, so no snapshot's preview is its contract.
@@ -34,7 +33,7 @@ PAGES = [
 ]
 IDS = [f"{host}/{built}" for _, host, built, _ in PAGES]
 # the pages whose preview says something other than their title and description: today's values, kept
-OWN_PREVIEW = {"content/signet.html", "content/katha.html"}
+OWN_PREVIEW = {"content/katha.html"}
 
 TAG = re.compile(r'<meta\s+(?:property|name)="([^"]+)"\s+content="([^"]*)"\s*/?>')
 
@@ -104,20 +103,9 @@ def test_a_page_carries_front_matter_for_its_preview_only_where_today_differed(s
     assert found.og_image_alt == old.get("og:image:alt")
 
 
-def test_signets_preview_is_the_wording_tap_1_shipped(real_site):
-    new = built(real_site, "syahi.sh", "signet.html")
-    assert new["og:title"] == "Signet by Syahi: the decision ledger for AI that talks to your customers"
-    assert new["og:description"].startswith("The decision ledger for AI that talks to your customers.")
-    assert new["og:description"].endswith("Veto always wins. Every decision leaves a receipt.")
-    assert new["og:image:alt"] == ("The Signet seal above the words: Agents do the work. You keep the say-so. "
-                                   "Signet by Syahi, a decision ledger.")
-    assert new["og:title"] == new["twitter:title"] and new["og:image:alt"] == new["twitter:image:alt"]
-
-
 def test_every_other_page_has_no_image_alt_because_today_had_none(real_site):
     for snap, host, name, _ in PAGES:
-        if snap != "signet.html":
-            assert "og:image:alt" not in built(real_site, host, name), (host, name)
+        assert "og:image:alt" not in built(real_site, host, name), (host, name)
 
 
 @pytest.mark.parametrize("snap, host, name, source", PAGES, ids=IDS)
@@ -131,7 +119,7 @@ def test_the_preview_copy_passes_the_copy_check_and_has_no_em_dash(real_site, sn
 
 
 def test_the_copy_check_reads_the_preview_copy_of_the_pages_that_have_it(real_site):
-    # Signet's preview words are different from its title, so they are what the check must have read.
-    html = (real_site.out / "syahi.sh" / "signet.html").read_text(encoding="utf-8")
-    broken = html.replace("Every decision leaves a receipt.", "We leverage every decision.")
+    # Katha's preview words are different from its description, so they are what the check must have read.
+    html = (real_site.out / "syahi.sh" / "katha.html").read_text(encoding="utf-8")
+    broken = html.replace("Manuscript in, retail-ready audio out.", "We leverage every manuscript.")
     assert [f for f in copycheck.check(broken, None) if "og:description" in f and "leverage" in f]

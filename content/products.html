@@ -1,0 +1,82 @@
+---
+title: "Voice AI for English, Hindi and Hinglish | Syahi"
+description: "Syahi Dictate, Voice and Talk: speech to text, text to speech and live voice conversation for English, Hindi and Hinglish. Built in-house, in private preview."
+og_title: "Voice AI for English, Hindi and Hinglish | Syahi"
+og_description: "Syahi Dictate, Voice and Talk: speech to text, text to speech and live voice conversation for English, Hindi and Hinglish. Built in-house, in private preview."
+llms_title: "Voice AI for English, Hindi and Hinglish"
+llms_description: "In private preview, built in-house."
+updated: 2026-11-21
+draft: true
+layout: page
+css: products
+schema: [VoiceProducts]
+omit_profiles: [GitHub]
+claims: [voice-dictate-name, voice-dictate-line, voice-voice-name, voice-voice-line, voice-talk-name, voice-talk-line, voice-request-note, voice-faq-what-q, voice-faq-what-a, voice-faq-today-q, voice-faq-today-a, voice-faq-audio-q, voice-faq-audio-a, voice-faq-who-q, voice-faq-who-a]
+---
+{# DRAFT until she has seen the page: the words are hers (21 Nov 2026), the page is not yet approved. Add `approved: <date>` and
+   drop `draft: true` on her yes. Her words, not reworded: the headline, the line under it, three product blocks, the request note,
+   four questions. No form backend exists on this site, so each Request access button is a mailto: link to the
+   address /contact publishes, with the subject "Request access: <product>". No counter, date or price. #}
+<div class="page-head">
+  <p class="devanagari"><span lang="hi">स्याही</span> &nbsp;·&nbsp; ink</p>
+  <h1>Voice AI for English, Hindi and Hinglish</h1>
+  <p class="thesis">In private preview, built in-house.</p>
+</div>
+
+<section aria-labelledby="products-head">
+  <div class="section-head">
+    <h2 class="label" id="products-head">Products</h2>
+  </div>
+  <ul class="products">
+
+    <li class="product" id="dictate">
+      <p class="category">Speech to text for Hinglish</p>
+      <h3>{{ claim("voice-dictate-name") }}</h3>
+      <span class="chip">Private preview</span>
+      <p class="line">{{ claim("voice-dictate-line") }}</p>
+      <a class="cta" href="mailto:hello@syahi.sh?subject={{ ('Request access: ' ~ claim_text('voice-dictate-name'))|urlencode }}" aria-label="Request access to {{ claim_text('voice-dictate-name') }}">Request access</a>
+    </li>
+
+    <li class="product" id="voice">
+      <p class="category">Text to speech</p>
+      <h3>{{ claim("voice-voice-name") }}</h3>
+      <span class="chip">Private preview</span>
+      <p class="line">{{ claim("voice-voice-line") }}</p>
+      <a class="cta" href="mailto:hello@syahi.sh?subject={{ ('Request access: ' ~ claim_text('voice-voice-name'))|urlencode }}" aria-label="Request access to {{ claim_text('voice-voice-name') }}">Request access</a>
+    </li>
+
+    <li class="product" id="talk">
+      <p class="category">Live voice conversation</p>
+      <h3>{{ claim("voice-talk-name") }}</h3>
+      <span class="chip">Private preview</span>
+      <p class="line">{{ claim("voice-talk-line") }}</p>
+      <a class="cta" href="mailto:hello@syahi.sh?subject={{ ('Request access: ' ~ claim_text('voice-talk-name'))|urlencode }}" aria-label="Request access to {{ claim_text('voice-talk-name') }}">Request access</a>
+    </li>
+
+  </ul>
+  <p class="request-note">{{ claim("voice-request-note") }}</p>
+</section>
+
+<section aria-labelledby="faq-head">
+  <div class="section-head">
+    <h2 class="label" id="faq-head">Questions</h2>
+  </div>
+  <div class="faq">
+    <div>
+      <h3>{{ claim("voice-faq-what-q") }}</h3>
+      <p>{{ claim("voice-faq-what-a") }}</p>
+    </div>
+    <div>
+      <h3>{{ claim("voice-faq-today-q") }}</h3>
+      <p>{{ claim("voice-faq-today-a") }}</p>
+    </div>
+    <div>
+      <h3>{{ claim("voice-faq-audio-q") }}</h3>
+      <p>{{ claim("voice-faq-audio-a") }}</p>
+    </div>
+    <div>
+      <h3>{{ claim("voice-faq-who-q") }}</h3>
+      <p>{{ claim("voice-faq-who-a") }}</p>
+    </div>
+  </div>
+</section>

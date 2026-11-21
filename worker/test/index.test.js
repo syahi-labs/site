@@ -66,10 +66,55 @@ test("a redirect carries no cookie", async () => {
 
 test("other hosts get the asset, the request passed through as it came", async () => {
   const page = html();
-  const { res, seen, request } = await run("https://syahi.sh/signet", page);
+  const { res, seen, request } = await run("https://syahi.sh/products", page);
   assert.equal(res, page);
   assert.equal(seen.length, 1);
   assert.equal(seen[0], request);
+});
+
+test("/signet is gone: 410 with a short plain body and noindex, and the assets are never asked", async () => {
+  const { res, seen } = await run("https://syahi.sh/signet", html());
+  assert.equal(res.status, 410);
+  assert.equal(res.headers.get("content-type"), "text/plain; charset=utf-8");
+  assert.equal(res.headers.get("x-robots-tag"), "noindex");
+  assert.equal(res.headers.get("set-cookie"), null);
+  const body = await res.text();
+  assert.equal(body, "Gone. This page has been removed.\n");
+  assert.ok(body.length < 60 && !/<[a-z]/i.test(body));
+  assert.equal(seen.length, 0);
+  assert.equal(FakeRewriter.made.length, 0);
+});
+
+test("/signet keeps answering 410 with a query, and its other spellings get there by one 301 first", async () => {
+  const gone = await run("https://syahi.sh/signet?src=oct-x", html());
+  assert.equal(gone.res.status, 410);
+  for (const url of ["https://syahi.sh/signet.html", "https://syahi.sh/signet/", "http://syahi.sh/signet"]) {
+    const { res } = await run(url, html());
+    assert.equal(res.status, 301, url);
+    assert.equal(new URL(res.headers.get("location")).pathname, "/signet", url);
+  }
+});
+
+test("the retired page is the only one that answers 410, and another host's /signet is not ours", async () => {
+  for (const url of ["https://syahi.sh/", "https://syahi.sh/products", "https://syahi.sh/signet-x", "https://syahi.sh/about/signet"]) {
+    const { res } = await run(url, html());
+    assert.equal(res.status, 200, url);
+  }
+  const origin = new Response("origin");
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => origin;
+  try {
+    const { res } = await run("https://approve.syahi.sh/signet", html());
+    assert.equal(res, origin);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test("signet.syahi.sh still answers 301 to the home page, unchanged", async () => {
+  const { res } = await run("https://signet.syahi.sh/signet", html());
+  assert.equal(res.status, 301);
+  assert.equal(res.headers.get("location"), "https://syahi.sh/");
 });
 
 test("another host never reaches the assets and is passed straight through", async () => {

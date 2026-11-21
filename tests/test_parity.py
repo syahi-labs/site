@@ -729,6 +729,8 @@ HOME_B3_EDITS = [
     ("Every venture here runs on the same loop: agents draft, a human approves, the decision gets written down. "
      "We think that loop, not the models, is what the next decade of small companies is made of.",
      "Every piece of work that reaches you has a person's yes behind it, and a dated record that shows it."),
+    # Her A, 2026-11-21 (the products page): /signet is gone, so card I no longer links anywhere and its action line goes.
+    ("anyone whose agents touch the outside world see Signet \u2192", "anyone whose agents touch the outside world"),
 ]
 
 
@@ -785,21 +787,27 @@ def test_what_the_home_drops_is_not_in_the_new_page(dist):
 
 def test_the_home_card_links_are_the_old_pages_with_each_move_applied_in_order(dist):
     old, new = link_values(old_home_cards_on()), link_values(unhash(new_home_cards_on(dist)))
+    # Her A, 2026-11-21: /signet is gone (410), so card I carries no link and the old page's first link has no successor.
+    assert old[0] == "https://signet.syahi.sh"
+    old = old[1:]
     # quiz item 4: card IV's link goes to the plates page, so the old YouTube link is replaced in place
     assert new == ["/paper-machine" if v == "https://youtube.com/@papermachine07" else v for v in apply_link_moves(old)]
-    assert len(old) == 7                                # the comparison cannot pass by both sides being empty
+    assert len(old) == 6                                # the comparison cannot pass by both sides being empty
     assert [move.old for move in moves_used(old)] == [
-        "https://signet.syahi.sh", "https://services.syahi.sh", "https://katha.syahi.sh/",
+        "https://services.syahi.sh", "https://katha.syahi.sh/",
         "art/loom.webp", "art/gramophone.webp", "art/cube.webp"]
     hero = unhash(main_of(built(dist, "index.html")).split('<div class="section-head">')[0])
     assert "inkpot" in hero                         # the house mark's art is still the hero's
 
 
 def test_the_four_cards_keep_their_anchors_and_go_where_the_controller_ruled(dist):
-    cards = re.findall(r'<a class="card" id="([a-z]+)" href="([^"]+)"', main_of(built(dist, "index.html")))
-    assert cards == [("signet", "/signet"), ("studio", "/services/quote"), ("katha", "/katha"),
+    main = main_of(built(dist, "index.html"))
+    cards = re.findall(r'<a class="card" id="([a-z]+)" href="([^"]+)"', main)
+    assert cards == [("studio", "/services/quote"), ("katha", "/katha"),
                      ("papermachine", "/paper-machine")]      # quiz item 4
-    assert [id for id, _ in re.findall(r'<a class="card" id="([a-z]+)" href="([^"]+)"', old_home())] == [id for id, _ in cards]
+    # Her A, 2026-11-21: card I keeps its anchor and its words, and links nowhere, because /signet is gone.
+    assert '<div class="card" id="signet">' in main and "/signet" not in main
+    assert [id for id, _ in re.findall(r'<a class="card" id="([a-z]+)" href="([^"]+)"', old_home())] == ["signet"] + [id for id, _ in cards]
 
 
 def test_the_home_alt_text_and_labels_are_the_old_pages_exactly(dist):

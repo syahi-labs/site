@@ -44,7 +44,7 @@ from urllib.parse import urlsplit
 
 import jinja2
 
-from checks import copycheck, d10check, htmlcheck, sitecheck
+from checks import copycheck, d10check, htmlcheck, productscheck, sitecheck
 from sitebuild import assets
 from sitebuild.claims import ClaimError, ClaimRegister
 from sitebuild.content import ContentError, Page, load_pages
@@ -317,6 +317,7 @@ def _page_problems(page: Page, html: str, rendered: set[str], claims: ClaimRegis
     problems = [f"{page.source}: structured data not shown on the page: {mismatch}" for mismatch in jsonld_mismatches(html)]
     problems += [f"{page.source}: copycheck: {finding}" for finding in copycheck.check(html, page.audience)]
     problems += [f"{page.source}: htmlcheck: {finding}" for finding in htmlcheck.check(html, claims.renderings())]
+    problems += [f"{page.source}: productscheck: {finding}" for finding in productscheck.check(html, page.slug)]
     for id in page.claims:
         if id in rendered:
             continue

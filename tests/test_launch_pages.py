@@ -214,9 +214,9 @@ def test_the_header_has_no_link_to_a_page_that_is_not_built(dist, site):
 
 def test_home_keeps_the_four_cards_and_the_house_mark(dist):
     main = main_of(built(dist, "/"))
-    cards = re.findall(r'<a class="card" id="(\w+)" href="([^"]+)"', main)
-    assert cards == [("signet", "/signet"), ("studio", "/services/quote"), ("katha", "/katha"),
-                     ("papermachine", "/paper-machine")]   # quiz item 4: the card goes to the plates
+    cards = re.findall(r'<(?:a|div) class="card" id="(\w+)"(?: href="([^"]+)")?', main)
+    assert cards == [("signet", ""), ("studio", "/services/quote"), ("katha", "/katha"),
+                     ("papermachine", "/paper-machine")]   # quiz item 4: the card goes to the plates; card I links nowhere (/signet is gone, 2026-11-21)
     assert "inkpot" in main and "the house mark" in main and "partials" not in main
     assert re.search(r"<h1>Syahi<svg", main)
 

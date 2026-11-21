@@ -658,3 +658,80 @@
   source: "YouTube, 2026-10-11"
   updated: 2026-10-11
   status: live
+
+# ---- /products: the voice products (her words, 2026-11-21; the page, its structured data and its FAQ all read these) ----
+- id: voice-dictate-name
+  text: "Syahi Dictate"
+  source: "Her ruling on the voice products page, 2026-11-21"
+  updated: 2026-11-21
+  status: live
+- id: voice-dictate-line
+  text: "Speak in Hinglish, get clean text back. Hindi in Devanagari, English stays in English. Runs on our own servers, nothing is kept."
+  source: "Her ruling on the voice products page, 2026-11-21"
+  updated: 2026-11-21
+  status: live
+- id: voice-voice-name
+  text: "Syahi Voice"
+  source: "Her ruling on the voice products page, 2026-11-21"
+  updated: 2026-11-21
+  status: live
+- id: voice-voice-line
+  text: "Turn text into speech in English, Hindi or Hinglish. Every clip carries a watermark that marks it as made by Syahi Voice."
+  source: "Her ruling on the voice products page, 2026-11-21"
+  updated: 2026-11-21
+  status: live
+- id: voice-talk-name
+  text: "Syahi Talk"
+  source: "Her ruling on the voice products page, 2026-11-21"
+  updated: 2026-11-21
+  status: live
+- id: voice-talk-line
+  text: "Talk to AI out loud in English, Hindi or Hinglish, and hear it answer."
+  source: "Her ruling on the voice products page, 2026-11-21"
+  updated: 2026-11-21
+  status: live
+- id: voice-faq-what-q
+  text: "What are Syahi Dictate, Voice and Talk?"
+  source: "Her ruling on the voice products page, 2026-11-21"
+  updated: 2026-11-21
+  status: live
+- id: voice-faq-what-a
+  text: "Voice AI built in-house for English, Hindi and Hinglish: speech to text, text to speech and live voice conversation. All three are in private preview."
+  source: "Her ruling on the voice products page, 2026-11-21"
+  updated: 2026-11-21
+  status: live
+- id: voice-faq-today-q
+  text: "Can I use them today?"
+  source: "Her ruling on the voice products page, 2026-11-21"
+  updated: 2026-11-21
+  status: live
+- id: voice-faq-today-a
+  text: "Not yet. They're in private preview, by request only."
+  source: "Her ruling on the voice products page, 2026-11-21"
+  updated: 2026-11-21
+  status: live
+- id: voice-faq-audio-q
+  text: "Is my audio kept?"
+  source: "Her ruling on the voice products page, 2026-11-21"
+  updated: 2026-11-21
+  status: live
+- id: voice-faq-audio-a
+  text: "No. Dictate runs on our own servers and keeps no audio or text."
+  source: "Her ruling on the voice products page, 2026-11-21"
+  updated: 2026-11-21
+  status: live
+- id: voice-faq-who-q
+  text: "Who builds them?"
+  source: "Her ruling on the voice products page, 2026-11-21"
+  updated: 2026-11-21
+  status: live
+- id: voice-faq-who-a
+  text: "Syahi, an AI venture studio in Bengaluru."
+  source: "Her ruling on the voice products page, 2026-11-21"
+  updated: 2026-11-21
+  status: live
+- id: voice-request-note
+  text: "Private preview, by request only. We read every request."
+  source: "Her ruling on the voice products page, 2026-11-21"
+  updated: 2026-11-21
+  status: live

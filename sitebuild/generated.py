@@ -64,7 +64,10 @@ def llms_txt(site: SiteConfig, pages: list[Page], claims: ClaimRegister) -> str:
     if listed:
         lines.append("")
     for page in listed:
-        lines.append(f"- [{_one_line(page.title)}]({page_url(site.base_url, page.slug)}): {_one_line(page.description)}")
+        lines.append(
+            f"- [{_one_line(page.llms_title or page.title)}]({page_url(site.base_url, page.slug)}): "
+            f"{_one_line(page.llms_description or page.description)}"
+        )
     return "\n".join(lines) + "\n"
 
 

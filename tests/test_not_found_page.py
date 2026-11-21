@@ -52,7 +52,7 @@ def test_two_short_paragraphs_and_the_four_tabs(main):
 def test_it_links_the_four_tabs_in_the_order_the_header_has_them_then_home_and_the_inbox(main):
     site = load_site(REPO / "site.yaml")
     tabs = [tab.href for tab in site.tabs]
-    assert tabs == ["/services", "/signet", "/media", "/about"]          # the four tabs, D18
+    assert tabs == ["/services", "/products", "/media", "/about"]          # the four tabs, D18
     assert link_values(main) == tabs + ["/", "mailto:hello@syahi.sh"]
     assert main.index('href="/about"') < main.index('href="/"')           # the list of tabs comes first
 

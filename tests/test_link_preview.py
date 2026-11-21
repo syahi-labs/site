@@ -74,9 +74,9 @@ def test_the_default_image_carries_its_real_pixel_size(real_site, host):
 
 
 def test_a_page_with_its_own_image_carries_that_images_real_size(real_site):
-    # Signet's share image is today's og.png; today's page declared its 1200 by 630, and so does the port.
+    # No page names an image of its own now that /signet is gone (2026-11-21); the loop below still holds any that does.
     own = own_images()
-    assert own == {"signet.html": "/assets/brand/og-signet.png"}
+    assert own == {}
     for name, image in own.items():
         tags = metas((real_site.out / "syahi.sh" / name).read_text(encoding="utf-8"))
         assert tags["og:image"] == f"https://syahi.sh{image}" and tags["twitter:image"] == tags["og:image"]

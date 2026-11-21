@@ -55,7 +55,7 @@ def ld(html):
 
 
 CHANGED = [("main", "/"), ("main", "/404"), ("main", "/contact"), ("main", "/privacy"), ("main", "/terms"), ("main", "/refund"),
-           ("main", "/signet"), ("main", "/services/quote"), ("main", "/katha"), ("katha", "/")]
+           ("main", "/services/quote"), ("main", "/katha"), ("katha", "/")]
 
 
 @pytest.mark.parametrize("host, slug", CHANGED)
@@ -164,20 +164,10 @@ def test_privacy_links_line_names_only_services_the_built_site_links_to(dist):
 def test_404_is_final_copy_with_the_four_tabs_as_links(dist):
     main = main_of(built(dist, "404.html"))
     assert re.findall(r"<h1>(.*?)</h1>", main) == ["That page isn't here."]
-    for href in ("/services", "/signet", "/media", "/about"):
+    for href in ("/services", "/products", "/media", "/about"):
         assert f'<a href="{href}">' in main
     assert "placeholder" not in main.lower() and "TODO" not in main
     assert len(visible(main).split()) < 60
-
-
-# ---- B3.3 Signet ----
-
-def test_signet_has_no_d10_finding_and_the_old_lines_are_gone(dist):
-    html = built(dist, "signet.html")
-    assert d10check.check(html, "/signet") == []
-    text = visible(main_of(html))
-    assert "A self-serve app you start on your own today" in text and "A system with years of outside use behind it" not in text   # quiz item 11
-    assert "sign up for today" not in text and "customers running it" not in text
 
 
 # ---- B3.4 the quote page ----

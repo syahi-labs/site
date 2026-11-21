@@ -87,7 +87,9 @@ BUZZWORDS = re.compile(
 _ITEM = r"[^\s,;:.!?][^,;:.!?]{0,39}"
 TRIAD = re.compile(rf"{_ITEM}, {_ITEM},? and {_ITEM}")
 # Her own triad is the house voice and never counts.
-HER_TRIAD = re.compile(r"operate efficiently, analyze deeply,? and grow immensely", re.IGNORECASE)
+# So is her language set for the voice products (her ruling, 2026-11-21): English, Hindi and Hinglish.
+HER_TRIAD = re.compile(
+    r"operate efficiently, analyze deeply,? and grow immensely|english, hindi,? and hinglish", re.IGNORECASE)
 
 # agent, agents, agentic; AI and A.I. with its dot (the initialism is upper case only, so "Ai" and "said" are not it)
 OWNER_FIRST_LINE_WORDS = re.compile(r"\bagent(?:s|ic)?\b|(?-i:\bA\.I\b\.?|\bAI\b)", re.IGNORECASE)

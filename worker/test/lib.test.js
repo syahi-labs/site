@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { isSiteHost, redirectFor, cleanUrlFor, httpsUpgradeFor, sanitizeSrc, stampWhatsApp, stampCal } from "../src/lib.js";
+import { isSiteHost, isGone, goneResponse, redirectFor, cleanUrlFor, httpsUpgradeFor, sanitizeSrc, stampWhatsApp, stampCal } from "../src/lib.js";
 
 // ---- the brief's own tests, verbatim ----
 
@@ -409,4 +409,26 @@ test("the upgrade target is always https on syahi.sh, whatever the path says", (
     assert.equal(new URL(out).host, "syahi.sh", path);
     assert.ok(!out.startsWith("https://syahi.sh//"), out);
   }
+});
+
+// ---- isGone: a retired page answers 410 (/signet, her ruling 2026-11-21) ----
+
+test("only the clean /signet path on the site host is gone", () => {
+  assert.equal(isGone(new URL("https://syahi.sh/signet")), true);
+  assert.equal(isGone(new URL("https://syahi.sh/signet?src=oct-x")), true);
+  assert.equal(isGone(new URL("https://SYAHI.SH/signet")), true);
+  for (const url of ["https://syahi.sh/", "https://syahi.sh/products", "https://syahi.sh/signet-x", "https://syahi.sh/signets",
+                     "https://syahi.sh/about/signet", "https://approve.syahi.sh/signet", "https://www.syahi.sh/signet",
+                     "https://signet.syahi.sh/signet"]) {
+    assert.equal(isGone(new URL(url)), false, url);
+  }
+});
+
+test("the 410 reply is plain, short, noindex and cookie-free", async () => {
+  const res = goneResponse();
+  assert.equal(res.status, 410);
+  assert.equal(res.headers.get("content-type"), "text/plain; charset=utf-8");
+  assert.equal(res.headers.get("x-robots-tag"), "noindex");
+  assert.equal(res.headers.get("set-cookie"), null);
+  assert.equal(await res.text(), "Gone. This page has been removed.\n");
 });

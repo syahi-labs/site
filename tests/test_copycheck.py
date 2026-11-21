@@ -28,6 +28,12 @@ def test_her_triad_is_exempt_but_two_triads_fail():
     bad = "<p>Fast, cheap and simple. Quotes, replies and follow-ups.</p>"
     assert "stacked-threes" in ids(check(main(bad), None))
 
+def test_her_language_set_is_exempt_beside_one_other_triad():
+    ok = "<p>Voice AI built in-house for English, Hindi and Hinglish: speech to text, text to speech and live voice conversation.</p>"
+    assert "stacked-threes" not in ids(check(main(ok), None))
+    bad = "<p>Fast, cheap and simple. Quotes, replies and follow-ups. For English, Hindi and Hinglish.</p>"
+    assert "stacked-threes" in ids(check(main(bad), None))
+
 def test_owner_first_line():
     assert "owner-first-line" in ids(check(main("<h1>AI that answers enquiries</h1><p>x</p>"), "owner"))
     assert "owner-first-line" not in ids(check(main("<h1>Answer every enquiry first</h1><p>AI later.</p>"), "owner"))

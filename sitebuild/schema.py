@@ -147,6 +147,10 @@ def build_jsonld(page: Page, site: SiteConfig, claims: ClaimRegister) -> list[di
             raise SchemaError(f"{page.source}: schema type {kind!r} is not supported (supported: {', '.join(sorted(_BUILDERS))})")
     ctx = _Context(page, site, claims)
     try:
+        if "VoiceProducts" in kinds:
+            if len(kinds) > 1:
+                raise SchemaError(f"{page.source}: schema 'VoiceProducts' builds the whole page's graph and takes no other type")
+            return [_voice_graph(ctx)]
         nodes = []
         if ctx.is_main_home:
             nodes += [_organization(ctx), _website(ctx)]
@@ -230,6 +234,53 @@ def _service(ctx: _Context) -> dict:
     return {"@type": "Service", "name": ctx.page.title, "provider": ctx.ref("org"), "areaServed": COUNTRY}
 
 
+# The voice products page (/products). Each product: its anchor, the claim ids of its name and its line, and the
+# category its SoftwareApplication node carries. No offer, rating or review is ever built for them.
+VOICE_PRODUCTS = (
+    ("dictate", "voice-dictate-name", "voice-dictate-line", "Speech to text"),
+    ("voice", "voice-voice-name", "voice-voice-line", "Text to speech"),
+    ("talk", "voice-talk-name", "voice-talk-line", "Live voice conversation"),
+)
+VOICE_FAQ = (
+    ("voice-faq-what-q", "voice-faq-what-a"),
+    ("voice-faq-today-q", "voice-faq-today-a"),
+    ("voice-faq-audio-q", "voice-faq-audio-a"),
+    ("voice-faq-who-q", "voice-faq-who-a"),
+)
+
+
+def _voice_graph(ctx: _Context) -> dict:
+    """One @graph for /products: the Organization, the page, its breadcrumb, three apps and the FAQ.
+
+    Every string comes from a claim or the page's own title, so the page-shows-it check holds word for word.
+    The Organization is the home page's node, minus any profile this page leaves out of its footer.
+    """
+    org = _organization(ctx)
+    if ctx.page.omit_profiles:
+        org["sameAs"] = [link.href for link in ctx.site.profiles if link.label not in ctx.page.omit_profiles]
+    webpage = _webpage(ctx)
+    webpage["dateModified"] = ctx.page.updated.isoformat()
+    apps = [
+        {
+            "@type": "SoftwareApplication",
+            "@id": ctx.entity(anchor, ctx.page.slug),
+            "name": ctx.claim(name_id),
+            "applicationCategory": category,
+            "description": ctx.claim(line_id),
+            "publisher": ctx.ref("org"),
+        }
+        for anchor, name_id, line_id, category in VOICE_PRODUCTS
+    ]
+    faq = {
+        "@type": "FAQPage",
+        "mainEntity": [
+            {"@type": "Question", "name": ctx.claim(q), "acceptedAnswer": {"@type": "Answer", "text": ctx.claim(a)}}
+            for q, a in VOICE_FAQ
+        ],
+    }
+    return {"@context": "https://schema.org", "@graph": [org, webpage, _breadcrumbs(ctx), *apps, faq]}
+
+
 def _software_application(ctx: _Context) -> dict:
     return {
         "@type": "SoftwareApplication",
@@ -287,6 +338,7 @@ _BUILDERS = {
     "ProfilePage": _profile_page,
     "Service": _service,
     "SoftwareApplication": _software_application,
+    "VoiceProducts": _voice_graph,
 }
 
 

@@ -75,7 +75,7 @@
   <div class="wrap footer-stack">
     <nav aria-label="Company profiles">
       <ul class="link-row">
-        {% for link in site.profiles %}
+        {% for link in site.profiles if link.label not in page.omit_profiles %}
         <li><a href="{{ link.href }}">{{ link.label }}</a></li>
         {% endfor %}
       </ul>
