@@ -110,10 +110,12 @@ def test_each_page_has_exactly_one_h1(dist, slug):
 @pytest.mark.parametrize("slug", PAGES)
 def test_each_page_is_approved_by_her_on_11_oct(dist, slug):
     page = source(slug)
-    assert page.draft is False and page.approved == datetime.date(2026, 10, 11)
-    assert page.updated == (PM_UPDATED if slug in ("/paper-machine", "/media") else DRAFTED)   # /media: YouTube link 2026-10-11
+    relinked = slug in ("/", "/about")   # 21 Nov 2026: re-approved for the /signet link removal (her ruling, link-only edit)
+    assert page.draft is False and page.approved == (datetime.date(2026, 11, 21) if relinked else datetime.date(2026, 10, 11))
+    assert page.updated == (datetime.date(2026, 11, 21) if relinked else PM_UPDATED if slug in ("/paper-machine", "/media") else DRAFTED)   # /media: YouTube link 2026-10-11
     assert page.layout == "page"
-    assert "Checked and approved by Surabhi Pradhan on 11 Oct 2026." in built(dist, slug)
+    day = "21 Nov 2026" if slug in ("/", "/about") else "11 Oct 2026"
+    assert f"Checked and approved by Surabhi Pradhan on {day}." in built(dist, slug)
     assert "Not yet approved" not in built(dist, slug)
 
 

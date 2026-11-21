@@ -67,7 +67,10 @@ def test_every_changed_page_is_approved_by_her_on_11_oct(host, slug):
                 "/privacy": datetime.date(2026, 11, 15)}   # the play-on-a-video line (her call 2026-10-11), then the X link in the links line (her C 2026-11-15)
     if (host, slug) == ("katha", "/"):
         expected["/"] = datetime.date(2026, 10, 11)                    # "Hear it first" removed, her call 2026-10-11
-    approved = {("main", "/katha"): datetime.date(2026, 10, 12), ("main", "/privacy"): datetime.date(2026, 11, 15)}.get((host, slug), datetime.date(2026, 10, 11))
+    approved = {("main", "/katha"): datetime.date(2026, 10, 12), ("main", "/privacy"): datetime.date(2026, 11, 15),
+                ("main", "/"): datetime.date(2026, 11, 21), ("main", "/404"): datetime.date(2026, 11, 21)}.get((host, slug), datetime.date(2026, 10, 11))   # 21 Nov 2026: re-approved for the /signet link removal (her ruling, link-only edit)
+    if host == "main" and slug in ("/", "/404"):
+        expected[slug] = datetime.date(2026, 11, 21)
     assert found.draft is False and found.approved == approved and found.updated == expected.get(slug, DAY)
 
 

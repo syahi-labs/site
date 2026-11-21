@@ -695,11 +695,11 @@ def test_the_home_front_matter_is_the_rewrites_contract(dist):
     assert page.layout == "page" and page.css == "home"
     assert page.audience == "owner"         # launch B1: an owner reads it, so the first line stays free of agents and AI
     assert page.schema == ()                # the Organization and WebSite nodes come with the main host's home page
-    assert page.draft is False and page.approved == datetime.date(2026, 10, 11)     # her yes, 11 Oct
-    assert page.updated == datetime.date(2026, 10, 10)
+    assert page.draft is False and page.approved == datetime.date(2026, 11, 21)   # 21 Nov 2026: re-approved for the /signet link removal (her ruling, link-only edit)
+    assert page.updated == datetime.date(2026, 11, 21)
     assert page.claims and len(set(page.claims)) == len(page.claims)
     assert set(page.claims) == claim_ids(main_of(built(dist, "index.html")))
-    assert "Checked and approved by Surabhi Pradhan on 11 Oct 2026." in built(dist, "index.html")
+    assert "Checked and approved by Surabhi Pradhan on 21 Nov 2026." in built(dist, "index.html")
     assert "Not yet approved" not in built(dist, "index.html")
 
 

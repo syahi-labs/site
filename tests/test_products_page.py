@@ -1,5 +1,6 @@
 # tests/test_products_page.py: the voice products page at /products, and the retirement of /signet (her rulings,
 # 2026-11-21). The words are hers and are pinned exactly. Read the built output, not the source.
+import datetime
 import json
 import re
 import xml.etree.ElementTree as ET
@@ -240,10 +241,10 @@ def test_the_sitemap_and_llms_txt_list_products_with_the_h1_and_the_line_under_i
     assert f"- [{H1}](https://syahi.sh/products): {UNDER_H1}\n" in (dist / "llms.txt").read_text(encoding="utf-8")
 
 
-def test_the_page_is_approved_only_when_she_says_so():
+def test_the_page_is_approved_on_her_a_after_the_screenshots():
     page = next(p for p in load_pages(REPO / "content") if p.slug == "/products")
     assert page.schema == ("VoiceProducts",) and page.omit_profiles == ("GitHub",) and page.css == "products"
-    assert page.draft is True and page.approved is None            # flip both on her yes, after the screenshots
+    assert page.draft is False and page.approved == datetime.date(2026, 11, 21)   # her A on desktop and phone screenshots, 21 Nov 2026
 
 
 # ---- /signet is retired ----
