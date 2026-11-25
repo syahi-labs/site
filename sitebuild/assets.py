@@ -31,7 +31,7 @@ BUILD_OWNED = ("fonts",)
 
 # Stable names, kept exactly as they are because something outside the page asks for them by URL:
 # the share images (a link preview caches the URL), the Organization logo in the JSON-LD, the 192 px mark.
-STABLE_ONLY = ("brand/og-default.png", "brand/og-signet.png", "brand/mark-512.png", "brand/icon-192.png")
+STABLE_ONLY = ("brand/og-default.png", "brand/mark-512.png", "brand/icon-192.png")
 # The files the page head links get a hashed copy for the pages and keep their stable name for browsers,
 # crawlers and iOS, which ask for /favicon.ico and /apple-touch-icon.png without reading a page.
 ALSO_STABLE = ("brand/favicon.ico", "brand/favicon.svg", "brand/apple-touch-icon.png")

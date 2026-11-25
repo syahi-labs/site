@@ -114,23 +114,6 @@
 
 # ---- /terms ----
 
-# The two founding prices as the pricing plate prints them. The Signet page ties its structured-data
-# amount to its own price line; both must say the same rupees.
-- id: signet-price-monthly
-  text: "₹1,499 a month"
-  source: "Terms of service, 2026-09-12"
-  updated: 2026-10-06
-  status: live
-- id: signet-price-yearly
-  text: "₹14,999 a year"
-  source: "Terms of service, 2026-09-12"
-  updated: 2026-10-06
-  status: live
-- id: signet-yearly-ratio
-  text: "ten months for twelve"
-  source: "Terms of service, 2026-09-12"
-  updated: 2026-10-06
-  status: live
 - id: retainer-hours
   text: "four hours a month"
   source: "Terms of service, 2026-09-12"
@@ -212,73 +195,15 @@
   updated: 2026-10-06
   status: live
 
-# ---- the Signet page ----
+# ---- the D10 sentence ----
 
-# The product's name, for the SoftwareApplication structured data on /signet.
-- id: signet-name
-  text: "Signet by Syahi"
-  source: "syahi.sh, 2026-10-06"
-  updated: 2026-10-06
-  status: live
-# Ruling D10: the one public sentence about what runs today. Wherever Signet is offered it appears once,
+# Ruling D10: the one public sentence about what runs today. Wherever a demo is offered it appears once,
 # in these words. Her A, 2026-11-21 (retiring the Signet name): the sentence no longer names Signet, the founder
-# or a price; the founding price stays in signet-price-line only.
+# or a price. The /signet page and its price line were removed on her A, 2026-11-25.
 - id: signet-d10
   text: "Live today: every post, email and draft our own AI office makes waits for a person's yes before it goes out, and every decision leaves a record you can check. Your HQ works the same way: your team approves, and the record is yours. No outside clients yet; founding clients start after a demo."
   source: "Ruling D10, 2026-10-06; words replaced on her A, 2026-11-21"
   updated: 2026-11-21
-  status: live
-# The founding price. The amount is the plain number structured data carries; the line is what the page shows,
-# and the build refuses a line that does not show the amount. The line holds both terms prices
-# (signet-price-monthly and signet-price-yearly), so a test keeps all three the same.
-- id: signet-price-amount
-  text: "1499"
-  source: "Decision 2026-09-10, Signet INR price"
-  updated: 2026-10-06
-  status: live
-- id: signet-price-line
-  text: "₹1,499 a month or ₹14,999 a year, GST included."
-  source: "Decision 2026-09-10, Signet INR price"
-  updated: 2026-10-06
-  status: live
-- id: signet-founding-lock
-  text: "Founding price, locked for life while you stay subscribed."
-  source: "Decision 2026-09-10, Signet INR price"
-  updated: 2026-10-06
-  status: live
-- id: signet-pay-after-demo
-  text: "Nothing to pay until after the demo."
-  source: "Ruling D10, 2026-10-06"
-  updated: 2026-10-06
-  status: live
-# Two dates that happen to be the same day and are two facts: when the release pipe went live, and when the
-# live battery ran. Each can move on its own, so each is its own claim.
-- id: signet-live-since
-  text: "August 31, 2026"
-  source: "Ruling D10, 2026-10-06"
-  updated: 2026-10-06
-  status: live
-- id: signet-battery-date
-  text: "August 31, 2026"
-  source: "Signet live battery, 2026-08-31"
-  updated: 2026-10-06
-  status: live
-# The battery's counted results. The other results the page tells (a changed draft caught, a veto that beat
-# the clock, a freeze from a phone) carry no figure and stay as copy.
-- id: signet-battery-sent
-  text: "One real email went out"
-  source: "Signet live battery, 2026-08-31"
-  updated: 2026-10-06
-  status: live
-- id: signet-battery-refused
-  text: "Two other drafts got past her phone and were still refused at send."
-  source: "Signet live battery, 2026-08-31"
-  updated: 2026-10-07
-  status: live
-- id: signet-battery-refused-why
-  text: "the recipient wasn't on an approved lead list"
-  source: "Signet live battery, 2026-08-31"
-  updated: 2026-10-07
   status: live
 
 # ---- the Quote in Ten Minutes page ----
@@ -392,7 +317,7 @@
   source: "MCA record"
   updated: 2026-10-10
   status: live
-# Ruling D10, first beat alone: the only thing a page that does not offer Signet may say about it.
+# Ruling D10, first beat alone: the only thing a page that does not offer a demo may say about it.
 # Kept equal to the first sentence of signet-d10 (her A, 2026-11-21).
 - id: signet-d10-first
   text: "Live today: every post, email and draft our own AI office makes waits for a person's yes before it goes out, and every decision leaves a record you can check."

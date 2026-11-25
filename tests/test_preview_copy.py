@@ -44,8 +44,19 @@ def metas(markup):
     return {name: unescape(content) for name, content in TAG.findall(head)}
 
 
+# 25 Nov 2026, her A (the Signet name retired, inventory items 8 and 9): the terms and refund descriptions say HQ where the
+# live page's previews said Signet. Applied to the snapshot's words, so every other word stays held to the live page.
+RENAMED = {"Terms for Signet subscriptions": "Terms for HQ subscriptions", "How to cancel Signet,": "How to cancel HQ,"}
+
+
+def renamed(text):
+    for before, after in RENAMED.items():
+        text = text.replace(before, after)
+    return text
+
+
 def snapshot(name):
-    return metas((PARITY / name).read_text(encoding="utf-8"))
+    return {k: renamed(v) for k, v in metas((PARITY / name).read_text(encoding="utf-8")).items()}
 
 
 def built(real_site, host, name):

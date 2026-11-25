@@ -8,7 +8,7 @@
    A seal that sits beside a heading is decoration: bind seal_decorative = true and it is hidden from assistive
    technology instead of read out as a labelled image. #}
 {% set mask_id = "signet-seal-carve" ~ ("-" ~ seal_id if seal_id is defined else "") %}
-<svg class="signet-mark" viewBox="0 0 512 512"{% if seal_decorative is defined and seal_decorative %} aria-hidden="true"{% else %} role="img" aria-label="The Signet brand seal: an S-curve carved through an ink core, sealed with a copper wax dot"{% endif %}>
+<svg class="signet-mark" viewBox="0 0 512 512"{% if seal_decorative is defined and seal_decorative %} aria-hidden="true"{% else %} role="img" aria-label="A seal: an S-curve carved through an ink core, sealed with a copper wax dot"{% endif %}>
   <defs>
     <mask id="{{ mask_id }}">
       <rect x="0" y="0" width="512" height="512" style="fill:#fff"></rect>

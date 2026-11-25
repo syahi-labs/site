@@ -22,7 +22,7 @@ from sitebuild.site import load_site
 
 REPO = Path(__file__).resolve().parents[1]
 INCLUDE = '{% include "partials/signet-seal.html" %}'
-LABEL = "The Signet brand seal: an S-curve carved through an ink core, sealed with a copper wax dot"
+LABEL = "A seal: an S-curve carved through an ink core, sealed with a copper wax dot"
 
 
 def with_seal(**names):

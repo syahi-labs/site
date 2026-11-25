@@ -29,8 +29,10 @@ APPROVED = datetime.date(2026, 10, 6)
 # Her call 2026-10-10 (quiz item 8): the date each policy page says it was last updated. Only privacy has a text change
 # (10 October); the other three keep the dates they had. All four stay drafts: the build says "re-approve" for the three
 # whose Last updated line now renders from `updated`.
-POLICY_UPDATED = {"contact.html": datetime.date(2026, 9, 10), "terms.html": datetime.date(2026, 9, 12),
-                  "refund.html": datetime.date(2026, 9, 12), "privacy.html": datetime.date(2026, 11, 15)}   # privacy: the X link in the links line, her C 2026-11-15
+# 25 Nov 2026, her A ("fix the other Signet pages too"): all four pages say HQ where they said Signet, so all four are
+# re-approved and say "Last updated 25 November 2026". (Earlier: privacy 15 Nov, the X link, her C; contact 10 Sep; terms and refund 12 Sep.)
+POLICY_UPDATED = {"contact.html": datetime.date(2026, 11, 25), "terms.html": datetime.date(2026, 11, 25),
+                  "refund.html": datetime.date(2026, 11, 25), "privacy.html": datetime.date(2026, 11, 25)}
 MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
           "November", "December")
 
@@ -118,7 +120,7 @@ def test_front_matter_is_the_ports_contract(snapshot, name, slug, updated, level
     assert page.audience is None and page.schema == ()
     assert page.claims and len(set(page.claims)) == len(page.claims)
     if name in DRAFTS:
-        assert page.draft is False and page.approved == (datetime.date(2026, 11, 15) if name == "privacy.html" else datetime.date(2026, 10, 11))   # she approved the launch B3 version on 11 Oct 2026; privacy again on 15 Nov 2026 for the X link (her C)
+        assert page.draft is False and page.approved == datetime.date(2026, 11, 25)   # she approved the launch B3 version on 11 Oct 2026 (privacy again 15 Nov for the X link); all four again on 25 Nov 2026 for the Signet name retirement (her A)
         assert page.updated == POLICY_UPDATED[name]
     else:
         assert page.draft is False and page.approved == APPROVED   # the live page was last approved and shipped on 6 Oct 2026
@@ -128,7 +130,7 @@ def test_front_matter_is_the_ports_contract(snapshot, name, slug, updated, level
 def test_the_made_by_line_says_what_is_true_of_the_page(dist, snapshot, name, slug, updated, levels):
     html = built(dist, name)
     if name in DRAFTS:
-        line = APPROVED_LINE.replace("11 Oct 2026", "15 Nov 2026") if name == "privacy.html" else APPROVED_LINE
+        line = APPROVED_LINE.replace("11 Oct 2026", "25 Nov 2026")
         assert f'<p class="made-by">{line}</p>' in html and DRAFT_LINE not in html
     else:
         assert f"Checked and approved by Surabhi Pradhan on {format_date(APPROVED)}." in html
@@ -151,11 +153,39 @@ def test_privacy_has_made_the_three_edits_it_waited_for():
 # so every other word of every policy page is still held to the live page. One entry is the date line, which now
 # renders from the page's own `updated`.
 B3_TEXT_EDITS = {
-    "site-contact.html": [],     # quiz item 8: no text change, date stays 10 September 2026
-    "site-terms.html": [],       # likewise 12 September 2026
-    "site-refund.html": [],      # likewise 12 September 2026
+    # 25 Nov 2026, her A: the Signet name is retired. Each page's date line moves to 25 November 2026 and Signet becomes HQ,
+    # word for word as SIGNET-RETIRE-INVENTORY.md items 6 to 9 proposed.
+    "site-contact.html": [
+        ("Last updated 10 September 2026", "Last updated 25 November 2026"),
+        ("Signet billing or cancellation", "HQ billing or cancellation"),
+    ],
+    "site-terms.html": [
+        ("Last updated 12 September 2026", "Last updated 25 November 2026"),
+        ("subscribing to Signet,", "subscribing to HQ,"),
+        ("SignetSoftware you subscribe to.", "HQSoftware you subscribe to."),
+        ("Signet shows you what an agent wants to do.", "HQ shows you what an agent wants to do."),
+        ("don't use Signet for anything unlawful", "don't use HQ for anything unlawful"),
+        ("Signet only.", "HQ only."),
+        # Her "A, remove both founding price paragraphs" (25 Nov 2026).
+        ("Founding price. Founding users keep their price for as long as the subscription stays active. If it lapses and you come back, the price is whatever it is that day. ", ""),
+        # Her "A, take the price off" (25 Nov 2026): the founding price card and "Locked for life" are gone, and Pricing says one line.
+        ("One price, GST included. There is nothing else to pay for Signet. Signet \u00b7 founding price \u20b91,499 a monthGST included "
+         "\u20b914,999 a yearGST included \u00b7 ten months for twelve Locked for life for founding users, as long as the subscription stays active. "
+         "Studio Services carry no list price on this site. Each engagement is quoted in writing.",
+         "Prices are agreed in writing after a demo, GST included."),
+    ],
+    "site-refund.html": [
+        ("Last updated 12 September 2026", "Last updated 25 November 2026"),
+        ("SignetCancel any time.", "HQCancel any time."),
+        ("If we shut Signet down.", "If we shut HQ down."),
+        # Her "A, remove both founding price paragraphs" (25 Nov 2026).
+        ("Founding price. Cancelling ends the lock. If you come back later, the price is whatever it is that day. ", ""),
+    ],
     "site-privacy.html": [
-        ("Last updated 10 September 2026", "Last updated 15 November 2026"),
+        ("Last updated 10 September 2026", "Last updated 25 November 2026"),
+        ("the Signet product,", "Syahi HQ,"),   # 25 Nov 2026, her A: the Signet name is retired (inventory item 7)
+        ("VSignet", "VHQ"),
+        ("We store the ledger to run Signet, and for nothing else.", "We store your decision record to run your HQ, and for nothing else."),
         ("syahi.sh sets no cookies. It runs no analytics. It has no contact form, so the site itself collects nothing you type. "
          "The moving ink is drawn inside your browser and sends nothing anywhere. Two things do leave your browser when the page loads:",
          "syahi.sh sets no cookies and runs no tracking scripts. Our host counts visits in aggregate (which pages, which countries, "
@@ -205,8 +235,13 @@ def test_title_and_description_are_the_old_pages_exactly(dist, snapshot, name, s
     # Compared as the browser reads them: the template escapes an apostrophe as &#39;, the old page did not.
     old = (PARITY / snapshot).read_text(encoding="utf-8")
     html = built(dist, name)
+    # 25 Nov 2026, her A: the terms and refund descriptions say HQ where the live page said Signet (inventory items 8 and 9).
+    renamed = {"Terms for Signet subscriptions": "Terms for HQ subscriptions", "How to cancel Signet,": "How to cancel HQ,"}
     for pattern in (r"<title>(.*?)</title>", r'<meta name="description" content="(.*?)">'):
-        assert unescape(re.search(pattern, html).group(1)) == unescape(re.search(pattern, old).group(1))
+        want = unescape(re.search(pattern, old).group(1))
+        for before, after in renamed.items():
+            want = want.replace(before, after)
+        assert unescape(re.search(pattern, html).group(1)) == want
     assert "Syahi's products" in unescape(re.search(r'<meta name="description" content="(.*?)">', built(dist, "privacy.html")).group(1))
 
 
@@ -267,8 +302,9 @@ def test_every_section_is_a_section_with_its_head_and_its_prose(dist):
         assert main.count('class="section-head"') == sections, name
 
 
-def test_the_terms_pricing_plate_keeps_its_anchor(dist):
-    assert '<div class="plate" id="pricing">' in built(dist, "terms.html")
+def test_the_terms_pricing_plate_is_gone(dist):
+    # 25 Nov 2026, her "A, take the price off": the founding price card went; the section is one sentence (pinned in test_products_page.py).
+    assert 'id="pricing"' not in built(dist, "terms.html")
 
 
 # ---- numbers are claims ----
@@ -281,9 +317,8 @@ FIGURES = {
                      ("three working days", "reply-window"), ("one month", "grievance-resolve-window")],
     "privacy.html": [("ADB-1993", "org-llpin"), ("2023", "law-dpdp-act"), ("30 days", "signet-deletion-window"),
                      ("under 18", "minor-age-limit"), ("seven working days", "privacy-request-window")],
-    "terms.html": [("ADB-1993", "org-llpin"), ("₹1,499 a month", "signet-price-monthly"),
-                   ("₹14,999 a year", "signet-price-yearly"), ("day 30", "qtm-guarantee-day"),
-                   ("four hours a month", "retainer-hours"), ("ten months for twelve", "signet-yearly-ratio")],
+    "terms.html": [("ADB-1993", "org-llpin"), ("day 30", "qtm-guarantee-day"),
+                   ("four hours a month", "retainer-hours")],   # 25 Nov 2026: the price claims left with the price card (her "A, take the price off")
     "refund.html": [("14 days", "signet-annual-refund-window"), ("day 30", "qtm-guarantee-day"),
                     ("18% under SAC 998432", "katha-gst-treatment"), ("48 hours", "grievance-ack-window"),
                     ("30 days", "katha-refund-resolve-window"), ("5 to 7 working days", "razorpay-refund-timing"),
@@ -387,9 +422,6 @@ CLAIMS = {
     "minor-age-limit": ("under 18", "Privacy policy, 2026-09-10"),
     "privacy-request-window": ("seven working days", "Privacy policy, 2026-09-10"),
     # terms
-    "signet-price-monthly": ("\u20b91,499 a month", "Terms of service, 2026-09-12"),
-    "signet-price-yearly": ("\u20b914,999 a year", "Terms of service, 2026-09-12"),
-    "signet-yearly-ratio": ("ten months for twelve", "Terms of service, 2026-09-12"),
     "retainer-hours": ("four hours a month", "Terms of service, 2026-09-12"),
     "qtm-guarantee-day": ("day 30", "Terms of service, 2026-09-12"),
     # refund
@@ -652,8 +684,8 @@ def test_the_katha_page_has_no_script_no_remote_font_and_no_em_dash(dist):
 # cards, the house mark and the colophon. The rewritten top has its own tests in tests/test_launch_pages.py.
 
 HOME = "site-index.html"
-HOME_CARDS = ("Signet by Syahi", "Quote in Ten Minutes", "Katha Audio", "Paper Machine")
-HOME_SIGNATURE = ("Nothing sends that you didn't verifiably see.",
+HOME_CARDS = ("Your AI office, run from one HQ", "Quote in Ten Minutes", "Katha Audio", "Paper Machine")
+HOME_SIGNATURE = ("Run the daily work, see what got done, and grow without losing the say.",
                   "Live on your number in two weeks.",
                   "Plates, not thumbnails.",
                   "Ink is how intent becomes record.",
@@ -695,11 +727,11 @@ def test_the_home_front_matter_is_the_rewrites_contract(dist):
     assert page.layout == "page" and page.css == "home"
     assert page.audience == "owner"         # launch B1: an owner reads it, so the first line stays free of agents and AI
     assert page.schema == ()                # the Organization and WebSite nodes come with the main host's home page
-    assert page.draft is False and page.approved == datetime.date(2026, 11, 21)   # 21 Nov 2026: re-approved for the /signet link removal (her ruling, link-only edit)
-    assert page.updated == datetime.date(2026, 11, 21)
+    assert page.draft is False and page.approved == datetime.date(2026, 11, 25)   # 25 Nov 2026: card I is the HQ card, the Signet name is retired (her A; 21 Nov: the /signet link removal)
+    assert page.updated == datetime.date(2026, 11, 25)
     assert page.claims and len(set(page.claims)) == len(page.claims)
     assert set(page.claims) == claim_ids(main_of(built(dist, "index.html")))
-    assert "Checked and approved by Surabhi Pradhan on 21 Nov 2026." in built(dist, "index.html")
+    assert "Checked and approved by Surabhi Pradhan on 25 Nov 2026." in built(dist, "index.html")
     assert "Not yet approved" not in built(dist, "index.html")
 
 
@@ -731,6 +763,13 @@ HOME_B3_EDITS = [
      "Every piece of work that reaches you has a person's yes behind it, and a dated record that shows it."),
     # Her A, 2026-11-21 (the products page): /signet is gone, so card I no longer links anywhere and its action line goes.
     ("anyone whose agents touch the outside world see Signet \u2192", "anyone whose agents touch the outside world"),
+    # Her A, 2026-11-25 (the Signet name retired, SIGNET-RETIRE-INVENTORY.md item 3): card I becomes the HQ card, books a demo
+    # at /contact, and carries the full D10 sentence once. Old words on the left, the approved words on the right.
+    ("Signet by Syahi An approval layer with a decision ledger. The agent drafts. You see the actual words on your phone, and one tap says yes or no. "
+     "Nothing sends that you didn't verifiably see. For anyone whose agents touch the outside world",
+     "Your AI office, run from one HQ Run the daily work, see what got done, and grow without losing the say. "
+     "Our AI drafts what goes out. Your team decides what goes out, and every decision leaves a record you can check. "
+     "Live today: every post, email and draft our own AI office makes waits for a person's yes before it goes out, and every decision leaves a record you can check. Your HQ works the same way: your team approves, and the record is yours. No outside clients yet; founding clients start after a demo. For owner-run businesses that want the work done and the final word kept book a demo \u2192"),
 ]
 
 
@@ -787,9 +826,10 @@ def test_what_the_home_drops_is_not_in_the_new_page(dist):
 
 def test_the_home_card_links_are_the_old_pages_with_each_move_applied_in_order(dist):
     old, new = link_values(old_home_cards_on()), link_values(unhash(new_home_cards_on(dist)))
-    # Her A, 2026-11-21: /signet is gone (410), so card I carries no link and the old page's first link has no successor.
-    assert old[0] == "https://signet.syahi.sh"
-    old = old[1:]
+    # Her A, 2026-11-25: card I is the HQ card and links to /contact, a link the old page never had; the old page's first
+    # link (signet.syahi.sh) has no successor.
+    assert old[0] == "https://signet.syahi.sh" and new[0] == "/contact"
+    old, new = old[1:], new[1:]
     # quiz item 4: card IV's link goes to the plates page, so the old YouTube link is replaced in place
     assert new == ["/paper-machine" if v == "https://youtube.com/@papermachine07" else v for v in apply_link_moves(old)]
     assert len(old) == 6                                # the comparison cannot pass by both sides being empty
@@ -803,16 +843,18 @@ def test_the_home_card_links_are_the_old_pages_with_each_move_applied_in_order(d
 def test_the_four_cards_keep_their_anchors_and_go_where_the_controller_ruled(dist):
     main = main_of(built(dist, "index.html"))
     cards = re.findall(r'<a class="card" id="([a-z]+)" href="([^"]+)"', main)
-    assert cards == [("studio", "/services/quote"), ("katha", "/katha"),
+    assert cards == [("hq", "/contact"), ("studio", "/services/quote"), ("katha", "/katha"),
                      ("papermachine", "/paper-machine")]      # quiz item 4
-    # Her A, 2026-11-21: card I keeps its anchor and its words, and links nowhere, because /signet is gone.
-    assert '<div class="card" id="signet">' in main and "/signet" not in main
-    assert [id for id, _ in re.findall(r'<a class="card" id="([a-z]+)" href="([^"]+)"', old_home())] == ["signet"] + [id for id, _ in cards]
+    # Her A, 2026-11-25: card I's anchor is #hq (was #signet) and it goes to /contact, where a demo is booked.
+    assert "/signet" not in main and 'id="signet"' not in main
+    assert [id for id, _ in re.findall(r'<a class="card" id="([a-z]+)" href="([^"]+)"', old_home())] == ["signet"] + [id for id, _ in cards[1:]]
 
 
 def test_the_home_alt_text_and_labels_are_the_old_pages_exactly(dist):
     pattern = r'(?:alt|aria-label)="([^"]*)"'
     old, new = re.findall(pattern, old_home_content()), re.findall(pattern, main_of(built(dist, "index.html")))
+    # 25 Nov 2026, her A: the seal's label no longer says "Signet" (inventory item 3); the four plates' alt text is unchanged.
+    old = ["A seal: an S-curve carved through an ink core, sealed with a copper wax dot" if v.startswith("The Signet brand seal") else v for v in old]
     assert new == old and len(old) == 5                 # the four plates' alt text and the seal's label (the drop is hidden)
 
 
@@ -831,7 +873,8 @@ def test_the_card_titles_are_h2_with_their_words_kept(dist):
     main = main_of(built(dist, "index.html"))
     assert [int(level) for level in re.findall(r"<h([1-6])\b", main)] == [1, 2, 2, 2, 2, 2, 2, 2]   # h1, three beats, four cards
     assert tuple(re.findall(r"<h2>(.*?)</h2>", main))[3:] == HOME_CARDS
-    assert tuple(re.findall(r"<h3>(.*?)</h3>", old_home())) == HOME_CARDS
+    # 25 Nov 2026, her A: card I's title is "Your AI office, run from one HQ"; the old page's was "Signet by Syahi".
+    assert tuple(re.findall(r"<h3>(.*?)</h3>", old_home())) == ("Signet by Syahi", *HOME_CARDS[1:])
 
 
 def test_the_home_devanagari_wordmark_line_is_marked_hindi(dist):
@@ -852,7 +895,7 @@ def test_the_seal_comes_from_the_shared_partial_and_is_drawn_by_classes(dist):
     assert main.count('<svg class="signet-mark"') == 1 and main.count('id="signet-seal-carve"') == 1
     assert main.count('class="seal-ring"') == 2 and main.count('class="seal-core"') == 1 and main.count('class="seal-dot"') == 1
     assert "#221A0E" not in main and "#B06325" not in main            # the ink and the copper are tokens now
-    assert main.count("#") == main.count("#fff") + main.count("#000") + main.count("url(#") + main.count('href="#')   # only the mask's
+    assert main.count("#") - main.count("&#") == main.count("#fff") + main.count("#000") + main.count("url(#") + main.count('href="#')   # only the mask's
 
 
 def test_the_hero_art_keeps_its_words_and_the_old_ventures_line_went_with_the_old_thesis(dist):

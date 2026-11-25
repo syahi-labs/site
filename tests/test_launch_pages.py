@@ -111,13 +111,14 @@ def test_each_page_has_exactly_one_h1(dist, slug):
 @pytest.mark.parametrize("slug", PAGES)
 def test_each_page_is_approved_by_her_on_11_oct(dist, slug):
     page = source(slug)
-    relinked = slug in ("/", "/about")   # 21 Nov 2026: re-approved for the /signet link removal (her ruling, link-only edit)
-    reworded = slug == "/about"          # 25 Nov 2026: her A, "founder-led" and the HQ line replace "one-person" and Signet
-    when = datetime.date(2026, 11, 25) if reworded else datetime.date(2026, 11, 21) if relinked else None
+    # 25 Nov 2026: her A. /about: "founder-led" and the HQ line replace "one-person" and Signet. Home: card I is the HQ card
+    # (Signet name retired, her "fix the other Signet pages too"), so both pages are re-approved that day.
+    reworded = slug in ("/", "/about")
+    when = datetime.date(2026, 11, 25) if reworded else None
     assert page.draft is False and page.approved == (when or datetime.date(2026, 10, 11))
     assert page.updated == (when or (PM_UPDATED if slug in ("/paper-machine", "/media") else DRAFTED))   # /media: YouTube link 2026-10-11
     assert page.layout == "page"
-    day = "25 Nov 2026" if reworded else "21 Nov 2026" if relinked else "11 Oct 2026"
+    day = "25 Nov 2026" if reworded else "11 Oct 2026"
     assert f"Checked and approved by Surabhi Pradhan on {day}." in built(dist, slug)
     assert "Not yet approved" not in built(dist, slug)
 
@@ -203,10 +204,13 @@ def test_signets_customers_are_only_in_the_d10_sentence(dist):
     for slug in PAGES:
         html = built(dist, slug)
         text = text_of(main_of(html))
-        assert full not in text and "No outside clients yet" not in text and "founding clients" not in text, slug
+        # 25 Nov 2026: the home HQ card books a demo, so it carries the full D10 sentence once (the d10 check requires it).
+        assert text.count(full) == (1 if slug == "/" else 0), slug
+        if slug != "/":
+            assert "No outside clients yet" not in text and "founding clients" not in text, slug
         assert "Next: the same loop for your business's drafts." not in text and "Live today: every post, outreach email and desk draft our agents make waits for Surabhi's yes in Signet." not in text, slug
-        assert text.count(first_beat) == (1 if slug == "/about" else 0), slug
-        assert 'data-claim="signet-d10"' not in html, slug
+        assert text.count(first_beat) == (1 if slug in ("/about", "/") else 0), slug   # "/" carries it inside the full D10 sentence
+        assert html.count('data-claim="signet-d10"') == (1 if slug == "/" else 0), slug
 
 
 def test_the_header_has_no_link_to_a_page_that_is_not_built(dist, site):
@@ -220,8 +224,8 @@ def test_the_header_has_no_link_to_a_page_that_is_not_built(dist, site):
 def test_home_keeps_the_four_cards_and_the_house_mark(dist):
     main = main_of(built(dist, "/"))
     cards = re.findall(r'<(?:a|div) class="card" id="(\w+)"(?: href="([^"]+)")?', main)
-    assert cards == [("signet", ""), ("studio", "/services/quote"), ("katha", "/katha"),
-                     ("papermachine", "/paper-machine")]   # quiz item 4: the card goes to the plates; card I links nowhere (/signet is gone, 2026-11-21)
+    assert cards == [("hq", "/contact"), ("studio", "/services/quote"), ("katha", "/katha"),
+                     ("papermachine", "/paper-machine")]   # quiz item 4: the card goes to the plates; 25 Nov 2026: card I is the HQ card and books a demo at /contact (her A)
     assert "inkpot" in main and "the house mark" in main and "partials" not in main
     assert re.search(r"<h1>Syahi<svg", main)
 

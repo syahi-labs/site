@@ -93,11 +93,11 @@ def test_it_has_the_shared_chrome(html):
 
 def test_it_is_approved_and_the_made_by_line_says_so(html, page):
     # New copy that she has not reviewed: the page says so, and a release build refuses it until she has.
-    assert page.draft is False and page.approved == datetime.date(2026, 11, 21)   # 21 Nov 2026: re-approved for the /signet link removal (her ruling, link-only edit)
-    assert '<p class="made-by">Drafted with AI from our own records. Checked and approved by Surabhi Pradhan on 21 Nov 2026.</p>' in html
+    assert page.draft is False and page.approved == datetime.date(2026, 11, 25)   # 25 Nov 2026: re-approved, her A: the description no longer names Signet (21 Nov: the /signet link removal)
+    assert '<p class="made-by">Drafted with AI from our own records. Checked and approved by Surabhi Pradhan on 25 Nov 2026.</p>' in html
     assert "Not yet approved" not in html
 
 
 def test_front_matter_update_date_is_the_day_the_final_copy_was_written(page):
-    assert page.updated == datetime.date(2026, 11, 21)
+    assert page.updated == datetime.date(2026, 11, 25)   # 25 Nov 2026, her A: description without Signet
     assert page.layout == "page" and page.css is None

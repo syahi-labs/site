@@ -64,13 +64,15 @@ def test_every_changed_page_is_approved_by_her_on_11_oct(host, slug):
     # Quiz item 8: contact, terms and refund have no text change, so they keep their earlier dates (now approved too).
     expected = {"/contact": datetime.date(2026, 9, 10), "/terms": datetime.date(2026, 9, 12), "/refund": datetime.date(2026, 9, 12),
                 "/katha": datetime.date(2026, 10, 12),   # voices v2 on 11 Oct; shorter description, her A 2026-10-12
-                "/privacy": datetime.date(2026, 11, 15)}   # the play-on-a-video line (her call 2026-10-11), then the X link in the links line (her C 2026-11-15)
+                "/privacy": datetime.date(2026, 11, 25)}   # 25 Nov 2026: "Syahi HQ" replaces Signet (her A). Before: the play-on-a-video line (her call 2026-10-11), then the X link in the links line (her C 2026-11-15)
     if (host, slug) == ("katha", "/"):
         expected["/"] = datetime.date(2026, 10, 11)                    # "Hear it first" removed, her call 2026-10-11
-    approved = {("main", "/katha"): datetime.date(2026, 10, 12), ("main", "/privacy"): datetime.date(2026, 11, 15),
-                ("main", "/"): datetime.date(2026, 11, 21), ("main", "/404"): datetime.date(2026, 11, 21)}.get((host, slug), datetime.date(2026, 10, 11))   # 21 Nov 2026: re-approved for the /signet link removal (her ruling, link-only edit)
-    if host == "main" and slug in ("/", "/404"):
-        expected[slug] = datetime.date(2026, 11, 21)
+    # 25 Nov 2026: her A, "fix the other Signet pages too". Home, 404, contact, privacy, terms and refund are re-approved that day
+    # for the Signet name retirement (HQ words; the home HQ card; the 404 and contact lines). Earlier dates are in the history.
+    retired = datetime.date(2026, 11, 25)
+    approved = {("main", "/katha"): datetime.date(2026, 10, 12)}.get((host, slug), datetime.date(2026, 10, 11))
+    if host == "main" and slug in ("/", "/404", "/contact", "/privacy", "/terms", "/refund"):
+        approved = expected[slug] = retired
     assert found.draft is False and found.approved == approved and found.updated == expected.get(slug, DAY)
 
 

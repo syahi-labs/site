@@ -267,3 +267,33 @@ def test_the_worker_answers_410_for_signet_and_keeps_the_subdomain_301():
     assert 'new Set(["/signet"])' in src and "status: 410" in src and "x-robots-tag" in src and "noindex" in src
     assert "isGone(url)" in index
     assert 'if (host === "signet.syahi.sh") return `https://syahi.sh/${url.search}`;' in src      # unchanged
+
+
+def test_no_built_page_says_signet(real_site):
+    # 25 Nov 2026, her A: the name is retired everywhere on syahi.sh, and the terms price card went on her "A, take the price off".
+    # Internal ids stay (claim ids, the seal's class and mask id): her A, item 11.
+    out = real_site.out / "syahi.sh"
+    left = []
+    for path in sorted(out.rglob("*")):
+        if path.is_file() and path.suffix in (".html", ".txt", ".xml", ".json", ".css", "") and "assets" not in path.relative_to(out).parts[:1]:
+            text = re.sub(r"[\w-]*signet-[\w-]*", "", path.read_text(encoding="utf-8"))
+            if re.search("signet", text, re.IGNORECASE):
+                left.append(path.name)
+    assert left == []
+
+
+def test_terms_pricing_says_prices_are_agreed_in_writing_and_names_no_figure(real_site):
+    # 25 Nov 2026, her "A, take the price off": the founding price card and "Locked for life" are gone.
+    html = (real_site.out / "syahi.sh" / "terms.html").read_text(encoding="utf-8")
+    section = html.split('<span class="label">Pricing</span>', 1)[1].split("</section>", 1)[0]
+    assert "<p>Prices are agreed in writing after a demo, GST included.</p>" in section
+    assert 'id="pricing"' not in section and "founding price" not in html and "Locked for life" not in html
+    assert "\u20b9" not in html and "1,499" not in html and "14,999" not in html
+
+
+def test_terms_and_refund_have_no_founding_price_paragraph_and_no_lock(real_site):
+    # 25 Nov 2026, her "A, remove both founding price paragraphs".
+    for name in ("terms.html", "refund.html"):
+        html = (real_site.out / "syahi.sh" / name).read_text(encoding="utf-8")
+        assert "Founding price" not in html, name
+        assert not re.search(r"\block(?:ed|s)?\b", html, re.IGNORECASE), name
