@@ -1,5 +1,5 @@
 Jinja2>=3.1,<4
 PyYAML>=6,<7
-fonttools[woff]>=4.50
+fonttools[woff]==4.67.0  # pinned 25 Nov: the font subsets (and their hashed file names) must match the live build
 Pillow>=11.3
 pytest>=8
