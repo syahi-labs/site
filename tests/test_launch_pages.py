@@ -25,6 +25,7 @@ EM_DASH, EN_DASH = chr(0x2014), chr(0x2013)
 DRAFTED = datetime.date(2026, 10, 10)
 PM_UPDATED = datetime.date(2026, 10, 11)    # /paper-machine was reworked into three playlist cards on 2026-10-11
 D10_REWORDED = datetime.date(2026, 11, 21)  # her A: the D10 first beat no longer names Signet or the founder
+FOUNDER_LED = datetime.date(2026, 11, 25)  # her A: "founder-led", never "one-person"
 
 # slug -> (built file, audience). Home and /services are for an owner, so "agent" and "AI" stay out of their first line.
 PAGES = {
@@ -111,10 +112,12 @@ def test_each_page_has_exactly_one_h1(dist, slug):
 def test_each_page_is_approved_by_her_on_11_oct(dist, slug):
     page = source(slug)
     relinked = slug in ("/", "/about")   # 21 Nov 2026: re-approved for the /signet link removal (her ruling, link-only edit)
-    assert page.draft is False and page.approved == (datetime.date(2026, 11, 21) if relinked else datetime.date(2026, 10, 11))
-    assert page.updated == (datetime.date(2026, 11, 21) if relinked else PM_UPDATED if slug in ("/paper-machine", "/media") else DRAFTED)   # /media: YouTube link 2026-10-11
+    reworded = slug == "/about"          # 25 Nov 2026: her A, "founder-led" and the HQ line replace "one-person" and Signet
+    when = datetime.date(2026, 11, 25) if reworded else datetime.date(2026, 11, 21) if relinked else None
+    assert page.draft is False and page.approved == (when or datetime.date(2026, 10, 11))
+    assert page.updated == (when or (PM_UPDATED if slug in ("/paper-machine", "/media") else DRAFTED))   # /media: YouTube link 2026-10-11
     assert page.layout == "page"
-    day = "21 Nov 2026" if slug in ("/", "/about") else "11 Oct 2026"
+    day = "25 Nov 2026" if reworded else "21 Nov 2026" if relinked else "11 Oct 2026"
     assert f"Checked and approved by Surabhi Pradhan on {day}." in built(dist, slug)
     assert "Not yet approved" not in built(dist, slug)
 
@@ -374,12 +377,12 @@ def test_the_reworked_pages_have_no_em_or_en_dash(dist):
 def test_the_launch_claims_are_in_the_register_with_a_public_source(register):
     wanted = ["call-is-free", "assessment-length", "build-live-time", "build-running-period", "build-scope-in-writing",
               "qtm-name", "keep-running-name", "agent-os-name", "agent-os-runs-syahi", "founder-name", "founder-line",
-              "org-one-person", "org-founded-month", "signet-d10-first", "media-dahshat-name", "media-dahshat-line",
+              "org-founder-led", "org-founded-month", "signet-d10-first", "media-dahshat-name", "media-dahshat-line",
               "media-adhoore-name", "media-store-sample"]
     wanted += [f"pm-playlist-{slug}-{part}" for slug in PM_PLAYLISTS for part in ("name", "url", "count", "cover")]
     for id in wanted:
         claim = register.get(id)
-        expected = PM_UPDATED if id.startswith("pm-") else D10_REWORDED if id == "signet-d10-first" else DRAFTED
+        expected = PM_UPDATED if id.startswith("pm-") else D10_REWORDED if id == "signet-d10-first" else FOUNDER_LED if id == "org-founder-led" else DRAFTED
         assert claim.source and claim.status == "live" and claim.updated == expected
         assert EM_DASH not in claim.text and EN_DASH not in claim.text
 

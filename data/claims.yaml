@@ -382,10 +382,10 @@
   source: "syahi.sh, 2026-10-10"
   updated: 2026-10-10
   status: live
-- id: org-one-person
-  text: "a one-person AI venture studio"
-  source: "syahi.sh home page, 2026-10-06"
-  updated: 2026-10-10
+- id: org-founder-led
+  text: "a founder-led AI venture studio"
+  source: "her A, chat 2026-11-25: Syahi is founder-led today, not one-person (employees later)"
+  updated: 2026-11-25
   status: live
 - id: org-founded-month
   text: "August 2026"
