@@ -768,7 +768,7 @@ HOME_B3_EDITS = [
     ("Signet by Syahi An approval layer with a decision ledger. The agent drafts. You see the actual words on your phone, and one tap says yes or no. "
      "Nothing sends that you didn't verifiably see. For anyone whose agents touch the outside world",
      "Your AI office, run from one HQ Run the daily work, see what got done, and grow without losing the say. "
-     "Our AI drafts what goes out. Your team decides what goes out, and every decision leaves a record you can check. "
+     "Our AI drafts the work. Your team decides what goes out. "
      "Live today: every post, email and draft our own AI office makes waits for a person's yes before it goes out, and every decision leaves a record you can check. Your HQ works the same way: your team approves, and the record is yours. No outside clients yet; founding clients start after a demo. For owner-run businesses that want the work done and the final word kept book a demo \u2192"),
 ]
 
